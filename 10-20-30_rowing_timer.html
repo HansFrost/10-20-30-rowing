@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>10-20-30 Rowing &middot; 7-Week Program</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#101828;--card:#1a2236;--card-hover:#232e45;--accent:#4f8cff;
+  --green:#22c55e;--green-dim:#166534;--gold:#eab308;--red:#ef4444;
+  --text:#f1f5f9;--muted:#94a3b8;--border:#2a3550;
+  --bg-warmup:#2d3a4a;--bg-low:#0d6b3d;--bg-moderate:#b8860b;
+  --bg-high:#c0392b;--bg-rest:#2c3e6b;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;display:flex;
+  flex-direction:column;-webkit-tap-highlight-color:transparent;overflow-x:hidden;
+  transition:background .3s}
+body.phase-warmup{background:var(--bg-warmup)}body.phase-low{background:var(--bg-low)}
+body.phase-moderate{background:var(--bg-moderate)}body.phase-high{background:var(--bg-high)}
+body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
+
+/* ===== SHARED ===== */
+.screen{display:none;flex:1;flex-direction:column;padding:20px 16px;max-width:480px;
+  width:100%;margin:0 auto}
+.screen.active{display:flex}
+.btn{padding:14px 24px;border:none;border-radius:14px;font-size:1rem;font-weight:700;
+  cursor:pointer;transition:transform .1s,opacity .15s;text-align:center}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:#fff;color:var(--bg)}
+.btn-secondary{background:rgba(255,255,255,.1);color:#fff;border:2px solid var(--border)}
+.btn-small{padding:10px 16px;font-size:.85rem;border-radius:10px}
+
+/* ===== ONBOARDING ===== */
+#onboarding{align-items:center;justify-content:center;gap:24px;text-align:center}
+#onboarding h1{font-size:1.8rem;font-weight:800;line-height:1.2}
+#onboarding h1 small{display:block;font-size:.9rem;font-weight:400;color:var(--muted);margin-top:6px}
+#onboarding p{color:var(--muted);font-size:.9rem;line-height:1.6;max-width:340px}
+#dateInput{padding:14px 20px;border-radius:12px;border:2px solid var(--border);
+  background:var(--card);color:var(--text);font-size:1.1rem;font-weight:600;
+  width:100%;max-width:260px;text-align:center}
+#dateInput:focus{outline:none;border-color:var(--accent)}
+
+/* ===== SCHEDULE ===== */
+#schedule{gap:16px;padding-bottom:100px}
+.sched-header{display:flex;justify-content:space-between;align-items:center}
+.sched-header h1{font-size:1.4rem;font-weight:800}
+.sched-header-btns{display:flex;gap:8px}
+.sched-progress{background:var(--card);border-radius:12px;padding:16px}
+.sched-progress-label{display:flex;justify-content:space-between;font-size:.8rem;
+  color:var(--muted);margin-bottom:8px}
+.sched-progress-bar{height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
+.sched-progress-fill{height:100%;background:var(--green);border-radius:4px;transition:width .4s}
+.sched-today-banner{background:linear-gradient(135deg,#1e3a5f,#2a4a7f);border-radius:14px;
+  padding:18px;text-align:center}
+.sched-today-banner .day-label{font-size:.85rem;color:var(--muted);margin-bottom:4px}
+.sched-today-banner .day-title{font-size:1.2rem;font-weight:700;margin-bottom:12px}
+.sched-today-banner .btn{width:100%}
+.sched-rest-banner{background:var(--card);border-radius:14px;padding:18px;text-align:center}
+.sched-rest-banner p{color:var(--muted);font-size:.9rem}
+.week-group{margin-top:4px}
+.week-label{font-size:.75rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);
+  margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.week-label .blocks-tag{font-size:.7rem;background:rgba(255,255,255,.06);padding:2px 8px;
+  border-radius:6px;letter-spacing:0}
+.week-sessions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.session-card{background:var(--card);border:2px solid var(--border);border-radius:12px;
+  padding:12px;cursor:pointer;transition:all .15s;position:relative;text-align:center}
+.session-card:active{transform:scale(.97)}
+.session-card .s-day{font-size:.75rem;text-transform:uppercase;letter-spacing:1px;
+  color:var(--muted);margin-bottom:2px}
+.session-card .s-date{font-size:1rem;font-weight:700;margin-bottom:4px}
+.session-card .s-blocks{font-size:.7rem;color:var(--muted)}
+.session-card .s-check{position:absolute;top:8px;right:8px;width:22px;height:22px;
+  border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;
+  justify-content:center;font-size:12px;transition:all .15s}
+.session-card.completed{border-color:var(--green-dim);background:rgba(34,197,94,.08)}
+.session-card.completed .s-check{background:var(--green);border-color:var(--green);color:#fff}
+.session-card.today{border-color:var(--accent);box-shadow:0 0 0 2px rgba(79,140,255,.25)}
+.session-card.future{opacity:.5}
+.session-card.past:not(.completed){opacity:.4}
+
+/* ===== FREE SESSION SETUP ===== */
+#freeSetup{align-items:center;justify-content:center;gap:20px;text-align:center}
+#freeSetup h2{font-size:1.4rem;font-weight:800}
+.setup-group{width:100%;max-width:360px;background:var(--card);border-radius:16px;padding:20px}
+.setup-group label{display:block;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;
+  color:var(--muted);margin-bottom:10px}
+.btn-row{display:flex;gap:8px}
+.btn-row button{flex:1;padding:12px 0;border:2px solid var(--border);border-radius:12px;
+  background:transparent;color:#fff;font-size:1.1rem;font-weight:700;cursor:pointer;
+  transition:all .15s}
+.btn-row button.selected{background:rgba(255,255,255,.15);border-color:#fff}
+.btn-row button:active{transform:scale(.95)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between}
+.toggle-row label{margin-bottom:0}
+.toggle{width:52px;height:28px;background:rgba(255,255,255,.12);border-radius:14px;
+  position:relative;cursor:pointer;border:none;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;
+  border-radius:50%;background:#fff;transition:transform .2s}
+.toggle.on::after{transform:translateX(24px)}
+
+/* ===== TIMER ===== */
+#timer{align-items:center;justify-content:center;gap:6px;text-align:center;padding:20px}
+#phaseLabel{font-size:1rem;text-transform:uppercase;letter-spacing:3px;opacity:.8;font-weight:600}
+#phaseName{font-size:3.2rem;font-weight:900;line-height:1}
+#hrZone{font-size:.85rem;opacity:.7;margin-top:2px;font-weight:600;letter-spacing:.5px}
+#countdown{font-size:9rem;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;
+  letter-spacing:-4px}
+#instruction{font-size:1.3rem;font-weight:500;opacity:.85;min-height:1.8em;margin-top:2px}
+#encouragement{font-size:.9rem;opacity:.6;font-style:italic;min-height:1.4em;
+  transition:opacity .3s}
+#timerProgress{width:100%;max-width:400px;margin-top:12px}
+#timerProgressText{font-size:.8rem;opacity:.6;margin-bottom:6px;letter-spacing:.5px}
+#timerProgressBar{width:100%;height:6px;background:rgba(255,255,255,.12);border-radius:3px;
+  overflow:hidden}
+#timerProgressFill{height:100%;background:rgba(255,255,255,.55);border-radius:3px;
+  transition:width .3s;width:0}
+#timerControls{display:flex;gap:10px;margin-top:16px}
+.timer-btn{padding:11px 24px;border:2px solid rgba(255,255,255,.25);border-radius:12px;
+  background:rgba(255,255,255,.08);color:#fff;font-size:.95rem;font-weight:700;
+  cursor:pointer;transition:all .15s}
+.timer-btn:active{transform:scale(.95)}
+.timer-btn.stop{border-color:rgba(255,100,100,.4)}
+.timer-btn.skip{border-color:rgba(255,200,50,.4)}
+
+/* ===== DONE ===== */
+#done{align-items:center;justify-content:center;gap:16px;text-align:center}
+#done h2{font-size:2.2rem;font-weight:900}
+#done .sub{font-size:1rem;color:var(--muted)}
+#summaryBox{background:var(--card);border-radius:16px;padding:20px;width:100%;max-width:360px;
+  text-align:left}
+.summary-row{display:flex;justify-content:space-between;padding:7px 0;
+  border-bottom:1px solid rgba(255,255,255,.06)}
+.summary-row:last-child{border-bottom:none}
+.summary-row .label{color:var(--muted)}
+.summary-row .value{font-weight:700}
+
+/* ===== HELP OVERLAY ===== */
+#helpOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:100;align-items:center;justify-content:center;padding:20px}
+#helpOverlay.active{display:flex}
+#helpBox{background:var(--card);border-radius:20px;padding:28px 24px;max-width:420px;
+  width:100%;max-height:85vh;overflow-y:auto;position:relative}
+#helpBox h2{font-size:1.3rem;font-weight:800;margin-bottom:16px}
+#helpBox h3{font-size:.95rem;font-weight:700;margin-top:16px;margin-bottom:6px;color:var(--accent)}
+#helpBox p,#helpBox li{font-size:.85rem;color:var(--muted);line-height:1.6}
+#helpBox ul{padding-left:18px;margin-top:4px}
+#helpBox li{margin-bottom:4px}
+#helpClose{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);
+  font-size:1.4rem;cursor:pointer;padding:4px 8px}
+.hr-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:.8rem}
+.hr-table th,.hr-table td{padding:5px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,.06)}
+.hr-table th{color:var(--accent);font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px}
+.hr-table td{color:var(--muted)}
+.hr-table .zone-color{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:380px){
+  #countdown{font-size:7rem}
+  #phaseName{font-size:2.5rem}
+  .week-sessions{gap:6px}
+  .session-card{padding:10px 8px}
+}
+@media(orientation:landscape) and (max-height:500px){
+  #countdown{font-size:5.5rem}
+  #phaseName{font-size:2rem}
+  #timer{gap:2px;padding:10px}
+}
+
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+.pulse{animation:pulse .3s ease}
+</style>
+</head>
+<body>
+
+<!-- ===== ONBOARDING ===== -->
+<div class="screen" id="onboarding">
+  <h1>10-20-30 Rowing<small>7-Week Intermediate Program</small></h1>
+  <p>Train Tue / Thu / Sat for 7 weeks. Pick the Tuesday you want to start on.</p>
+  <input type="date" id="dateInput">
+  <button class="btn btn-primary" id="onboardBtn">START PROGRAM</button>
+  <p style="font-size:.75rem;color:var(--muted)">You can reset this later from the schedule screen.</p>
+</div>
+
+<!-- ===== SCHEDULE ===== -->
+<div class="screen" id="schedule">
+  <div class="sched-header">
+    <h1>My Program</h1>
+    <div class="sched-header-btns">
+      <button class="btn btn-secondary btn-small" id="helpBtn">?</button>
+      <button class="btn btn-secondary btn-small" id="freeBtn">Free Session</button>
+    </div>
+  </div>
+  <div class="sched-progress">
+    <div class="sched-progress-label"><span id="progLabel">0 / 21 sessions</span><span id="progPct">0%</span></div>
+    <div class="sched-progress-bar"><div class="sched-progress-fill" id="progFill"></div></div>
+  </div>
+  <div id="todayBanner"></div>
+  <div id="weekGrid"></div>
+  <div style="margin-top:20px;text-align:center">
+    <button class="btn btn-secondary btn-small" id="resetBtn" style="opacity:.5;font-size:.75rem">Reset Program</button>
+  </div>
+</div>
+
+<!-- ===== FREE SESSION SETUP ===== -->
+<div class="screen" id="freeSetup">
+  <h2>Free Session</h2>
+  <div class="setup-group">
+    <label>Number of Blocks</label>
+    <div class="btn-row" id="blockBtns">
+      <button data-val="2">2</button>
+      <button data-val="3" class="selected">3</button>
+      <button data-val="4">4</button>
+    </div>
+  </div>
+  <div class="setup-group">
+    <label>Rest Between Blocks</label>
+    <div class="btn-row" id="restBtns">
+      <button data-val="120" class="selected">2 min</button>
+      <button data-val="150">2:30</button>
+      <button data-val="180">3 min</button>
+    </div>
+  </div>
+  <div class="setup-group toggle-row">
+    <label>4-min Warm-up</label>
+    <button class="toggle on" id="warmupToggle"></button>
+  </div>
+  <div class="setup-group toggle-row">
+    <label>5-min Cool-down</label>
+    <button class="toggle on" id="cooldownToggle"></button>
+  </div>
+  <button class="btn btn-primary" id="freeStartBtn" style="width:100%;max-width:360px">START</button>
+  <button class="btn btn-secondary btn-small" id="freeBackBtn">Back to Schedule</button>
+  <p style="font-size:.75rem;color:var(--muted);text-align:center;margin-top:4px">
+    Set Concept2 PM5 to "Just Row" mode.</p>
+</div>
+
+<!-- ===== TIMER ===== -->
+<div class="screen" id="timer">
+  <div id="phaseLabel">GET READY</div>
+  <div id="phaseName">--</div>
+  <div id="hrZone"></div>
+  <div id="countdown">--</div>
+  <div id="instruction"></div>
+  <div id="encouragement"></div>
+  <div id="timerProgress">
+    <div id="timerProgressText"></div>
+    <div id="timerProgressBar"><div id="timerProgressFill"></div></div>
+  </div>
+  <div id="timerControls">
+    <button class="timer-btn" id="pauseBtn">PAUSE</button>
+    <button class="timer-btn skip" id="skipBtn">SKIP</button>
+    <button class="timer-btn stop" id="stopBtn">STOP</button>
+  </div>
+</div>
+
+<!-- ===== DONE ===== -->
+<div class="screen" id="done">
+  <h2>WORKOUT COMPLETE</h2>
+  <p class="sub" id="doneSubtext"></p>
+  <div id="summaryBox"></div>
+  <button class="btn btn-primary" id="doneBackBtn" style="width:100%;max-width:360px">Back to Schedule</button>
+</div>
+
+<!-- ===== HELP OVERLAY ===== -->
+<div id="helpOverlay">
+  <div id="helpBox">
+    <button id="helpClose">&times;</button>
+    <h2>How to Use</h2>
+
+    <h3>First-Time Setup</h3>
+    <p>Pick the <strong>Tuesday</strong> you want to start your 7-week program on. The schedule will auto-generate 21 sessions across Tue / Thu / Sat.</p>
+
+    <h3>The 10-20-30 Concept</h3>
+    <p>Each 1-minute cycle repeats 5 times to form a 5-minute block:</p>
+    <ul>
+      <li><strong>30 sec LOW</strong> &mdash; easy paddle, recover</li>
+      <li><strong>20 sec MODERATE</strong> &mdash; steady, comfortable pace</li>
+      <li><strong>10 sec HIGH</strong> &mdash; all-out sprint, max power</li>
+    </ul>
+
+    <h3>Your Heart Rate Zones (Max HR: 176 bpm)</h3>
+    <table class="hr-table">
+      <tr><th>Phase</th><th>HR Range</th><th>% Max</th></tr>
+      <tr><td><span class="zone-color" style="background:#2d3a4a"></span>Warm-up</td><td>106 &ndash; 123 bpm</td><td>60&ndash;70%</td></tr>
+      <tr><td><span class="zone-color" style="background:#0d6b3d"></span>Low (30s)</td><td>114 &ndash; 132 bpm</td><td>65&ndash;75%</td></tr>
+      <tr><td><span class="zone-color" style="background:#b8860b"></span>Moderate (20s)</td><td>132 &ndash; 150 bpm</td><td>75&ndash;85%</td></tr>
+      <tr><td><span class="zone-color" style="background:#c0392b"></span>High (10s)</td><td>158 &ndash; 176 bpm</td><td>90&ndash;100%</td></tr>
+      <tr><td><span class="zone-color" style="background:#2c3e6b"></span>Rest</td><td>&lt; 123 bpm</td><td>&lt; 70%</td></tr>
+      <tr><td>Session avg</td><td>~150 bpm</td><td>~85%</td></tr>
+      <tr><td>Session peak</td><td>~169 bpm</td><td>~96%</td></tr>
+    </table>
+
+    <h3>Program Structure</h3>
+    <ul>
+      <li>Weeks 1-4: <strong>3 blocks</strong> per session (~24 min)</li>
+      <li>Weeks 5-7: <strong>4 blocks</strong> per session (~30 min)</li>
+      <li>2 min rest between blocks</li>
+      <li>4 min warm-up + 5 min cool-down included</li>
+    </ul>
+
+    <h3>Starting a Session</h3>
+    <p>If today is a training day, tap the big <strong>START TODAY'S SESSION</strong> button, or tap any session card in the calendar. The timer will auto-configure the correct number of blocks.</p>
+
+    <h3>Timer Controls</h3>
+    <ul>
+      <li><strong>PAUSE</strong> &mdash; pause / resume the timer</li>
+      <li><strong>SKIP</strong> &mdash; skip the current phase and jump to the next one</li>
+      <li><strong>STOP</strong> &mdash; abort the session and return to the schedule</li>
+    </ul>
+
+    <h3>Marking Sessions Complete</h3>
+    <p>When the timer finishes, the session is <strong>automatically marked done</strong>. You can also tap the circle on any session card to manually check/uncheck it.</p>
+
+    <h3>Free Session</h3>
+    <p>Tap <strong>Free Session</strong> to do an ad-hoc workout outside the program. You choose the block count and settings. Free sessions are not tracked in the schedule.</p>
+
+    <h3>Concept2 PM5 Setup</h3>
+    <p>Set your PM5 to <strong>"Just Row"</strong> mode. Prop your phone/tablet near the erg and follow the color + audio cues. ErgData can run in the background to sync your session data.</p>
+
+    <h3>Resetting the Program</h3>
+    <p>Scroll to the bottom of the schedule and tap <strong>Reset Program</strong>. This clears all completion data and lets you pick a new start date.</p>
+  </div>
+</div>
+
+<script>
+(function(){
+/* ========== AUDIO ========== */
+const AudioCtx=window.AudioContext||window.webkitAudioContext;
+let audioCtx=null;
+function ensureAudio(){if(!audioCtx)audioCtx=new AudioCtx();if(audioCtx.state==='suspended')audioCtx.resume()}
+function beep(f,d,v){if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);o.frequency.value=f;o.type='sine';g.gain.value=v||.4;
+  o.start(audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+d);
+  o.stop(audioCtx.currentTime+d)}
+function soundTick(){beep(600,.08,.2)}
+function soundPhase(){beep(880,.15,.5)}
+function soundBlockEnd(){beep(440,.3,.4);setTimeout(()=>beep(440,.3,.4),350)}
+function soundSprint(){beep(1200,.1,.6);setTimeout(()=>beep(1400,.15,.6),120)}
+function soundDone(){beep(523,.2,.5);setTimeout(()=>beep(659,.2,.5),200);setTimeout(()=>beep(784,.4,.5),400)}
+
+/* ========== HR ZONES (Max HR 176, Age 44) ========== */
+const MAX_HR=176;
+const HR_ZONES={
+  warmup: {lo:Math.round(MAX_HR*.60),hi:Math.round(MAX_HR*.70),label:'60\u201370%'},
+  low:    {lo:Math.round(MAX_HR*.65),hi:Math.round(MAX_HR*.75),label:'65\u201375%'},
+  moderate:{lo:Math.round(MAX_HR*.75),hi:Math.round(MAX_HR*.85),label:'75\u201385%'},
+  high:   {lo:Math.round(MAX_HR*.90),hi:MAX_HR,label:'90\u2013100%'},
+  rest:   {lo:0,hi:Math.round(MAX_HR*.70),label:'< 70%'},
+  cooldown:{lo:Math.round(MAX_HR*.50),hi:Math.round(MAX_HR*.65),label:'50\u201365%'},
+  countdown:{lo:0,hi:0,label:''}
+};
+function hrText(type){
+  const z=HR_ZONES[type];
+  if(!z||!z.label) return '';
+  if(z.lo===0) return '\u2764 < '+z.hi+' bpm ('+z.label+')';
+  return '\u2764 '+z.lo+'\u2013'+z.hi+' bpm ('+z.label+')';
+}
+
+/* ========== ENCOURAGING MESSAGES ========== */
+const CHEERS_LOW=[
+  'Breathe deep, reset your focus',
+  'Nice and easy, let the legs recover',
+  'Good rhythm, stay relaxed',
+  'Shake it out, you earned this rest',
+  'Controlled breathing, controlled power',
+  'Feel the recovery, the next sprint is coming',
+  'Easy strokes, conserve your energy',
+  'Relax the grip, loosen the shoulders',
+];
+const CHEERS_MOD=[
+  'Building momentum now',
+  'Smooth and steady, great form',
+  'Feel the power building',
+  'Strong strokes, keep it flowing',
+  'This is your rhythm, own it',
+  'Drive with the legs, connect the chain',
+  'You are getting stronger every session',
+  'Solid pace, the sprint is next',
+];
+const CHEERS_HIGH=[
+  'SEND IT!',
+  'Everything you have!',
+  'Legs, back, arms \u2013 EXPLODE!',
+  'Maximum power!',
+  'Push through!',
+  'This is why you came!',
+  'Full send, no holding back!',
+  'GO GO GO!',
+  'Drive those legs!',
+  'Peak power NOW!',
+];
+const CHEERS_REST=[
+  'Great block, take a breather',
+  'Well done, hydrate if you need to',
+  'You crushed that one',
+  'Let your heart rate come down',
+  'Reset and prepare for the next block',
+  'Strong work, keep it up',
+];
+const CHEERS_WARMUP=[
+  'Warming up the engine',
+  'Get the blood flowing',
+  'Long smooth strokes',
+  'Find your rhythm',
+  'Gradually build the pace',
+  'Loosen up, prepare to work',
+];
+const CHEERS_COOLDOWN=[
+  'Great session, bring it down slowly',
+  'You did it, easy strokes now',
+  'Let the heart rate settle',
+  'Proud of you for showing up',
+  'Another session in the bank',
+  'Cool down, you have earned it',
+];
+const CHEERS_MAP={low:CHEERS_LOW,moderate:CHEERS_MOD,high:CHEERS_HIGH,
+  rest:CHEERS_REST,warmup:CHEERS_WARMUP,cooldown:CHEERS_COOLDOWN,countdown:[]};
+
+let lastCheerIdx=-1;
+function pickCheer(type){
+  const pool=CHEERS_MAP[type]||[];
+  if(!pool.length) return '';
+  let idx;
+  do{idx=Math.floor(Math.random()*pool.length)}while(idx===lastCheerIdx&&pool.length>1);
+  lastCheerIdx=idx;
+  return pool[idx];
+}
+
+/* ========== HELPERS ========== */
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+const STORAGE_KEY='rowing-102030-schedule';
+const DAY_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTH_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function loadData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||null}catch(e){return null}}
+function saveData(d){localStorage.setItem(STORAGE_KEY,JSON.stringify(d))}
+function clearData(){localStorage.removeItem(STORAGE_KEY)}
+
+function dateStr(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function parseDate(s){const p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+function addDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r}
+function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
+function fmtDate(d){return d.getDate()+' '+MONTH_SHORT[d.getMonth()]}
+function fmtTime(sec){const m=Math.floor(sec/60),s=sec%60;return m+':'+String(s).padStart(2,'0')}
+
+/* ========== SCHEDULE DEFINITION ========== */
+function buildSchedule(startTue){
+  const sessions=[];
+  for(let w=0;w<7;w++){
+    const weekTue=addDays(startTue,w*7);
+    const blocks=w<4?3:4;
+    [{key:w+1+'-tue',off:0,day:'Tue'},{key:w+1+'-thu',off:2,day:'Thu'},{key:w+1+'-sat',off:4,day:'Sat'}]
+      .forEach(s=>{
+        const d=addDays(weekTue,s.off);
+        sessions.push({key:s.key,date:d,day:s.day,week:w+1,blocks});
+      });
+  }
+  return sessions;
+}
+
+/* ========== SCREENS ========== */
+function showScreen(id){
+  $$('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+  document.body.className='';
+}
+
+/* ========== ONBOARDING ========== */
+function initOnboarding(){
+  const today=new Date();
+  let next=new Date(today);
+  const dow=next.getDay();
+  const daysUntilTue=(2-dow+7)%7||7;
+  if(dow===2) next=today; else next=addDays(today,daysUntilTue);
+  $('#dateInput').value=dateStr(next);
+
+  $('#onboardBtn').addEventListener('click',()=>{
+    const v=$('#dateInput').value;
+    if(!v)return;
+    const d=parseDate(v);
+    if(d.getDay()!==2){
+      const off=(d.getDay()-2+7)%7;
+      d.setDate(d.getDate()-off);
+      $('#dateInput').value=dateStr(d);
+    }
+    saveData({startDate:dateStr(d),completed:{}});
+    renderSchedule();
+    showScreen('#schedule');
+  });
+}
+
+/* ========== SCHEDULE RENDERING ========== */
+let currentSessionKey=null;
+
+function renderSchedule(){
+  const data=loadData();
+  if(!data){showScreen('#onboarding');return}
+
+  const startTue=parseDate(data.startDate);
+  const sessions=buildSchedule(startTue);
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  const completed=data.completed||{};
+
+  const doneCount=Object.keys(completed).length;
+  $('#progLabel').textContent=doneCount+' / 21 sessions';
+  $('#progPct').textContent=Math.round(doneCount/21*100)+'%';
+  $('#progFill').style.width=(doneCount/21*100)+'%';
+
+  const todaySession=sessions.find(s=>sameDay(s.date,today));
+  const bannerEl=$('#todayBanner');
+  if(todaySession&&!completed[todaySession.key]){
+    bannerEl.innerHTML=`
+      <div class="sched-today-banner">
+        <div class="day-label">TODAY &middot; ${todaySession.day}</div>
+        <div class="day-title">Week ${todaySession.week} &middot; ${todaySession.blocks} Blocks</div>
+        <button class="btn btn-primary" id="todayStartBtn">START TODAY'S SESSION</button>
+      </div>`;
+    $('#todayStartBtn').addEventListener('click',()=>launchScheduledSession(todaySession));
+  } else if(todaySession&&completed[todaySession.key]){
+    bannerEl.innerHTML=`
+      <div class="sched-rest-banner">
+        <p style="font-weight:700;color:var(--green);margin-bottom:4px">Today's session is done!</p>
+        <p>Next session: ${getNextSession(sessions,today,completed)}</p>
+      </div>`;
+  } else {
+    const dayName=DAY_NAMES[today.getDay()];
+    bannerEl.innerHTML=`
+      <div class="sched-rest-banner">
+        <p style="font-weight:700;margin-bottom:4px">Rest Day (${dayName})</p>
+        <p>Next session: ${getNextSession(sessions,today,completed)}</p>
+      </div>`;
+  }
+
+  let html='';
+  for(let w=1;w<=7;w++){
+    const weekSessions=sessions.filter(s=>s.week===w);
+    const blocks=weekSessions[0].blocks;
+    html+=`<div class="week-group">
+      <div class="week-label"><span>Week ${w}</span><span class="blocks-tag">${blocks} blocks</span></div>
+      <div class="week-sessions">`;
+    weekSessions.forEach(s=>{
+      const isDone=!!completed[s.key];
+      const isToday=sameDay(s.date,today);
+      const isFuture=s.date>today;
+      const isPast=s.date<today;
+      let cls='session-card';
+      if(isDone) cls+=' completed';
+      if(isToday) cls+=' today';
+      else if(isFuture) cls+=' future';
+      else if(isPast&&!isDone) cls+=' past';
+      html+=`<div class="${cls}" data-key="${s.key}" data-blocks="${s.blocks}">
+        <div class="s-check" data-toggle="${s.key}">${isDone?'&#10003;':''}</div>
+        <div class="s-day">${s.day}</div>
+        <div class="s-date">${fmtDate(s.date)}</div>
+        <div class="s-blocks">${s.blocks} blocks</div>
+      </div>`;
+    });
+    html+=`</div></div>`;
+  }
+  $('#weekGrid').innerHTML=html;
+
+  $$('.session-card').forEach(card=>{
+    card.addEventListener('click',e=>{
+      if(e.target.closest('[data-toggle]')){
+        e.stopPropagation();
+        toggleCompletion(e.target.closest('[data-toggle]').dataset.toggle);
+        return;
+      }
+      const sess=sessions.find(s=>s.key===card.dataset.key);
+      if(sess) launchScheduledSession(sess);
+    });
+  });
+}
+
+function getNextSession(sessions,today,completed){
+  const upcoming=sessions.filter(s=>s.date>today&&!completed[s.key]);
+  if(!upcoming.length) return 'Program complete!';
+  const n=upcoming[0];
+  return n.day+' '+fmtDate(n.date)+' (Week '+n.week+')';
+}
+
+function toggleCompletion(key){
+  const data=loadData();
+  if(!data) return;
+  if(data.completed[key]) delete data.completed[key];
+  else data.completed[key]=new Date().toISOString();
+  saveData(data);
+  renderSchedule();
+}
+
+function launchScheduledSession(sess){
+  currentSessionKey=sess.key;
+  timerConfig.blocks=sess.blocks;
+  timerConfig.restSec=120;
+  timerConfig.warmup=true;
+  timerConfig.cooldown=true;
+  timerConfig.isFree=false;
+  startTimer();
+}
+
+/* ========== FREE SESSION ========== */
+let freeConfig={blocks:3,restSec:120,warmup:true,cooldown:true};
+
+function initFreeSetup(){
+  function setupSel(id,key){
+    $$(`#${id} button`).forEach(b=>{
+      b.addEventListener('click',()=>{
+        $$(`#${id} button`).forEach(x=>x.classList.remove('selected'));
+        b.classList.add('selected');
+        freeConfig[key]=parseInt(b.dataset.val);
+      });
+    });
+  }
+  setupSel('blockBtns','blocks');
+  setupSel('restBtns','restSec');
+
+  function setupTog(id,key){
+    const btn=$('#'+id);
+    btn.addEventListener('click',()=>{
+      freeConfig[key]=!freeConfig[key];
+      btn.classList.toggle('on',freeConfig[key]);
+    });
+  }
+  setupTog('warmupToggle','warmup');
+  setupTog('cooldownToggle','cooldown');
+
+  $('#freeStartBtn').addEventListener('click',()=>{
+    currentSessionKey=null;
+    timerConfig.blocks=freeConfig.blocks;
+    timerConfig.restSec=freeConfig.restSec;
+    timerConfig.warmup=freeConfig.warmup;
+    timerConfig.cooldown=freeConfig.cooldown;
+    timerConfig.isFree=true;
+    startTimer();
+  });
+  $('#freeBackBtn').addEventListener('click',()=>{showScreen('#schedule');renderSchedule()});
+}
+
+/* ========== TIMER ========== */
+let timerConfig={blocks:3,restSec:120,warmup:true,cooldown:true,isFree:false};
+let sequence=[],stepIdx=0,remaining=0,timerInterval=null,paused=false,startTime=null,totalSec=0;
+let cheerTimer=null;
+
+function buildSequence(){
+  const c=timerConfig,seq=[];
+  if(c.warmup) seq.push({type:'warmup',name:'WARM-UP',dur:240,inst:'Easy rowing \u2022 Build gradually',blk:0,cyc:0});
+  seq.push({type:'countdown',name:'GET READY',dur:10,inst:'Block 1 starting...',blk:1,cyc:0});
+  for(let b=1;b<=c.blocks;b++){
+    for(let cy=1;cy<=5;cy++){
+      seq.push({type:'low',name:'LOW',dur:30,inst:'Easy paddle \u2022 Recover',blk:b,cyc:cy});
+      seq.push({type:'moderate',name:'MODERATE',dur:20,inst:'Steady pace \u2022 Full strokes',blk:b,cyc:cy});
+      seq.push({type:'high',name:'SPRINT',dur:10,inst:'ALL OUT! Max power!',blk:b,cyc:cy});
+    }
+    if(b<c.blocks){
+      seq.push({type:'rest',name:'REST',dur:c.restSec,inst:'Light paddle or stop \u2022 Breathe',blk:b,cyc:0});
+      seq.push({type:'countdown',name:'GET READY',dur:10,inst:'Block '+(b+1)+' starting...',blk:b+1,cyc:0});
+    }
+  }
+  if(c.cooldown) seq.push({type:'cooldown',name:'COOL-DOWN',dur:300,inst:'Easy rowing \u2022 Bring HR down',blk:0,cyc:0});
+  return seq;
+}
+
+function elapsedBefore(idx){let s=0;for(let i=0;i<idx;i++)s+=sequence[i].dur;return s}
+
+function showCheer(type){
+  const msg=pickCheer(type);
+  const el=$('#encouragement');
+  el.style.opacity='0';
+  setTimeout(()=>{el.textContent=msg;el.style.opacity='1'},150);
+}
+
+function scheduleCheer(type,dur){
+  clearTimeout(cheerTimer);
+  // Show immediately on phase change
+  showCheer(type);
+  // For longer phases, show another cheer partway through
+  if(dur>15){
+    cheerTimer=setTimeout(()=>showCheer(type),(dur>60?20:10)*1000);
+  }
+}
+
+function updateTimerUI(){
+  const s=sequence[stepIdx];
+  const ph='phase-'+(s.type==='countdown'?'rest':s.type==='cooldown'?'warmup':s.type);
+  document.body.className=ph;
+  $('#phaseLabel').textContent=s.type==='countdown'?'NEXT':s.blk?'BLOCK '+s.blk:'SESSION';
+  $('#phaseName').textContent=s.name;
+  $('#phaseName').classList.remove('pulse');void $('#phaseName').offsetWidth;$('#phaseName').classList.add('pulse');
+  $('#hrZone').textContent=hrText(s.type);
+  $('#instruction').textContent=s.inst;
+  scheduleCheer(s.type,s.dur);
+  updateCountdown();
+  updateTimerProgress();
+}
+
+function updateCountdown(){
+  if(remaining>=60) $('#countdown').textContent=Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0');
+  else $('#countdown').textContent=remaining;
+}
+
+function updateTimerProgress(){
+  const s=sequence[stepIdx];
+  const el=elapsedBefore(stepIdx)+(s.dur-remaining);
+  const pct=(el/totalSec)*100;
+  $('#timerProgressFill').style.width=pct+'%';
+  let t='';
+  if(s.blk&&s.cyc) t='Block '+s.blk+' / '+timerConfig.blocks+' \u00B7 Cycle '+s.cyc+' / 5';
+  else if(s.blk) t='Block '+s.blk+' / '+timerConfig.blocks;
+  else t=s.name;
+  t+=' \u00B7 '+fmtTime(Math.round(el))+' / '+fmtTime(totalSec);
+  $('#timerProgressText').textContent=t;
+}
+
+function tick(){
+  if(paused)return;
+  remaining--;
+  if(remaining<=3&&remaining>0) soundTick();
+  if(remaining<=0){advance();return}
+  updateCountdown();updateTimerProgress();
+}
+
+function advance(){
+  stepIdx++;
+  if(stepIdx>=sequence.length){finish();return}
+  const s=sequence[stepIdx];
+  remaining=s.dur;
+  if(s.type==='high') soundSprint();
+  else if(s.type==='rest') soundBlockEnd();
+  else if(s.type==='low'||s.type==='moderate') soundPhase();
+  updateTimerUI();
+}
+
+function skipPhase(){
+  if(stepIdx>=sequence.length-1){finish();return}
+  remaining=0;
+  advance();
+}
+
+function startTimer(){
+  ensureAudio();
+  sequence=buildSequence();
+  stepIdx=0;remaining=sequence[0].dur;
+  totalSec=sequence.reduce((a,x)=>a+x.dur,0);
+  paused=false;startTime=Date.now();
+  $('#pauseBtn').textContent='PAUSE';
+  $('#encouragement').textContent='';
+  showScreen('#timer');
+  updateTimerUI();
+  timerInterval=setInterval(tick,1000);
+  requestWakeLock();
+}
+
+function stopTimer(){
+  clearInterval(timerInterval);timerInterval=null;
+  clearTimeout(cheerTimer);
+  if(timerConfig.isFree){showScreen('#freeSetup')}
+  else{showScreen('#schedule');renderSchedule()}
+}
+
+function finish(){
+  clearInterval(timerInterval);timerInterval=null;
+  clearTimeout(cheerTimer);
+  soundDone();
+  const elapsed=Math.round((Date.now()-startTime)/1000);
+  const sprintSec=timerConfig.blocks*5*10;
+
+  if(currentSessionKey){
+    const data=loadData();
+    if(data){
+      data.completed[currentSessionKey]=new Date().toISOString();
+      saveData(data);
+    }
+  }
+
+  document.body.className='phase-done';
+  $('#doneSubtext').textContent=currentSessionKey
+    ? 'Session marked complete!'
+    : 'Free session finished.';
+
+  let h='';
+  h+=sRow('Total time',fmtTime(elapsed));
+  h+=sRow('Blocks',timerConfig.blocks);
+  h+=sRow('Total cycles',timerConfig.blocks*5);
+  h+=sRow('Sprint time',fmtTime(sprintSec));
+  h+=sRow('Sprints',timerConfig.blocks*5);
+  $('#summaryBox').innerHTML=h;
+  showScreen('#done');
+}
+
+function sRow(l,v){return '<div class="summary-row"><span class="label">'+l+'</span><span class="value">'+v+'</span></div>'}
+
+/* ========== WAKE LOCK ========== */
+async function requestWakeLock(){
+  try{if('wakeLock' in navigator) await navigator.wakeLock.request('screen')}catch(e){}
+}
+
+/* ========== HELP ========== */
+$('#helpBtn').addEventListener('click',()=>$('#helpOverlay').classList.add('active'));
+$('#helpClose').addEventListener('click',()=>$('#helpOverlay').classList.remove('active'));
+$('#helpOverlay').addEventListener('click',e=>{if(e.target===$('#helpOverlay'))$('#helpOverlay').classList.remove('active')});
+
+/* ========== EVENT WIRING ========== */
+$('#freeBtn').addEventListener('click',()=>showScreen('#freeSetup'));
+$('#pauseBtn').addEventListener('click',()=>{paused=!paused;$('#pauseBtn').textContent=paused?'RESUME':'PAUSE'});
+$('#skipBtn').addEventListener('click',skipPhase);
+$('#stopBtn').addEventListener('click',stopTimer);
+$('#doneBackBtn').addEventListener('click',()=>{showScreen('#schedule');renderSchedule()});
+$('#resetBtn').addEventListener('click',()=>{
+  if(confirm('Reset the entire 7-week program? All progress will be lost.')){
+    clearData();showScreen('#onboarding');
+  }
+});
+
+/* ========== INIT ========== */
+initOnboarding();
+initFreeSetup();
+const saved=loadData();
+if(saved){renderSchedule();showScreen('#schedule')}
+else{showScreen('#onboarding')}
+})();
+</script>
+</body>
+</html>
