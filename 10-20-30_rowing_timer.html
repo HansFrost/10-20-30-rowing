@@ -231,7 +231,12 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
   </div>
   <div id="todayBanner"></div>
   <div id="weekGrid"></div>
-  <div style="margin-top:20px;text-align:center">
+  <div style="margin-top:20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px">
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary btn-small" id="exportBtn" style="font-size:.75rem">Export Progress</button>
+      <button class="btn btn-secondary btn-small" id="importBtn" style="font-size:.75rem">Import Progress</button>
+    </div>
+    <input type="file" id="importFile" accept=".json" style="display:none">
     <button class="btn btn-secondary btn-small" id="resetBtn" style="opacity:.5;font-size:.75rem">Reset Program</button>
   </div>
 </div>
@@ -750,6 +755,24 @@ $('#doneBackBtn').addEventListener('click',()=>{showScreen('#schedule');renderSc
 $('#changProgBtn').addEventListener('click',()=>{
   if(confirm('Switch to a different program? Current progress will be cleared.')){clearData();showScreen('#onboarding');
     $('#stepDate').classList.remove('active');$('#stepProgram').classList.add('active')}});
+$('#exportBtn').addEventListener('click',()=>{
+  const data=loadData();if(!data){alert('No progress to export.');return}
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='rowing-102030-progress.json';a.click();URL.revokeObjectURL(a.href)});
+$('#importBtn').addEventListener('click',()=>$('#importFile').click());
+$('#importFile').addEventListener('change',e=>{
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!data.startDate||!data.program||!PROGRAMS[data.program]){alert('Invalid progress file.');return}
+      if(!confirm('Import this progress? It will replace your current data.'))return;
+      saveData(data);renderSchedule();showScreen('#schedule');
+    }catch(err){alert('Could not read file. Make sure it is a valid progress export.')}
+  };
+  reader.readAsText(file);e.target.value=''});
 $('#resetBtn').addEventListener('click',()=>{
   if(confirm('Reset the entire program? All progress will be lost.')){clearData();showScreen('#onboarding');
     $('#stepDate').classList.remove('active');$('#stepProgram').classList.add('active')}});
