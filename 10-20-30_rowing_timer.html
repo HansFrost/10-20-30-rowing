@@ -221,6 +221,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
     </div>
     <div class="sched-header-btns">
       <button class="btn btn-secondary btn-small" id="helpBtn">?</button>
+      <button class="btn btn-secondary btn-small" id="changProgBtn">Change Program</button>
       <button class="btn btn-secondary btn-small" id="freeBtn">Free Session</button>
     </div>
   </div>
@@ -746,6 +747,9 @@ $('#pauseBtn').addEventListener('click',()=>{paused=!paused;$('#pauseBtn').textC
 $('#skipBtn').addEventListener('click',skipPhase);
 $('#stopBtn').addEventListener('click',stopTimer);
 $('#doneBackBtn').addEventListener('click',()=>{showScreen('#schedule');renderSchedule()});
+$('#changProgBtn').addEventListener('click',()=>{
+  if(confirm('Switch to a different program? Current progress will be cleared.')){clearData();showScreen('#onboarding');
+    $('#stepDate').classList.remove('active');$('#stepProgram').classList.add('active')}});
 $('#resetBtn').addEventListener('click',()=>{
   if(confirm('Reset the entire program? All progress will be lost.')){clearData();showScreen('#onboarding');
     $('#stepDate').classList.remove('active');$('#stepProgram').classList.add('active')}});
