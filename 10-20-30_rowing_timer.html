@@ -19,7 +19,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-seri
   transition:background .3s}
 body.phase-warmup{background:var(--bg-warmup)}body.phase-low{background:var(--bg-low)}
 body.phase-moderate{background:var(--bg-moderate)}body.phase-high{background:var(--bg-high)}
-body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
+body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}body.phase-done{background:var(--bg)}
 
 .screen{display:none;flex:1;flex-direction:column;padding:20px 16px;max-width:480px;
   width:100%;margin:0 auto}
@@ -228,7 +228,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
       </div>
       <div class="program-card selected" data-prog="intermediate">
         <div class="pc-head"><span class="pc-name">Intermediate</span><span class="pc-tag">7 weeks</span></div>
-        <div class="pc-desc">3 blocks for weeks 1-4, then 4 blocks. 2-min rest.</div>
+        <div class="pc-desc">3 blocks building to 4 blocks. 2-min rest.</div>
       </div>
       <div class="program-card" data-prog="advanced">
         <div class="pc-head"><span class="pc-name">Advanced</span><span class="pc-tag">8 weeks</span></div>
@@ -241,7 +241,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
   <!-- Step 2: Days -->
   <div class="onboard-step" id="stepDays">
     <p id="numDaysLabel" style="font-size:.85rem;color:var(--muted)">Sessions per week:</p>
-    <div class="btn-row" id="numDaysBtns" style="max-width:340px">
+    <div class="btn-row" id="numDaysBtns" style="width:100%;max-width:340px">
       <button data-val="2">2</button><button data-val="3" class="selected">3</button><button data-val="4">4</button><button data-val="5">5</button>
     </div>
     <p id="daysPrompt">Choose your training days:</p>
@@ -456,6 +456,7 @@ function calcZones(mhr){
     moderate:{lo:Math.round(mhr*.75),hi:Math.round(mhr*.85),label:'75\u201385%'},
     high:{lo:Math.round(mhr*.90),hi:mhr,label:'90\u2013100%'},
     rest:{lo:0,hi:Math.round(mhr*.70),label:'< 70%'},
+    steady:{lo:Math.round(mhr*.65),hi:Math.round(mhr*.80),label:'65\u201380%'},
     cooldown:{lo:Math.round(mhr*.50),hi:Math.round(mhr*.65),label:'50\u201365%'},
     countdown:{lo:0,hi:0,label:''}
   };
@@ -481,20 +482,94 @@ function renderHrTable(mhr){
 
 /* ===== ENCOURAGEMENT ===== */
 const CH={
-  low:['Breathe deep, reset your focus','Nice and easy, let the legs recover','Good rhythm, stay relaxed',
+  low:[
+    'Breathe deep, reset your focus','Nice and easy, let the legs recover','Good rhythm, stay relaxed',
     'Shake it out, you earned this rest','Controlled breathing, controlled power','Easy strokes, conserve energy',
-    'Relax the grip, loosen the shoulders','Feel the recovery, sprint is coming'],
-  moderate:['Building momentum now','Smooth and steady, great form','Feel the power building',
+    'Relax the grip, loosen the shoulders','Feel the recovery, sprint is coming',
+    'This is your vacation \u2013 enjoy it','Gentle paddle, gentle thoughts','Recharge those legs',
+    'Float it out, nice and light','Active recovery is still recovery','Lower that heart rate',
+    'Save the energy, you will need it','Slow it down, you are doing great','Arms only if you want',
+    'Think happy thoughts, sprint soon','Catch your breath, you beast','Your muscles say thank you',
+    'Recovery is where the magic happens','Lighter than a feather on the water','Just vibing right now',
+    'Cruise control engaged','Even machines need to idle sometimes','Light strokes, heavy results later',
+    'The calm before the storm','Channel your inner sloth (briefly)','Pretend you are rowing through honey',
+    'Easy does it, champ','Let gravity do the work','This is the dessert of the workout'
+  ],
+  moderate:[
+    'Building momentum now','Smooth and steady, great form','Feel the power building',
     'Strong strokes, keep it flowing','This is your rhythm, own it','Drive with the legs, connect the chain',
-    'Getting stronger every session','Solid pace, sprint is next'],
-  high:['SEND IT!','Everything you have!','Legs, back, arms \u2013 EXPLODE!','Maximum power!','Push through!',
-    'This is why you came!','Full send, no holding back!','GO GO GO!','Drive those legs!','Peak power NOW!'],
-  rest:['Great block, take a breather','Well done, hydrate if you need to','You crushed that one',
-    'Let your heart rate come down','Reset and prepare for the next block','Strong work, keep it up'],
-  warmup:['Warming up the engine','Get the blood flowing','Long smooth strokes',
-    'Find your rhythm','Gradually build the pace','Loosen up, prepare to work'],
-  cooldown:['Great session, bring it down slowly','You did it, easy strokes now','Let the heart rate settle',
-    'Proud of you for showing up','Another session in the bank','Cool down, you have earned it'],
+    'Getting stronger every session','Solid pace, sprint is next',
+    'You make this look easy','That form though \u2013 chef kiss','Lock in the chain sequence',
+    'Like a well-oiled machine','Feel that flywheel spin','Connected and powerful',
+    'Your 5K pace called \u2013 it is jealous','Smooth is fast, fast is smooth',
+    'Right in the groove','Tempo game is strong','Every stroke is an investment',
+    'The engine is humming','This is your bread and butter','Control the slide, own the drive',
+    'Textbook rowing right here','Building the foundation of fitness','You are rowing, not fighting the erg',
+    'This pace could win elections \u2013 very steady','Efficient power transfer',
+    'Keep that drag factor honest','Legs-back-arms like a pro','Rhythm and power in harmony',
+    'Moderate effort, maximum gains','Your coach would be proud'
+  ],
+  high:[
+    'SEND IT!','Everything you have!','Legs, back, arms \u2013 EXPLODE!','Maximum power!','Push through!',
+    'This is why you came!','Full send, no holding back!','GO GO GO!','Drive those legs!','Peak power NOW!',
+    'BE THE ERG!','Leave nothing in the tank!','Your erg fears you!','POWER POWER POWER!',
+    'Sprint like WiFi just came back!','Ten seconds of FURY!','Give it EVERYTHING!',
+    'You are UNSTOPPABLE!','Like your life depends on it!','Channel your inner viking!',
+    'ATTACK the handle!','Maximum wattage!','The monitor cannot handle you!',
+    'Unleash the KRAKEN!','This is your moment!','Sprint first, breathe later!',
+    'Row like you stole the boat!','TURBO MODE ACTIVATED!','Every watt counts!',
+    'The erg owes you rent!','You are a rowing MACHINE!','Light up that screen!',
+    'Absolute CARNAGE on that handle!','Row angry (but with good form)!','BEAST MODE!',
+    'You vs. the erg \u2013 you WIN!','Ten seconds of pure chaos!','Make the flywheel SCREAM!',
+    'Row like pizza is at the finish!'
+  ],
+  rest:[
+    'Great block, take a breather','Well done, hydrate if you need to','You crushed that one',
+    'Let your heart rate come down','Reset and prepare for the next block','Strong work, keep it up',
+    'Shake it out, walk it off if you need','That block is DONE, well played','Sip some water, champion',
+    'Stretch those forearms','Your lungs will forgive you eventually','Another block conquered',
+    'Rest is part of the training','Deep belly breaths','You are tougher than you think',
+    'Roll those shoulders back','Stand up and shake it out','That was impressive, not gonna lie',
+    'Recovery drink? Fancy. Water? Also great.','Mentally prepare for the next one',
+    'You are earning every bit of this rest','One down, glory ahead','Enjoy this \u2013 you earned it',
+    'Plot your revenge on the next block'
+  ],
+  warmup:[
+    'Warming up the engine','Get the blood flowing','Long smooth strokes','Find your rhythm',
+    'Gradually build the pace','Loosen up, prepare to work',
+    'Wake up those muscles','Easy strokes to start','Hello erg, my old friend',
+    'Let the body remember what rowing is','No rush, just smooth movements',
+    'Get those joints moving','Incremental power, no heroics yet',
+    'First strokes are always the hardest','The erg missed you, probably',
+    'Start slow to finish strong','Oil the machine (you are the machine)',
+    'Engage the core, relax the mind','Your warm-up is someone else\u2019s workout',
+    'Building heat, building focus'
+  ],
+  cooldown:[
+    'Great session, bring it down slowly','You did it, easy strokes now','Let the heart rate settle',
+    'Proud of you for showing up','Another session in the bank','Cool down, you have earned it',
+    'You showed up and delivered','Champion\u2019s cool-down','Smooth it out, wind it down',
+    'Your future self thanks you','Post-workout glow activated','That was a proper session',
+    'The hard part is over','Easy paddle to the finish','You are officially a better rower now',
+    'High-five yourself (mentally)','Recovery starts now','Enjoy the endorphins',
+    'The erg respects you now','One more session closer to your goals',
+    'Ice bath optional, pride mandatory','Float it home, hero'
+  ],
+  steady:[
+    'Find your rhythm, hold it steady','Long smooth strokes','Focus on consistent split time',
+    'Breathe evenly, stay relaxed','Building aerobic base','Good steady effort',
+    'Every stroke counts','Keep the pace, keep the form','Settle in, enjoy the row',
+    'Sustainable power, smooth chain','This is where endurance is built','Zen and the art of rowing',
+    'Consistent is the new fast','Metronomic precision','Steady wins the race',
+    'Your cardiovascular system says thanks','The engine room is purring',
+    'This is productive suffering at its finest','Marathon pace, marathon mindset',
+    'Think of this as a moving meditation','You could do this all day (almost)',
+    'Smooth water, smooth strokes','Building the aerobic monster within',
+    'Same split, same effort, same legend','The tortoise always wins',
+    'Embrace the monotony, it is working','Row like a clock \u2013 tick, tick, tick',
+    'Volume is the secret sauce','Your VO2max is quietly improving',
+    'Just you, the erg, and consistency'
+  ],
   countdown:[]
 };
 let lastCI=-1;
@@ -509,21 +584,21 @@ const PROGRAMS={
     name:'Beginner',weeks:8,restSec:180,
     defaultNumDays:3,minDays:2,maxDays:5,
     defaultDays:['tue','thu','sat'],
-    weekBlocks:[2,2,3,3,3,3,4,4],
+    weekRange:[[2],[2],[2,3,.67],[3],[3],[3],[3,4,.3],[3,4,.8]],
     desc:'Blocks ramp from 2 to 4. 3-min rest.'
   },
   intermediate:{
     name:'Intermediate',weeks:7,restSec:120,
     defaultNumDays:3,minDays:2,maxDays:5,
     defaultDays:['tue','thu','sat'],
-    weekBlocks:[3,3,3,3,4,4,4],
-    desc:'3 blocks weeks 1\u20134, then 4. 2-min rest.'
+    weekRange:[[3],[3],[3],[3,4,.3],[3,4,.8],[4],[4]],
+    desc:'3 blocks building to 4. 2-min rest.'
   },
   advanced:{
     name:'Advanced',weeks:8,restSec:120,
     defaultNumDays:3,minDays:2,maxDays:5,
     defaultDays:['tue','thu','sat'],defaultSteady:'wed',
-    weekBlocks:[3,3,3,3,4,4,4,4],
+    weekRange:[[3],[3],[3],[3,4,.3],[3,4,.8],[4],[4],[4]],
     steadyMinutes:[30,30,35,35,35,40,40,40],
     desc:'Interval + 1 steady-state/week. Blocks 3\u20134. 2-min rest.'
   }
@@ -569,21 +644,38 @@ function closeConfirm(result){
 }
 
 /* ===== BUILD SCHEDULE ===== */
+/* Distribute peak blocks evenly across n sessions */
+function distributeBlocks(base,peak,n,ratio){
+  if(!peak||peak===base||!ratio||n<=0)return Array(Math.max(0,n)).fill(base);
+  const numPeak=Math.min(n,Math.max(0,Math.round(n*ratio)));
+  if(numPeak<=0)return Array(n).fill(base);
+  if(numPeak>=n)return Array(n).fill(peak);
+  const arr=Array(n).fill(base);
+  for(let i=0;i<numPeak;i++){
+    /* Spread peaks evenly from end to start */
+    const pos=numPeak===1?n-1:Math.round((n-1)*(1-i/(numPeak-1)));
+    arr[pos]=peak;
+  }
+  return arr;
+}
+
 function buildSchedule(startMon,progKey,days,steadyDay,swaps){
   const prog=PROGRAMS[progKey];
   const sessions=[];
+  const n=days.length;
   for(let w=0;w<prog.weeks;w++){
     const weekMon=addDays(startMon,w*7);
-    const blocks=prog.weekBlocks[w];
+    const wr=prog.weekRange[w];
+    const wBlocks=distributeBlocks(wr[0],wr[1],n,wr[2]);
     const weekSessions=[];
     /* Interval sessions — one per chosen day */
-    days.forEach(day=>{
+    days.forEach((day,idx)=>{
       const key=(w+1)+'-'+day;
       const actualDay=(swaps&&swaps[key])||day;
       const date=addDays(weekMon,DAY_OFFSET[actualDay]);
       weekSessions.push({
         key,date,day:DAY_LABELS[actualDay],week:w+1,
-        blocks,type:'interval',minutes:0,
+        blocks:wBlocks[idx],type:'interval',minutes:0,
         defaultDay:day,actualDay,swapped:actualDay!==day
       });
     });
@@ -843,7 +935,8 @@ function renderSchedule(){
     bannerEl.innerHTML='<div class="sched-today-banner">'+
       '<div class="day-label">TODAY &middot; '+todaySteady.day+'</div>'+
       '<div class="day-title">Steady-State '+todaySteady.minutes+' min</div>'+
-      '<p style="color:var(--muted);font-size:.85rem;margin-top:8px">Row at a steady comfortable pace. Check off when done.</p></div>';
+      '<button class="btn btn-primary" id="todaySteadyBtn">START STEADY SESSION</button></div>';
+    $('#todaySteadyBtn').addEventListener('click',()=>launchSteadySession(todaySteady));
   } else if(todayAllDone){
     bannerEl.innerHTML='<div class="sched-rest-banner">'+
       '<p style="font-weight:700;color:var(--green);margin-bottom:4px">Today\'s session is done!</p>'+
@@ -858,8 +951,9 @@ function renderSchedule(){
   let html='';
   for(let w=1;w<=prog.weeks;w++){
     const ws=sessions.filter(s=>s.week===w);
-    const intervalBlocks=ws.find(s=>s.type==='interval');
-    const tag=intervalBlocks?intervalBlocks.blocks+' blocks':'';
+    const ibs=ws.filter(s=>s.type==='interval').map(s=>s.blocks);
+    const lo=Math.min(...ibs),hi=Math.max(...ibs);
+    const tag=ibs.length?lo===hi?lo+' blocks':lo+'\u2013'+hi+' blocks':'';
     html+='<div class="week-group"><div class="week-label"><span>Week '+w+'</span>'+
       '<span class="blocks-tag">'+tag+'</span></div><div class="week-sessions">';
     ws.forEach(s=>{
@@ -902,6 +996,7 @@ function renderSchedule(){
       }
       const s=sessions.find(x=>x.key===card.dataset.key);
       if(s&&s.type==='interval') launchSession(s,prog);
+      else if(s&&s.type==='steady') launchSteadySession(s);
     });
   });
 }
@@ -925,6 +1020,13 @@ function launchSession(sess,prog){
   currentSessionKey=sess.key;
   timerConfig.blocks=sess.blocks;
   timerConfig.restSec=prog.restSec;
+  timerConfig.warmup=true;timerConfig.cooldown=true;timerConfig.isFree=false;timerConfig.steady=false;
+  startTimer();
+}
+
+function launchSteadySession(sess){
+  currentSessionKey=sess.key;
+  timerConfig.steady=true;timerConfig.steadyMinutes=sess.minutes;
   timerConfig.warmup=true;timerConfig.cooldown=true;timerConfig.isFree=false;
   startTimer();
 }
@@ -982,16 +1084,22 @@ function initFreeSetup(){
     freeConfig[key]=!freeConfig[key];$('#'+id).classList.toggle('on',freeConfig[key])})}
   tog('warmupToggle','warmup');tog('cooldownToggle','cooldown');
   $('#freeStartBtn').addEventListener('click',()=>{
-    currentSessionKey=null;Object.assign(timerConfig,freeConfig);timerConfig.isFree=true;startTimer()});
+    currentSessionKey=null;Object.assign(timerConfig,freeConfig);timerConfig.isFree=true;timerConfig.steady=false;startTimer()});
   $('#freeBackBtn').addEventListener('click',()=>{showScreen('#schedule');renderSchedule()});
 }
 
 /* ===== TIMER ===== */
-let timerConfig={blocks:3,restSec:120,warmup:true,cooldown:true,isFree:false};
+let timerConfig={blocks:3,restSec:120,warmup:true,cooldown:true,isFree:false,steady:false,steadyMinutes:0};
 let sequence=[],stepIdx=0,remaining=0,timerInterval=null,paused=false,startTime=null,totalSec=0,cheerTimer=null;
 
 function buildSequence(){
   const c=timerConfig,seq=[];
+  if(c.steady){
+    if(c.warmup) seq.push({type:'warmup',name:'WARM-UP',dur:240,inst:'Easy rowing \u2022 Build gradually',blk:0,cyc:0});
+    seq.push({type:'steady',name:'STEADY STATE',dur:c.steadyMinutes*60,inst:'Comfortable pace \u2022 Full strokes',blk:0,cyc:0});
+    if(c.cooldown) seq.push({type:'cooldown',name:'COOL-DOWN',dur:300,inst:'Easy rowing \u2022 Bring HR down',blk:0,cyc:0});
+    return seq;
+  }
   if(c.warmup) seq.push({type:'warmup',name:'WARM-UP',dur:240,inst:'Easy rowing \u2022 Build gradually',blk:0,cyc:0});
   seq.push({type:'countdown',name:'GET READY',dur:10,inst:'Block 1 starting...',blk:1,cyc:0});
   for(let b=1;b<=c.blocks;b++){
@@ -1061,13 +1169,20 @@ function stopTimer(){clearInterval(timerInterval);timerInterval=null;clearTimeou
 
 function finish(){
   clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);soundDone();
-  const elapsed=Math.round((Date.now()-startTime)/1000),sprintSec=timerConfig.blocks*5*10;
+  const elapsed=Math.round((Date.now()-startTime)/1000);
   if(currentSessionKey){const d=loadData();if(d){d.completed[currentSessionKey]=new Date().toISOString();saveData(d)}}
   document.body.className='phase-done';
   $('#doneSubtext').textContent=currentSessionKey?'Session marked complete!':'Free session finished.';
-  let h='';h+=sRow('Total time',fmtTime(elapsed));h+=sRow('Blocks',timerConfig.blocks);
-  h+=sRow('Total cycles',timerConfig.blocks*5);h+=sRow('Sprint time',fmtTime(sprintSec));
-  h+=sRow('Sprints',timerConfig.blocks*5);$('#summaryBox').innerHTML=h;showScreen('#done');
+  let h='';h+=sRow('Total time',fmtTime(elapsed));
+  if(timerConfig.steady){
+    h+=sRow('Steady-state',timerConfig.steadyMinutes+' min');
+  } else {
+    const sprintSec=timerConfig.blocks*5*10;
+    h+=sRow('Blocks',timerConfig.blocks);
+    h+=sRow('Total cycles',timerConfig.blocks*5);h+=sRow('Sprint time',fmtTime(sprintSec));
+    h+=sRow('Sprints',timerConfig.blocks*5);
+  }
+  $('#summaryBox').innerHTML=h;showScreen('#done');
 }
 function sRow(l,v){return '<div class="summary-row"><span class="label">'+l+'</span><span class="value">'+v+'</span></div>'}
 
