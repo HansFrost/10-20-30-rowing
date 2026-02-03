@@ -96,6 +96,11 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
 .sched-today-banner .btn{width:100%}
 .sched-rest-banner{background:var(--card);border-radius:14px;padding:18px;text-align:center}
 .sched-rest-banner p{color:var(--muted);font-size:.9rem}
+.finish-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;text-align:center}
+.finish-stat{background:rgba(255,255,255,.04);border-radius:10px;padding:10px 8px}
+.finish-stat-num{font-size:1.3rem;font-weight:800;color:var(--fg);line-height:1.2}
+.finish-stat-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
+.finish-msg{font-size:.85rem;color:var(--fg);font-style:italic;line-height:1.5;margin:8px 0}
 .week-group{margin-top:4px}
 .week-label{font-size:.8rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);
   margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
@@ -1357,17 +1362,14 @@ function renderSchedule(){
   const doneCount=Object.keys(completed).length;
   const lastSession=sessions[sessions.length-1];
   const programOver=lastSession&&lastSession.date<today;
+  const pct=Math.round(doneCount/total*100);
   if(programOver){
     $('#progLabel').textContent='Program finished \u2014 '+doneCount+' / '+total+' sessions';
-    const pct=Math.round(doneCount/total*100);
-    $('#progPct').textContent=pct+'%';
-    $('#progFill').style.width=pct+'%';
   } else {
     $('#progLabel').textContent=doneCount+' / '+total+' sessions';
-    const pct=Math.round(doneCount/total*100);
-    $('#progPct').textContent=pct+'%';
-    $('#progFill').style.width=pct+'%';
   }
+  $('#progPct').textContent=pct+'%';
+  $('#progFill').style.width=pct+'%';
 
   /* Habit strip (streak + stage badge) */
   renderHabitStrip(data,sessions);
@@ -1420,13 +1422,38 @@ function renderSchedule(){
       '<button class="btn btn-primary" id="todaySteadyBtn">START STEADY SESSION</button></div>';
     $('#todaySteadyBtn').addEventListener('click',()=>launchSteadySession(todaySteady));
   } else if(programOver){
-    const pctDone=Math.round(doneCount/total*100);
+    /* Compute encouraging stats from actual data */
+    const doneSessions=sessions.filter(s=>!!completed[s.key]);
+    const totalBlocks=doneSessions.reduce((sum,s)=>sum+(s.type==='interval'?s.blocks:0),0);
+    const totalSprints=totalBlocks*5;
+    const totalCycles=totalBlocks*5;
+    const estMinutes=doneSessions.reduce((sum,s)=>{
+      if(s.type==='steady')return sum+s.minutes+4+5;
+      return sum+4+s.blocks*5+(s.blocks-1)*(prog.restSec/60)+5;
+    },0);
+    const estHours=Math.round(estMinutes/60*10)/10;
+    const weeksActive=new Set(doneSessions.map(s=>s.week)).size;
+    const si=calcStreak(data,sessions);
+
+    /* Pick encouraging message based on completion rate */
+    let finishMsg;
+    if(doneCount===total) finishMsg='Perfect completion. Every single session, done. That is extraordinary.';
+    else if(pct>=75) finishMsg='You completed more than three quarters of the program. That level of consistency changes your physiology.';
+    else if(pct>=50) finishMsg='You showed up for more than half the program. Most people never make it this far.';
+    else if(pct>=25) finishMsg='You built a real training habit over '+weeksActive+' weeks. That foundation carries forward.';
+    else finishMsg='You showed up '+doneCount+' times. Every session made you fitter than you were before.';
+
     bannerEl.innerHTML='<div class="sched-rest-banner">'+
-      '<p style="font-weight:700;color:var(--green);margin-bottom:4px">Program Finished!</p>'+
+      '<p style="font-weight:700;color:var(--green);margin-bottom:4px;font-size:1rem">Program Finished!</p>'+
       bTagHtml+
-      '<p>You completed '+doneCount+' of '+total+' sessions ('+pctDone+'%).</p>'+
-      (doneCount===total?'<p style="color:var(--green);font-weight:600">Perfect completion!</p>':
-        '<p style="font-size:.8rem;color:var(--muted)">Tap <strong>Change Program</strong> to start a new program.</p>')+
+      '<div class="finish-stats">'+
+        '<div class="finish-stat"><div class="finish-stat-num">'+doneCount+'</div><div class="finish-stat-label">Sessions</div></div>'+
+        '<div class="finish-stat"><div class="finish-stat-num">'+totalSprints+'</div><div class="finish-stat-label">Sprints</div></div>'+
+        '<div class="finish-stat"><div class="finish-stat-num">'+estHours+'h</div><div class="finish-stat-label">Training time</div></div>'+
+        '<div class="finish-stat"><div class="finish-stat-num">'+si.best+'</div><div class="finish-stat-label">Best streak</div></div>'+
+      '</div>'+
+      '<p class="finish-msg">'+finishMsg+'</p>'+
+      '<p style="font-size:.8rem;color:var(--muted)">Tap <strong>Change Program</strong> to start again.</p>'+
     '</div>';
   } else if(todayAllDone){
     bannerEl.innerHTML='<div class="sched-rest-banner">'+
