@@ -28,6 +28,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
   cursor:pointer;transition:transform .1s,opacity .15s;text-align:center}
 .btn:active{transform:scale(.97)}
 .btn-primary{background:#fff;color:var(--bg)}
+.btn-primary:disabled{opacity:.3;cursor:default;transform:none}
 .btn-secondary{background:rgba(255,255,255,.1);color:#fff;border:2px solid var(--border)}
 .btn-small{padding:10px 16px;font-size:.85rem;border-radius:10px}
 
@@ -52,6 +53,15 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
 #dateInput:focus{outline:none;border-color:var(--accent)}
 .onboard-step{display:none;flex-direction:column;align-items:center;gap:16px;width:100%}
 .onboard-step.active{display:flex}
+
+/* DAY PICKER */
+.day-picker{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.day-btn{width:46px;height:46px;border-radius:50%;border:2px solid var(--border);
+  background:transparent;color:var(--muted);font-size:.75rem;font-weight:700;
+  cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.day-btn.selected{border-color:var(--accent);background:rgba(79,140,255,.15);color:#fff}
+.day-btn.steady{border-color:var(--gold);background:rgba(234,179,8,.15);color:var(--gold)}
+.day-btn:active{transform:scale(.9)}
 
 /* SCHEDULE */
 #schedule{gap:16px;padding-bottom:100px}
@@ -89,6 +99,10 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
 .session-card .s-check{position:absolute;top:7px;right:7px;width:20px;height:20px;
   border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;
   justify-content:center;font-size:11px;transition:all .15s}
+.session-card .s-swap{position:absolute;bottom:4px;left:4px;font-size:11px;width:22px;height:22px;
+  display:flex;align-items:center;justify-content:center;border-radius:50%;
+  color:var(--muted);cursor:pointer;opacity:.4;transition:opacity .15s}
+.session-card .s-swap:active{opacity:1}
 .session-card.completed{border-color:var(--green-dim);background:rgba(34,197,94,.08)}
 .session-card.completed .s-check{background:var(--green);border-color:var(--green);color:#fff}
 .session-card.today{border-color:var(--accent);box-shadow:0 0 0 2px rgba(79,140,255,.25)}
@@ -96,6 +110,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
 .session-card.past:not(.completed){opacity:.4}
 .session-card.steady{border-style:dashed;opacity:.7}
 .session-card.steady .s-blocks{color:var(--gold)}
+.session-card.swapped{border-color:rgba(234,179,8,.35)}
 
 /* FREE SESSION */
 #freeSetup{align-items:center;justify-content:center;gap:20px;text-align:center}
@@ -166,15 +181,17 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
 .hr-table td{color:var(--muted)}
 .hr-table .zc{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
 
-/* CONFIRM MODAL */
-#confirmOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
+/* CONFIRM / SWAP MODALS */
+#confirmOverlay,#swapOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
   align-items:center;justify-content:center;padding:20px}
-#confirmOverlay.active{display:flex}
-#confirmBox{background:var(--card);border-radius:20px;padding:28px 24px;max-width:360px;
+#confirmOverlay.active,#swapOverlay.active{display:flex}
+#confirmBox,#swapBox{background:var(--card);border-radius:20px;padding:28px 24px;max-width:360px;
   width:100%;text-align:center}
 #confirmMsg{font-size:.95rem;line-height:1.6;margin-bottom:20px}
 #confirmBtns{display:flex;gap:10px}
 #confirmBtns .btn{flex:1}
+#swapBox{display:flex;flex-direction:column;align-items:center;gap:16px}
+#swapTitle{font-size:1rem;font-weight:700}
 
 /* MAX HR INPUT */
 .maxhr-row{display:flex;align-items:center;justify-content:center;gap:8px;font-size:.9rem;color:var(--muted)}
@@ -201,6 +218,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
 <div class="screen" id="onboarding">
   <h1>10-20-30 Rowing<small>Training Program</small></h1>
 
+  <!-- Step 1: Program -->
   <div class="onboard-step active" id="stepProgram">
     <p>Choose your program level:</p>
     <div class="program-cards">
@@ -210,7 +228,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
       </div>
       <div class="program-card selected" data-prog="intermediate">
         <div class="pc-head"><span class="pc-name">Intermediate</span><span class="pc-tag">7 weeks</span></div>
-        <div class="pc-desc">3 sessions/week (Tue/Thu/Sat). 3 blocks for weeks 1-4, then 4 blocks. 2-min rest.</div>
+        <div class="pc-desc">3 sessions/week. 3 blocks for weeks 1-4, then 4 blocks. 2-min rest.</div>
       </div>
       <div class="program-card" data-prog="advanced">
         <div class="pc-head"><span class="pc-name">Advanced</span><span class="pc-tag">8 weeks</span></div>
@@ -220,8 +238,30 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
     <button class="btn btn-primary" id="progNextBtn" style="width:100%;max-width:380px">NEXT</button>
   </div>
 
+  <!-- Step 2: Days -->
+  <div class="onboard-step" id="stepDays">
+    <p id="daysPrompt">Choose your training days:</p>
+    <div class="day-picker" id="dayPicker">
+      <button class="day-btn" data-day="mon">Mon</button>
+      <button class="day-btn" data-day="tue">Tue</button>
+      <button class="day-btn" data-day="wed">Wed</button>
+      <button class="day-btn" data-day="thu">Thu</button>
+      <button class="day-btn" data-day="fri">Fri</button>
+      <button class="day-btn" data-day="sat">Sat</button>
+      <button class="day-btn" data-day="sun">Sun</button>
+    </div>
+    <p id="daysCount" style="font-size:.8rem;color:var(--muted)">0 / 3 selected</p>
+    <div id="steadySection" style="display:none">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">Which day is your <strong>steady-state</strong> session?</p>
+      <div class="day-picker" id="steadyPicker"></div>
+    </div>
+    <button class="btn btn-primary" id="daysNextBtn" style="width:100%;max-width:380px" disabled>NEXT</button>
+    <button class="btn btn-secondary btn-small" id="daysBackBtn">Back</button>
+  </div>
+
+  <!-- Step 3: Date + Max HR -->
   <div class="onboard-step" id="stepDate">
-    <p>Pick the <strong>Tuesday</strong> you want to start on:</p>
+    <p>Pick the <strong>week</strong> you want to start on:</p>
     <input type="date" id="dateInput">
     <div class="maxhr-row">
       <span>Max Heart Rate:</span>
@@ -230,7 +270,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
     </div>
     <button class="btn btn-primary" id="onboardBtn" style="width:100%;max-width:380px">START PROGRAM</button>
     <button class="btn btn-secondary btn-small" id="dateBackBtn">Back</button>
-    <p style="font-size:.75rem;color:var(--muted)">You can reset this later from the schedule screen.</p>
+    <p style="font-size:.75rem;color:var(--muted)">Date will snap to Monday of the chosen week.</p>
   </div>
 </div>
 
@@ -332,6 +372,8 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
     <div id="helpHrTable"></div>
     <h3 id="helpProgTitle">Program Details</h3>
     <div id="helpProgDetails"></div>
+    <h3>Training Days</h3>
+    <p>Choose your preferred training days during setup. You can <strong>move individual sessions</strong> to different days by tapping the <strong>&#8652;</strong> icon on any session card.</p>
     <h3>Starting a Session</h3>
     <p>Tap <strong>START TODAY'S SESSION</strong> or any session card to launch the timer with the correct settings.</p>
     <h3>Timer Controls</h3>
@@ -360,6 +402,26 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
     <div id="confirmBtns">
       <button class="btn btn-secondary btn-small" id="confirmCancel">Cancel</button>
       <button class="btn btn-primary btn-small" id="confirmOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- SWAP MODAL -->
+<div id="swapOverlay">
+  <div id="swapBox">
+    <p id="swapTitle">Move session to:</p>
+    <div class="day-picker" id="swapDayPicker">
+      <button class="day-btn" data-day="mon">Mon</button>
+      <button class="day-btn" data-day="tue">Tue</button>
+      <button class="day-btn" data-day="wed">Wed</button>
+      <button class="day-btn" data-day="thu">Thu</button>
+      <button class="day-btn" data-day="fri">Fri</button>
+      <button class="day-btn" data-day="sat">Sat</button>
+      <button class="day-btn" data-day="sun">Sun</button>
+    </div>
+    <div style="display:flex;gap:8px;width:100%">
+      <button class="btn btn-secondary btn-small" id="swapReset" style="flex:1;font-size:.75rem">Reset to default</button>
+      <button class="btn btn-secondary btn-small" id="swapCancel" style="flex:1">Cancel</button>
     </div>
   </div>
 </div>
@@ -435,47 +497,52 @@ let lastCI=-1;
 function pickCheer(t){const p=CH[t]||[];if(!p.length)return '';let i;do{i=Math.floor(Math.random()*p.length)}while(i===lastCI&&p.length>1);lastCI=i;return p[i]}
 
 /* ===== PROGRAM DEFINITIONS ===== */
-const DAY_OFF={tue:0,thu:2,sat:4,wed:1};
+const ALL_DAYS=['mon','tue','wed','thu','fri','sat','sun'];
+const DAY_OFFSET={mon:0,tue:1,wed:2,thu:3,fri:4,sat:5,sun:6};
+const DAY_LABELS={mon:'Mon',tue:'Tue',wed:'Wed',thu:'Thu',fri:'Fri',sat:'Sat',sun:'Sun'};
 const PROGRAMS={
   beginner:{
-    name:'Beginner',weeks:8,restSec:180,
+    name:'Beginner',weeks:8,restSec:180,numDays:3,
+    defaultDays:['tue','thu','sat'],
     desc:'2 sessions/week (weeks 1\u20132), then 3/week. Blocks ramp from 2 to 4. 3-min rest.',
     schedule:[
-      [{day:'tue',blocks:2},{day:'thu',blocks:2}],
-      [{day:'tue',blocks:2},{day:'thu',blocks:2}],
-      [{day:'tue',blocks:3},{day:'thu',blocks:2},{day:'sat',blocks:3}],
-      [{day:'tue',blocks:3},{day:'thu',blocks:3},{day:'sat',blocks:3}],
-      [{day:'tue',blocks:3},{day:'thu',blocks:3},{day:'sat',blocks:3}],
-      [{day:'tue',blocks:3},{day:'thu',blocks:3},{day:'sat',blocks:3}],
-      [{day:'tue',blocks:3},{day:'thu',blocks:3},{day:'sat',blocks:4}],
-      [{day:'tue',blocks:4},{day:'thu',blocks:3},{day:'sat',blocks:4}],
+      [{blocks:2},{blocks:2}],
+      [{blocks:2},{blocks:2}],
+      [{blocks:3},{blocks:2},{blocks:3}],
+      [{blocks:3},{blocks:3},{blocks:3}],
+      [{blocks:3},{blocks:3},{blocks:3}],
+      [{blocks:3},{blocks:3},{blocks:3}],
+      [{blocks:3},{blocks:3},{blocks:4}],
+      [{blocks:4},{blocks:3},{blocks:4}],
     ]
   },
   intermediate:{
-    name:'Intermediate',weeks:7,restSec:120,
-    desc:'3 sessions/week (Tue/Thu/Sat). 3 blocks weeks 1\u20134, 4 blocks weeks 5\u20137. 2-min rest.',
+    name:'Intermediate',weeks:7,restSec:120,numDays:3,
+    defaultDays:['tue','thu','sat'],
+    desc:'3 sessions/week. 3 blocks weeks 1\u20134, 4 blocks weeks 5\u20137. 2-min rest.',
     schedule:[
-      [{day:'tue',blocks:3},{day:'thu',blocks:3},{day:'sat',blocks:3}],
-      [{day:'tue',blocks:3},{day:'thu',blocks:3},{day:'sat',blocks:3}],
-      [{day:'tue',blocks:3},{day:'thu',blocks:3},{day:'sat',blocks:3}],
-      [{day:'tue',blocks:3},{day:'thu',blocks:3},{day:'sat',blocks:3}],
-      [{day:'tue',blocks:4},{day:'thu',blocks:4},{day:'sat',blocks:4}],
-      [{day:'tue',blocks:4},{day:'thu',blocks:4},{day:'sat',blocks:4}],
-      [{day:'tue',blocks:4},{day:'thu',blocks:4},{day:'sat',blocks:4}],
+      [{blocks:3},{blocks:3},{blocks:3}],
+      [{blocks:3},{blocks:3},{blocks:3}],
+      [{blocks:3},{blocks:3},{blocks:3}],
+      [{blocks:3},{blocks:3},{blocks:3}],
+      [{blocks:4},{blocks:4},{blocks:4}],
+      [{blocks:4},{blocks:4},{blocks:4}],
+      [{blocks:4},{blocks:4},{blocks:4}],
     ]
   },
   advanced:{
-    name:'Advanced',weeks:8,restSec:120,
-    desc:'3 interval sessions + 1 steady-state/week. 3 blocks weeks 1\u20134, 4 blocks weeks 5\u20138. 2-min rest.',
+    name:'Advanced',weeks:8,restSec:120,numDays:3,
+    defaultDays:['tue','thu','sat'],defaultSteady:'wed',
+    desc:'3 interval + 1 steady-state/week. 3 blocks weeks 1\u20134, 4 blocks weeks 5\u20138. 2-min rest.',
     schedule:[
-      [{day:'tue',blocks:3},{day:'wed',type:'steady',minutes:30},{day:'thu',blocks:3},{day:'sat',blocks:3}],
-      [{day:'tue',blocks:3},{day:'wed',type:'steady',minutes:30},{day:'thu',blocks:3},{day:'sat',blocks:3}],
-      [{day:'tue',blocks:3},{day:'wed',type:'steady',minutes:35},{day:'thu',blocks:3},{day:'sat',blocks:3}],
-      [{day:'tue',blocks:3},{day:'wed',type:'steady',minutes:35},{day:'thu',blocks:3},{day:'sat',blocks:3}],
-      [{day:'tue',blocks:4},{day:'wed',type:'steady',minutes:35},{day:'thu',blocks:4},{day:'sat',blocks:4}],
-      [{day:'tue',blocks:4},{day:'wed',type:'steady',minutes:40},{day:'thu',blocks:4},{day:'sat',blocks:4}],
-      [{day:'tue',blocks:4},{day:'wed',type:'steady',minutes:40},{day:'thu',blocks:4},{day:'sat',blocks:4}],
-      [{day:'tue',blocks:4},{day:'wed',type:'steady',minutes:40},{day:'thu',blocks:4},{day:'sat',blocks:4}],
+      [{blocks:3},{type:'steady',minutes:30},{blocks:3},{blocks:3}],
+      [{blocks:3},{type:'steady',minutes:30},{blocks:3},{blocks:3}],
+      [{blocks:3},{type:'steady',minutes:35},{blocks:3},{blocks:3}],
+      [{blocks:3},{type:'steady',minutes:35},{blocks:3},{blocks:3}],
+      [{blocks:4},{type:'steady',minutes:35},{blocks:4},{blocks:4}],
+      [{blocks:4},{type:'steady',minutes:40},{blocks:4},{blocks:4}],
+      [{blocks:4},{type:'steady',minutes:40},{blocks:4},{blocks:4}],
+      [{blocks:4},{type:'steady',minutes:40},{blocks:4},{blocks:4}],
     ]
   }
 };
@@ -483,7 +550,6 @@ const PROGRAMS={
 /* ===== HELPERS ===== */
 const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
 const STORAGE_KEY='rowing-102030-schedule';
-const DAY_LABELS={tue:'Tue',thu:'Thu',sat:'Sat',wed:'Wed'};
 const MONTH_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const WEEKDAY_NAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
@@ -520,30 +586,38 @@ function closeConfirm(result){
   if(confirmResolve){confirmResolve(result);confirmResolve=null}
 }
 
-/* ===== BUILD SCHEDULE FROM PROGRAM ===== */
-function buildSchedule(startTue,progKey){
+/* ===== BUILD SCHEDULE ===== */
+function buildSchedule(startMon,progKey,days,steadyDay,swaps){
   const prog=PROGRAMS[progKey];
   const sessions=[];
   for(let w=0;w<prog.weeks;w++){
-    const weekTue=addDays(startTue,w*7);
-    prog.schedule[w].forEach((s,i)=>{
-      const d=addDays(weekTue,DAY_OFF[s.day]);
-      const key=(w+1)+'-'+s.day+(s.type==='steady'?'-ss':'');
-      sessions.push({
-        key,date:d,day:DAY_LABELS[s.day],week:w+1,
-        blocks:s.blocks||0,type:s.type||'interval',
-        minutes:s.minutes||0
+    const weekMon=addDays(startMon,w*7);
+    const weekEntries=prog.schedule[w];
+    let intIdx=0;
+    const weekSessions=[];
+    weekEntries.forEach(entry=>{
+      let defaultDay,key;
+      if(entry.type==='steady'){
+        defaultDay=steadyDay||'wed';
+        key=(w+1)+'-'+defaultDay+'-ss';
+      } else {
+        defaultDay=days[intIdx]||'mon';
+        key=(w+1)+'-'+defaultDay;
+        intIdx++;
+      }
+      const actualDay=(swaps&&swaps[key])||defaultDay;
+      const date=addDays(weekMon,DAY_OFFSET[actualDay]);
+      weekSessions.push({
+        key,date,day:DAY_LABELS[actualDay],week:w+1,
+        blocks:entry.blocks||0,type:entry.type||'interval',
+        minutes:entry.minutes||0,
+        defaultDay,actualDay,swapped:actualDay!==defaultDay
       });
     });
+    weekSessions.sort((a,b)=>a.date-b.date);
+    sessions.push(...weekSessions);
   }
   return sessions;
-}
-
-function totalIntervalSessions(progKey){
-  const prog=PROGRAMS[progKey];
-  let n=0;
-  prog.schedule.forEach(w=>w.forEach(s=>{if(!s.type||s.type!=='steady')n++}));
-  return n;
 }
 
 function totalAllSessions(progKey){
@@ -553,11 +627,15 @@ function totalAllSessions(progKey){
 
 /* ===== SCREENS ===== */
 function showScreen(id){$$('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');document.body.className=''}
+function showOnboardStep(id){$$('.onboard-step').forEach(s=>s.classList.remove('active'));$('#'+id).classList.add('active')}
 
 /* ===== ONBOARDING ===== */
 let selectedProg='intermediate';
+let selectedDays=['tue','thu','sat'];
+let selectedSteady='';
 
 function initOnboarding(){
+  /* Program cards */
   $$('.program-card').forEach(c=>{
     c.addEventListener('click',()=>{
       $$('.program-card').forEach(x=>x.classList.remove('selected'));
@@ -566,27 +644,134 @@ function initOnboarding(){
     });
   });
 
+  /* Step 1 → Step 2 */
   $('#progNextBtn').addEventListener('click',()=>{
-    $('#stepProgram').classList.remove('active');
-    $('#stepDate').classList.add('active');
-    // Default date to next Tuesday
+    showOnboardStep('stepDays');
+    initDayPicker();
+  });
+
+  /* Day picker buttons */
+  $$('#dayPicker .day-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      b.classList.toggle('selected');
+      updateDayPickerState();
+    });
+  });
+
+  /* Step 2 → Step 3 */
+  $('#daysNextBtn').addEventListener('click',()=>{
+    selectedDays=getSelectedIntervalDays();
+    selectedDays.sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
+    if(selectedProg==='advanced'){
+      const steadyBtn=$('#steadyPicker .day-btn.steady');
+      selectedSteady=steadyBtn?steadyBtn.dataset.day:'wed';
+    } else {
+      selectedSteady='';
+    }
+    showOnboardStep('stepDate');
     const today=new Date(),dow=today.getDay();
-    const next=dow===2?today:addDays(today,(2-dow+7)%7||7);
-    $('#dateInput').value=dateStr(next);
+    const nextMon=dow===1?today:addDays(today,(1-dow+7)%7||7);
+    $('#dateInput').value=dateStr(nextMon);
   });
 
-  $('#dateBackBtn').addEventListener('click',()=>{
-    $('#stepDate').classList.remove('active');
-    $('#stepProgram').classList.add('active');
-  });
+  /* Back buttons */
+  $('#daysBackBtn').addEventListener('click',()=>showOnboardStep('stepProgram'));
+  $('#dateBackBtn').addEventListener('click',()=>showOnboardStep('stepDays'));
 
+  /* START PROGRAM */
   $('#onboardBtn').addEventListener('click',()=>{
     const v=$('#dateInput').value;if(!v)return;
     const d=parseDate(v);
-    if(d.getDay()!==2){const off=(d.getDay()-2+7)%7;d.setDate(d.getDate()-off)}
+    /* Snap to Monday */
+    const dow=d.getDay();
+    if(dow!==1){const off=dow===0?6:dow-1;d.setDate(d.getDate()-off)}
     const mhr=parseInt($('#maxHrInput').value)||DEFAULT_MAX_HR;
-    saveData({startDate:dateStr(d),program:selectedProg,maxHR:Math.min(230,Math.max(100,mhr)),completed:{}});
+    const saveObj={
+      startDate:dateStr(d),program:selectedProg,
+      days:selectedDays,
+      maxHR:Math.min(230,Math.max(100,mhr)),
+      swaps:{},completed:{}
+    };
+    if(selectedProg==='advanced')saveObj.steadyDay=selectedSteady;
+    saveData(saveObj);
     renderSchedule();showScreen('#schedule');
+  });
+}
+
+function initDayPicker(){
+  const prog=PROGRAMS[selectedProg];
+  const defaults=prog.defaultDays;
+  const isAdv=!!prog.defaultSteady;
+
+  /* Reset all */
+  $$('#dayPicker .day-btn').forEach(b=>{
+    b.classList.remove('selected');
+  });
+  /* Pre-select defaults */
+  defaults.forEach(d=>{
+    const btn=$('#dayPicker .day-btn[data-day="'+d+'"]');
+    if(btn)btn.classList.add('selected');
+  });
+
+  if(isAdv){
+    $('#daysPrompt').textContent='Choose 3 interval training days:';
+  } else {
+    $('#daysPrompt').textContent='Choose '+prog.numDays+' training days:';
+  }
+
+  $('#steadySection').style.display='none';
+  selectedSteady='';
+  updateDayPickerState();
+}
+
+function getSelectedIntervalDays(){
+  const days=[];
+  $$('#dayPicker .day-btn.selected').forEach(b=>days.push(b.dataset.day));
+  return days;
+}
+
+function updateDayPickerState(){
+  const prog=PROGRAMS[selectedProg];
+  const needed=prog.numDays;
+  const isAdv=!!prog.defaultSteady;
+  const selected=getSelectedIntervalDays();
+  const count=selected.length;
+
+  $('#daysCount').textContent=count+' / '+needed+' selected';
+
+  if(isAdv){
+    if(count===needed){
+      /* Show steady picker */
+      $('#steadySection').style.display='';
+      buildSteadyPicker(selected);
+    } else {
+      $('#steadySection').style.display='none';
+      selectedSteady='';
+    }
+    /* NEXT enabled when interval days correct AND steady selected */
+    const steadyBtn=$('#steadyPicker .day-btn.steady');
+    $('#daysNextBtn').disabled=!(count===needed&&steadyBtn);
+  } else {
+    $('#steadySection').style.display='none';
+    $('#daysNextBtn').disabled=(count!==needed);
+  }
+}
+
+function buildSteadyPicker(intervalDays){
+  const available=ALL_DAYS.filter(d=>!intervalDays.includes(d));
+  let html='';
+  available.forEach(d=>{
+    const cls=d===selectedSteady?'day-btn steady':'day-btn';
+    html+='<button class="'+cls+'" data-day="'+d+'">'+DAY_LABELS[d]+'</button>';
+  });
+  $('#steadyPicker').innerHTML=html;
+  $$('#steadyPicker .day-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      $$('#steadyPicker .day-btn').forEach(x=>x.classList.remove('steady'));
+      b.classList.add('steady');
+      selectedSteady=b.dataset.day;
+      updateDayPickerState();
+    });
   });
 }
 
@@ -596,17 +781,21 @@ let currentSessionKey=null;
 function renderSchedule(){
   const data=loadData();
   if(!data){showScreen('#onboarding');return}
+  if(!data.days){migrateData(data)}
   const progKey=data.program||'intermediate';
   const prog=PROGRAMS[progKey];
-  const startTue=parseDate(data.startDate);
-  const sessions=buildSchedule(startTue,progKey);
+  const startMon=parseDate(data.startDate);
+  const sessions=buildSchedule(startMon,progKey,data.days,data.steadyDay,data.swaps||{});
   const today=new Date();today.setHours(0,0,0,0);
   const completed=data.completed||{};
   const total=totalAllSessions(progKey);
 
-  $('#progBadge').textContent=prog.name+' \u00B7 '+prog.weeks+' weeks';
+  /* Badge */
+  let badge=prog.name+' \u00B7 '+prog.weeks+'w \u00B7 '+data.days.map(d=>DAY_LABELS[d]).join('/');
+  if(data.steadyDay)badge+='+'+DAY_LABELS[data.steadyDay];
+  $('#progBadge').textContent=badge;
 
-  // Update help & HR zones
+  /* Help */
   const mhr=data.maxHR||DEFAULT_MAX_HR;
   $('#helpHrTitle').textContent='Your Heart Rate Zones (Max HR: '+mhr+' bpm)';
   $('#helpHrTable').innerHTML=renderHrTable(mhr);
@@ -614,14 +803,14 @@ function renderSchedule(){
   $('#helpProgDetails').innerHTML='<p>'+prog.desc+'</p>';
   $('#maxHrEdit').value=mhr;
 
-  // Progress
+  /* Progress */
   const doneCount=Object.keys(completed).length;
   $('#progLabel').textContent=doneCount+' / '+total+' sessions';
   const pct=Math.round(doneCount/total*100);
   $('#progPct').textContent=pct+'%';
   $('#progFill').style.width=pct+'%';
 
-  // Today banner
+  /* Today banner */
   const todaySessions=sessions.filter(s=>sameDay(s.date,today));
   const todayInterval=todaySessions.find(s=>s.type==='interval'&&!completed[s.key]);
   const todaySteady=todaySessions.find(s=>s.type==='steady'&&!completed[s.key]);
@@ -629,64 +818,70 @@ function renderSchedule(){
   const bannerEl=$('#todayBanner');
 
   if(todayInterval){
-    bannerEl.innerHTML=`<div class="sched-today-banner">
-      <div class="day-label">TODAY &middot; ${todayInterval.day}</div>
-      <div class="day-title">Week ${todayInterval.week} &middot; ${todayInterval.blocks} Blocks</div>
-      <button class="btn btn-primary" id="todayStartBtn">START TODAY'S SESSION</button>
-    </div>`;
+    bannerEl.innerHTML='<div class="sched-today-banner">'+
+      '<div class="day-label">TODAY &middot; '+todayInterval.day+'</div>'+
+      '<div class="day-title">Week '+todayInterval.week+' &middot; '+todayInterval.blocks+' Blocks</div>'+
+      '<button class="btn btn-primary" id="todayStartBtn">START TODAY\'S SESSION</button></div>';
     $('#todayStartBtn').addEventListener('click',()=>launchSession(todayInterval,prog));
   } else if(todaySteady){
-    bannerEl.innerHTML=`<div class="sched-today-banner">
-      <div class="day-label">TODAY &middot; ${todaySteady.day}</div>
-      <div class="day-title">Steady-State ${todaySteady.minutes} min</div>
-      <p style="color:var(--muted);font-size:.85rem;margin-top:8px">Row at a steady comfortable pace. Check off when done.</p>
-    </div>`;
+    bannerEl.innerHTML='<div class="sched-today-banner">'+
+      '<div class="day-label">TODAY &middot; '+todaySteady.day+'</div>'+
+      '<div class="day-title">Steady-State '+todaySteady.minutes+' min</div>'+
+      '<p style="color:var(--muted);font-size:.85rem;margin-top:8px">Row at a steady comfortable pace. Check off when done.</p></div>';
   } else if(todayAllDone){
-    bannerEl.innerHTML=`<div class="sched-rest-banner">
-      <p style="font-weight:700;color:var(--green);margin-bottom:4px">Today's session is done!</p>
-      <p>Next: ${getNext(sessions,today,completed)}</p></div>`;
+    bannerEl.innerHTML='<div class="sched-rest-banner">'+
+      '<p style="font-weight:700;color:var(--green);margin-bottom:4px">Today\'s session is done!</p>'+
+      '<p>Next: '+getNext(sessions,today,completed)+'</p></div>';
   } else {
-    bannerEl.innerHTML=`<div class="sched-rest-banner">
-      <p style="font-weight:700;margin-bottom:4px">Rest Day (${WEEKDAY_NAMES[today.getDay()]})</p>
-      <p>Next: ${getNext(sessions,today,completed)}</p></div>`;
+    bannerEl.innerHTML='<div class="sched-rest-banner">'+
+      '<p style="font-weight:700;margin-bottom:4px">Rest Day ('+WEEKDAY_NAMES[today.getDay()]+')</p>'+
+      '<p>Next: '+getNext(sessions,today,completed)+'</p></div>';
   }
 
-  // Week grid
+  /* Week grid */
   let html='';
   for(let w=1;w<=prog.weeks;w++){
     const ws=sessions.filter(s=>s.week===w);
     const intervalBlocks=ws.find(s=>s.type==='interval');
     const tag=intervalBlocks?intervalBlocks.blocks+' blocks':'';
-    html+=`<div class="week-group"><div class="week-label"><span>Week ${w}</span>
-      <span class="blocks-tag">${tag}</span></div><div class="week-sessions">`;
+    html+='<div class="week-group"><div class="week-label"><span>Week '+w+'</span>'+
+      '<span class="blocks-tag">'+tag+'</span></div><div class="week-sessions">';
     ws.forEach(s=>{
       const isDone=!!completed[s.key],isToday=sameDay(s.date,today);
       const isFuture=s.date>today,isPast=s.date<today;
       let cls='session-card';
       if(s.type==='steady') cls+=' steady';
+      if(s.swapped) cls+=' swapped';
       if(isDone) cls+=' completed';
       if(isToday) cls+=' today';
       else if(isFuture) cls+=' future';
       else if(isPast&&!isDone) cls+=' past';
 
       const label=s.type==='steady'?'Steady '+s.minutes+'m':s.blocks+' blocks';
-      html+=`<div class="${cls}" data-key="${s.key}" data-blocks="${s.blocks}" data-type="${s.type}">
-        <div class="s-check" data-toggle="${s.key}">${isDone?'&#10003;':''}</div>
-        <div class="s-day">${s.day}</div>
-        <div class="s-date">${fmtDate(s.date)}</div>
-        <div class="s-blocks">${label}</div>
-      </div>`;
+      html+='<div class="'+cls+'" data-key="'+s.key+'" data-blocks="'+s.blocks+'" data-type="'+s.type+'">'+
+        '<div class="s-check" data-toggle="'+s.key+'">'+(isDone?'&#10003;':'')+'</div>'+
+        '<div class="s-swap" data-swap-key="'+s.key+'" data-swap-week="'+s.week+'" data-swap-default="'+s.defaultDay+'" data-swap-current="'+s.actualDay+'">&#8652;</div>'+
+        '<div class="s-day">'+s.day+(s.swapped?' *':'')+'</div>'+
+        '<div class="s-date">'+fmtDate(s.date)+'</div>'+
+        '<div class="s-blocks">'+label+'</div>'+
+      '</div>';
     });
-    html+=`</div></div>`;
+    html+='</div></div>';
   }
   $('#weekGrid').innerHTML=html;
 
-  // Card events
+  /* Card events */
   $$('.session-card').forEach(card=>{
     card.addEventListener('click',e=>{
       if(e.target.closest('[data-toggle]')){
         e.stopPropagation();
         toggleDone(e.target.closest('[data-toggle]').dataset.toggle);
+        return;
+      }
+      if(e.target.closest('[data-swap-key]')){
+        e.stopPropagation();
+        const el=e.target.closest('[data-swap-key]');
+        openSwapModal(el.dataset.swapKey,el.dataset.swapWeek,el.dataset.swapDefault,el.dataset.swapCurrent);
         return;
       }
       const s=sessions.find(x=>x.key===card.dataset.key);
@@ -718,11 +913,53 @@ function launchSession(sess,prog){
   startTimer();
 }
 
+/* ===== SWAP MODAL ===== */
+let swapTarget=null;
+
+function openSwapModal(key,week,defaultDay,currentDay){
+  swapTarget={key,week,defaultDay,currentDay};
+  $('#swapTitle').textContent='Move Week '+week+' '+DAY_LABELS[currentDay]+' to:';
+  $$('#swapDayPicker .day-btn').forEach(b=>{
+    b.classList.toggle('selected',b.dataset.day===currentDay);
+  });
+  $('#swapReset').style.display=(currentDay!==defaultDay)?'':'none';
+  $('#swapOverlay').classList.add('active');
+}
+
+function initSwapModal(){
+  $$('#swapDayPicker .day-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      if(!swapTarget)return;
+      const newDay=b.dataset.day;
+      const data=loadData();if(!data)return;
+      if(!data.swaps)data.swaps={};
+      if(newDay===swapTarget.defaultDay) delete data.swaps[swapTarget.key];
+      else data.swaps[swapTarget.key]=newDay;
+      saveData(data);
+      $('#swapOverlay').classList.remove('active');
+      swapTarget=null;
+      renderSchedule();
+    });
+  });
+  $('#swapCancel').addEventListener('click',()=>{
+    $('#swapOverlay').classList.remove('active');swapTarget=null;
+  });
+  $('#swapReset').addEventListener('click',()=>{
+    if(!swapTarget)return;
+    const data=loadData();if(!data)return;
+    if(data.swaps)delete data.swaps[swapTarget.key];
+    saveData(data);
+    $('#swapOverlay').classList.remove('active');
+    swapTarget=null;
+    renderSchedule();
+  });
+}
+
 /* ===== FREE SESSION ===== */
 let freeConfig={blocks:3,restSec:120,warmup:true,cooldown:true};
 function initFreeSetup(){
-  function sel(id,key){$$(`#${id} button`).forEach(b=>{b.addEventListener('click',()=>{
-    $$(`#${id} button`).forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
+  function sel(id,key){$$('#'+id+' button').forEach(b=>{b.addEventListener('click',()=>{
+    $$('#'+id+' button').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
     freeConfig[key]=parseInt(b.dataset.val)})})}
   sel('blockBtns','blocks');sel('restBtns','restSec');
   function tog(id,key){$('#'+id).addEventListener('click',()=>{
@@ -820,6 +1057,22 @@ function sRow(l,v){return '<div class="summary-row"><span class="label">'+l+'</s
 
 async function requestWakeLock(){try{if('wakeLock' in navigator)await navigator.wakeLock.request('screen')}catch(e){}}
 
+/* ===== MIGRATION ===== */
+function migrateData(data){
+  if(data.days)return data;
+  const prog=PROGRAMS[data.program];
+  if(!prog)return data;
+  data.days=prog.defaultDays.slice();
+  if(prog.defaultSteady)data.steadyDay=prog.defaultSteady;
+  /* Adjust startDate from Tuesday-based to Monday-based */
+  const d=parseDate(data.startDate);
+  d.setDate(d.getDate()-1);
+  data.startDate=dateStr(d);
+  if(!data.swaps)data.swaps={};
+  saveData(data);
+  return data;
+}
+
 /* ===== EVENTS ===== */
 $('#helpBtn').addEventListener('click',()=>$('#helpOverlay').classList.add('active'));
 $('#helpClose').addEventListener('click',()=>$('#helpOverlay').classList.remove('active'));
@@ -833,8 +1086,7 @@ $('#confirmOk').addEventListener('click',()=>closeConfirm(true));
 $('#confirmCancel').addEventListener('click',()=>closeConfirm(false));
 $('#changProgBtn').addEventListener('click',async()=>{
   if(await customConfirm('Switch to a different program? Current progress will be cleared.')){
-    clearData();showScreen('#onboarding');
-    $('#stepDate').classList.remove('active');$('#stepProgram').classList.add('active')}});
+    clearData();showScreen('#onboarding');showOnboardStep('stepProgram')}});
 $('#maxHrSaveBtn').addEventListener('click',()=>{
   const data=loadData();if(!data)return;
   const v=parseInt($('#maxHrEdit').value)||DEFAULT_MAX_HR;
@@ -860,14 +1112,16 @@ $('#importFile').addEventListener('change',e=>{
   reader.readAsText(file);e.target.value=''});
 $('#resetBtn').addEventListener('click',async()=>{
   if(await customConfirm('Reset the entire program? All progress will be lost.')){
-    clearData();showScreen('#onboarding');
-    $('#stepDate').classList.remove('active');$('#stepProgram').classList.add('active')}});
+    clearData();showScreen('#onboarding');showOnboardStep('stepProgram')}});
 
 /* ===== INIT ===== */
-initOnboarding();initFreeSetup();
+initOnboarding();initFreeSetup();initSwapModal();
 const saved=loadData();
-if(saved&&saved.program){renderSchedule();showScreen('#schedule')}
-else if(saved){/* legacy data without program field */clearData();showScreen('#onboarding')}
+if(saved&&saved.program){
+  if(!saved.days)migrateData(saved);
+  renderSchedule();showScreen('#schedule');
+}
+else if(saved){clearData();showScreen('#onboarding')}
 else showScreen('#onboarding');
 })();
 </script>
