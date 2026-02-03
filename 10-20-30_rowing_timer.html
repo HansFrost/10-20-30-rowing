@@ -1539,7 +1539,6 @@ function renderSchedule(){
   const todaySessions=sessions.filter(s=>sameDay(s.date,today));
   const todayInterval=todaySessions.find(s=>s.type==='interval'&&!completed[s.key]);
   const todaySteady=todaySessions.find(s=>s.type==='steady'&&!completed[s.key]);
-  const todayAllDone=todaySessions.length>0&&todaySessions.every(s=>!!completed[s.key]);
   const bannerEl=$('#todayBanner');
   const bDoneCount=Object.keys(completed).length;
   const bStage=getHabitStage(bDoneCount);
@@ -1608,11 +1607,6 @@ function renderSchedule(){
       '<p class="finish-msg">'+finishMsg+'</p>'+
       '<p style="font-size:.8rem;color:var(--muted)">Tap <strong>Change Program</strong> to start again.</p>'+
     '</div>';
-  } else if(todayAllDone){
-    bannerEl.innerHTML='<div class="sched-rest-banner">'+
-      '<p style="font-weight:700;color:var(--green);margin-bottom:4px">Today\'s session is done!</p>'+
-      bTagHtml+
-      '<p>Next: '+getNext(sessions,today,completed)+'</p></div>';
   } else {
     bannerEl.innerHTML='<div class="sched-rest-banner">'+
       '<p style="font-weight:700;margin-bottom:4px">Rest Day ('+WEEKDAY_NAMES[today.getDay()]+')</p>'+
