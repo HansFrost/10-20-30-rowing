@@ -280,12 +280,22 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
 #helpBox{background:var(--card);border-radius:20px;padding:28px 24px;max-width:420px;
   width:100%;max-height:85vh;overflow-y:auto;position:relative}
 #helpBox h2{font-size:1.3rem;font-weight:800;margin-bottom:16px}
-#helpBox h3{font-size:.95rem;font-weight:700;margin-top:16px;margin-bottom:6px;color:var(--accent)}
 #helpBox p,#helpBox li{font-size:.85rem;color:var(--muted);line-height:1.6}
 #helpBox ul{padding-left:18px;margin-top:4px}
 #helpBox li{margin-bottom:4px}
 #helpClose{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);
   font-size:1.4rem;cursor:pointer;padding:4px 8px}
+#helpBox details{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden}
+#helpBox summary{font-size:.9rem;font-weight:700;padding:12px 14px;cursor:pointer;
+  list-style:none;display:flex;justify-content:space-between;align-items:center;
+  -webkit-user-select:none;user-select:none}
+#helpBox summary::-webkit-details-marker{display:none}
+#helpBox summary::after{content:'\25B8';font-size:.8rem;color:var(--muted);transition:transform .2s}
+#helpBox details[open]>summary::after{transform:rotate(90deg)}
+#helpBox details[open]>summary{border-bottom:1px solid var(--border)}
+#helpBox .help-content{padding:10px 14px}
+#helpBox .help-content h4{font-size:.85rem;font-weight:700;color:var(--accent);margin:10px 0 4px}
+#helpBox .help-content h4:first-child{margin-top:0}
 .hr-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:.8rem}
 .hr-table th,.hr-table td{padding:5px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,.06)}
 .hr-table th{color:var(--accent);font-weight:600;font-size:.7rem;text-transform:uppercase;letter-spacing:.5px}
@@ -496,54 +506,113 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
   <div id="helpBox">
     <button id="helpClose">&times;</button>
     <h2>How to Use</h2>
-    <h3>The 10-20-30 Concept</h3>
-    <p>Each 1-minute cycle repeats 5 times to form a 5-minute block:</p>
-    <ul>
-      <li><strong>30 sec LOW</strong> &mdash; easy paddle, recover</li>
-      <li><strong>20 sec MODERATE</strong> &mdash; steady, comfortable pace</li>
-      <li><strong>10 sec HIGH</strong> &mdash; all-out sprint, max power</li>
-    </ul>
-    <h3 id="helpHrTitle">Your Heart Rate Zones</h3>
-    <div id="helpHrTable"></div>
-    <h3 id="helpProgTitle">Program Details</h3>
-    <div id="helpProgDetails"></div>
-    <h3>Training Days &amp; Sessions Per Week</h3>
-    <p>During setup you choose <strong>how many sessions per week</strong> (2&ndash;5) and <strong>which days</strong> to train on. Blocks per session ramp up gradually over the program&mdash;not every session in a week has the same count.</p>
-    <h3>Moving a Session to a Different Day</h3>
-    <p>Tap the <strong>&#8652;</strong> icon in the bottom-left corner of any session card. A picker appears where you choose a new day. The session keeps its original identity so your completion status is preserved. A <strong>yellow border</strong> and <strong>*</strong> mark indicate moved sessions. Tap <strong>Reset to default</strong> in the picker to undo.</p>
-    <h3>Starting a Session</h3>
-    <p>Tap <strong>START TODAY&rsquo;S SESSION</strong> or tap any session card to launch the timer. Both interval and steady-state sessions have a guided timer with warm-up and cool-down.</p>
-    <h3>Target Stroke Rates</h3>
-    <ul>
-      <li><strong>LOW (30s)</strong> &mdash; 16&ndash;20 spm &mdash; easy paddle, recover</li>
-      <li><strong>MODERATE (20s)</strong> &mdash; 22&ndash;26 spm &mdash; steady full strokes</li>
-      <li><strong>SPRINT (10s)</strong> &mdash; 30+ spm &mdash; all-out max power</li>
-      <li><strong>Warm-up / Cool-down</strong> &mdash; 18&ndash;20 spm</li>
-      <li><strong>Steady-state</strong> &mdash; 20&ndash;24 spm</li>
-    </ul>
-    <p>Stroke rate targets are shown on the timer during each phase. Use the PM5 stroke rate display to match.</p>
-    <h3>Timer Controls</h3>
-    <ul>
-      <li><strong>PAUSE</strong> &mdash; pause / resume</li>
-      <li><strong>SKIP</strong> &mdash; skip to the next phase</li>
-      <li><strong>STOP</strong> &mdash; abort and return to schedule</li>
-    </ul>
-    <h3>Marking Sessions Complete</h3>
-    <p>Sessions are <strong>auto-marked done</strong> when the timer finishes. You can also tap the circle on any card to manually toggle completion.</p>
-    <h3>Steady-State Sessions (Advanced)</h3>
-    <p>Shown with a dashed border. Tap the card to start a countdown timer, or check them off manually. These build your aerobic base at a comfortable 65&ndash;80% max HR.</p>
-    <h3>Block Progression</h3>
-    <p>Blocks increase gradually over the program. Transition weeks mix higher and lower block counts within the same week, so the jump is never too sudden.</p>
-    <h3>Free Session</h3>
-    <p>Tap <strong>Free Session</strong> for an ad-hoc workout not tracked in the schedule. Choose blocks, rest time, warm-up, and cool-down.</p>
-    <h3>Max Heart Rate</h3>
-    <p>Set your max HR during setup or change it at the bottom of the schedule. All heart-rate zones update automatically.</p>
-    <h3>Export &amp; Import Progress</h3>
-    <p>Scroll to the bottom of the schedule to <strong>Export</strong> your progress as a JSON file or <strong>Import</strong> a previous backup. Handy when switching devices.</p>
-    <h3>Concept2 PM5</h3>
-    <p>Set PM5 to <strong>&ldquo;Just Row&rdquo;</strong>. Prop your phone near the erg. ErgData can sync in the background.</p>
-    <h3>Change Program / Reset</h3>
-    <p>Tap <strong>Change Program</strong> to start fresh with a different program. Tap <strong>Reset Program</strong> at the bottom to clear all progress.</p>
+
+    <details open>
+      <summary>The 10-20-30 Method</summary>
+      <div class="help-content">
+        <p>Each 1-minute cycle repeats 5 times to form a 5-minute block:</p>
+        <ul>
+          <li><strong>30 sec LOW</strong> &mdash; easy paddle, recover</li>
+          <li><strong>20 sec MODERATE</strong> &mdash; steady, comfortable pace</li>
+          <li><strong>10 sec HIGH</strong> &mdash; all-out sprint, max power</li>
+        </ul>
+        <h4>Target Stroke Rates</h4>
+        <ul>
+          <li><strong>LOW (30s)</strong> &mdash; 16&ndash;20 spm</li>
+          <li><strong>MODERATE (20s)</strong> &mdash; 22&ndash;26 spm</li>
+          <li><strong>SPRINT (10s)</strong> &mdash; 30+ spm</li>
+          <li><strong>Warm-up / Cool-down</strong> &mdash; 18&ndash;20 spm</li>
+          <li><strong>Steady-state</strong> &mdash; 20&ndash;24 spm</li>
+        </ul>
+        <p>Stroke rate targets are shown on the timer during each phase. Use the PM5 stroke rate display to match.</p>
+        <h4 id="helpHrTitle">Your Heart Rate Zones</h4>
+        <div id="helpHrTable"></div>
+        <h4 id="helpProgTitle">Program Details</h4>
+        <div id="helpProgDetails"></div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Schedule &amp; Sessions</summary>
+      <div class="help-content">
+        <h4>Training Days</h4>
+        <p>During setup you choose <strong>how many sessions per week</strong> (2&ndash;5) and <strong>which days</strong> to train on. Blocks per session ramp up gradually over the program&mdash;not every session in a week has the same count.</p>
+        <h4>Block Progression</h4>
+        <p>Blocks increase gradually over the program. Transition weeks mix higher and lower block counts within the same week, so the jump is never too sudden.</p>
+        <h4>Moving a Session</h4>
+        <p>Tap the <strong>&#8652;</strong> icon on any session card to move it to a different day. The session keeps its identity so your completion status is preserved. A <strong>yellow border</strong> and <strong>*</strong> mark indicate moved sessions.</p>
+        <h4>Marking Sessions Complete</h4>
+        <p>Sessions are <strong>auto-marked done</strong> when the timer finishes. You can also tap the circle on any card to manually toggle completion.</p>
+        <h4>Steady-State Sessions</h4>
+        <p>Advanced program only. Shown with a dashed border. Tap the card to start a countdown timer, or check them off manually. These build your aerobic base at 65&ndash;80% max HR.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Training Times</summary>
+      <div class="help-content">
+        <h4>Default Times</h4>
+        <p>Tap <strong>Set Default Training Times</strong> at the bottom of the schedule to assign a default time for each training day (e.g. Tue 07:00, Thu 18:00). All sessions on that day will inherit the default.</p>
+        <h4>Per-Session Times</h4>
+        <p>Tap the time shown on any session card (or the <strong>set times</strong> banner for upcoming sessions) to override the default for that specific session.</p>
+        <h4>Calendar Slots</h4>
+        <p>When a time is set, the card shows a duration estimate (warm-up + blocks + rest + cool-down) so you can plan around your schedule.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Timer &amp; Controls</summary>
+      <div class="help-content">
+        <h4>Starting a Session</h4>
+        <p>Tap <strong>START TODAY&rsquo;S SESSION</strong> from the banner, or tap any session card to launch the timer. Both interval and steady-state sessions include warm-up and cool-down.</p>
+        <h4>Quick Session</h4>
+        <p>On training days, a <strong>Quick Session (1 block)</strong> button appears below the main start button. This runs just 1 block (~5 min with warm-up/cool-down) and still counts as a completed session&mdash;useful on busy days to keep your streak alive.</p>
+        <h4>Controls</h4>
+        <ul>
+          <li><strong>PAUSE</strong> &mdash; pause / resume</li>
+          <li><strong>SKIP</strong> &mdash; skip to the next phase</li>
+          <li><strong>STOP</strong> &mdash; abort and return to schedule</li>
+        </ul>
+        <h4>Free Session</h4>
+        <p>Tap <strong>Free Session</strong> for an ad-hoc workout not tracked in the schedule. Choose blocks, rest time, warm-up, and cool-down.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Habit Tracking</summary>
+      <div class="help-content">
+        <h4>Streak</h4>
+        <p>Your <strong>streak</strong> counts consecutive completed sessions with no gaps. It appears in the habit strip below the progress bar. Your personal best streak is tracked automatically.</p>
+        <h4>Stages</h4>
+        <p>As you complete more sessions, you progress through three stages:</p>
+        <ul>
+          <li><strong>Getting Started</strong> (1+ sessions) &mdash; you&rsquo;re trying something new</li>
+          <li><strong>Building Momentum</strong> (4+ sessions) &mdash; you&rsquo;re becoming a rower</li>
+          <li><strong>Locked In</strong> (11+ sessions) &mdash; this is who you are</li>
+        </ul>
+        <h4>Milestones</h4>
+        <p>You&rsquo;ll earn milestone celebrations for achievements like your first session, streak records, completing a full week, and reaching program completion percentages.</p>
+        <h4>Tip of the Day</h4>
+        <p>A rotating daily tip appears on the schedule page with science-backed insights on the 10-20-30 method, rowing technique, and recovery.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Settings &amp; Data</summary>
+      <div class="help-content">
+        <h4>Rename Program</h4>
+        <p>Tap the <strong>program name</strong> at the top of the schedule to give it a custom name. Press Enter or tap away to save.</p>
+        <h4>Max Heart Rate</h4>
+        <p>Set your max HR during setup or change it at the bottom of the schedule. All heart-rate zones update automatically.</p>
+        <h4>Export &amp; Import</h4>
+        <p><strong>Export</strong> saves your progress as a JSON file. <strong>Import</strong> restores a previous backup. Useful when switching devices.</p>
+        <h4>Change Program / Reset</h4>
+        <p>Tap <strong>Change Program</strong> to start fresh with a different program. Tap <strong>Reset Program</strong> at the bottom to clear all progress.</p>
+        <h4>Concept2 PM5</h4>
+        <p>Set PM5 to <strong>&ldquo;Just Row&rdquo;</strong>. Prop your phone near the erg. ErgData can sync in the background.</p>
+      </div>
+    </details>
+
   </div>
 </div>
 
