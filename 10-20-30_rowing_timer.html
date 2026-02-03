@@ -1909,6 +1909,7 @@ function openAddSessionModal(week){
   addSessionTarget.weekMon=weekMon;
   addSessionTarget.selectedDay=null;
   addSessionTarget.selectedBlocks=defaultBlocks;
+  $('#addSessionSave').disabled=true;
   $('#addSessionOverlay').classList.add('active');
 }
 function initAddSessionModal(){
@@ -1918,6 +1919,7 @@ function initAddSessionModal(){
       $$('#addSessionDayPicker .day-btn').forEach(x=>x.classList.remove('selected'));
       b.classList.add('selected');
       if(addSessionTarget)addSessionTarget.selectedDay=b.dataset.day;
+      $('#addSessionSave').disabled=false;
     });
   });
   $$('#addSessionBlockPicker .block-btn').forEach(b=>{
