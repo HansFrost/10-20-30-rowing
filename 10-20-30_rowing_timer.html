@@ -1934,10 +1934,8 @@ function openAddSessionModal(week){
   $('#addSessionTitle').textContent='Add session to Week '+week;
   const sessions=injectExtras(buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks);
   const weekSessions=sessions.filter(s=>s.week===week);
-  const takenDays=weekSessions.map(s=>s.actualDay);
   $$('#addSessionDayPicker .day-btn').forEach(b=>{
-    b.classList.toggle('taken',takenDays.includes(b.dataset.day));
-    b.classList.remove('selected');
+    b.classList.remove('taken','selected');
   });
   const weekBlocks=weekSessions.filter(s=>s.type==='interval').map(s=>s.blocks);
   const defaultBlocks=weekBlocks.length?weekBlocks[0]:3;
