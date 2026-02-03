@@ -335,11 +335,12 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .maxhr-input:focus{outline:none;border-color:var(--accent)}
 
 @media(max-width:500px){
-  .sched-habit{flex-direction:column;padding:16px;min-height:auto;gap:10px}
-  .streak-box{position:static;transform:none;flex-direction:row;gap:6px;min-width:auto}
+  .sched-habit{flex-wrap:wrap;padding:16px;min-height:auto;gap:6px 12px}
+  .streak-box{position:static;transform:none;flex-direction:row;gap:4px;min-width:auto;align-items:baseline}
   .streak-label{margin-top:0}.streak-best{margin-top:0}
-  .habit-badge{position:static;transform:none;flex-direction:column}
+  .habit-badge{position:static;transform:none;display:contents}
   .habit-ring{position:static;margin-right:0}
+  .habit-info{flex-basis:100%;align-items:center;text-align:center}
   .week-group{width:auto}.week-sessions{grid-template-columns:repeat(3,1fr);gap:6px}
   .session-card{padding:10px 6px;min-width:0;width:auto}
 }
