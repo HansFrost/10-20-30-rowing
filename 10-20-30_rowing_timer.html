@@ -185,13 +185,13 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .time-pick-input:focus{outline:none;border-color:var(--accent)}
 
 /* HABIT STRIP (streak + stage badge) */
-.sched-habit{display:flex;gap:12px;align-items:center;background:var(--card);border-radius:12px;padding:14px 16px}
+.sched-habit{display:flex;gap:12px;align-items:center;justify-content:center;background:var(--card);border-radius:12px;padding:14px 16px}
 .streak-box{display:flex;flex-direction:column;align-items:center;min-width:60px}
 .streak-num{font-size:1.8rem;font-weight:900;line-height:1;color:var(--accent)}
 .streak-label{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px}
 .streak-best{font-size:.6rem;color:var(--muted);margin-top:1px}
 .habit-divider{width:1px;height:36px;background:var(--border)}
-.habit-badge{display:flex;align-items:center;gap:10px;flex:1}
+.habit-badge{display:flex;align-items:center;gap:10px}
 .habit-ring{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-size:1rem;font-weight:800;flex-shrink:0;transition:all .3s}
 .habit-ring.stage-1{background:rgba(34,197,94,.15);border:2px solid var(--green);color:var(--green)}
@@ -2045,10 +2045,10 @@ function calcStreak(data,sessions){
 }
 
 function getHabitStage(doneCount){
-  if(doneCount>=11)return{id:3,name:'Locked In',cls:'stage-3',colorCls:'c-blue',ring:'L',next:null,threshold:11};
-  if(doneCount>=4)return{id:2,name:'Building Momentum',cls:'stage-2',colorCls:'c-green',ring:'M',next:11,threshold:4};
-  if(doneCount>=1)return{id:1,name:'Getting Started',cls:'stage-1',colorCls:'c-green',ring:'G',next:4,threshold:1};
-  return{id:0,name:'Not Started',cls:'',colorCls:'',ring:'-',next:1,threshold:0};
+  if(doneCount>=11)return{id:3,name:'Locked In',cls:'stage-3',colorCls:'c-blue',ring:'\u26A1',next:null,threshold:11};
+  if(doneCount>=4)return{id:2,name:'Building Momentum',cls:'stage-2',colorCls:'c-green',ring:'\uD83D\uDD25',next:11,threshold:4};
+  if(doneCount>=1)return{id:1,name:'Getting Started',cls:'stage-1',colorCls:'c-green',ring:'\uD83C\uDF31',next:4,threshold:1};
+  return{id:0,name:'Not Started',cls:'',colorCls:'',ring:'\u2013',next:1,threshold:0};
 }
 
 function checkFullWeek(sessions){
