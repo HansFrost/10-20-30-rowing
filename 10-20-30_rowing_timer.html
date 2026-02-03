@@ -195,11 +195,6 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
 .done-quote{font-size:.85rem;color:var(--muted);font-style:italic;text-align:center;max-width:320px;
   margin:4px auto 0;line-height:1.5}
 
-/* NOTIFICATION PROMPT */
-.notif-prompt{background:var(--card);border:1px solid var(--border);border-radius:12px;
-  padding:14px 16px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
-.notif-prompt p{font-size:.8rem;color:var(--muted);line-height:1.4;margin:0}
-.notif-prompt-btns{display:flex;gap:8px}
 
 /* FREE SESSION */
 #freeSetup{align-items:center;justify-content:center;gap:20px;text-align:center}
@@ -399,7 +394,6 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
   <div id="habitStrip"></div>
   <div id="todayBanner"></div>
   <div id="precommitBanner"></div>
-  <div id="notifPrompt"></div>
   <div id="weekGrid"></div>
   <div style="margin-top:20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px">
     <div class="maxhr-row">
@@ -1297,9 +1291,6 @@ function renderSchedule(){
     pcEl.innerHTML='';
   }
 
-  /* Notification prompt */
-  renderNotifPrompt(data);
-
   /* Week grid */
   let html='';
   for(let w=1;w<=prog.weeks;w++){
@@ -1729,8 +1720,13 @@ function calcStreak(data,sessions){
   const today=new Date();today.setHours(0,0,0,0);
   const past=sessions.filter(s=>s.date<=today).sort((a,b)=>a.date-b.date);
   if(!past.length)return{current:0,best:data.bestStreak||0};
-  let streak=0;
+  let lastDone=-1;
   for(let i=past.length-1;i>=0;i--){
+    if(completed[past[i].key]){lastDone=i;break;}
+  }
+  if(lastDone===-1)return{current:0,best:data.bestStreak||0};
+  let streak=0;
+  for(let i=lastDone;i>=0;i--){
     if(completed[past[i].key])streak++;else break;
   }
   return{current:streak,best:Math.max(streak,data.bestStreak||0)};
@@ -1806,73 +1802,6 @@ function renderHabitStrip(data,sessions){
   '</div>';
 }
 
-/* ===== NOTIFICATIONS ===== */
-let notifInterval=null;
-
-function initNotifications(){
-  const data=loadData();
-  if(!data||!('Notification' in window))return;
-  if(data.notifGranted&&Notification.permission==='granted')startNotifCheck();
-}
-
-function startNotifCheck(){
-  if(notifInterval)return;
-  notifInterval=setInterval(checkNotifications,60000);
-}
-
-function checkNotifications(){
-  const data=loadData();
-  if(!data||!data.notifGranted||Notification.permission!=='granted')return;
-  const now=new Date();
-  const startMon=parseDate(data.startDate);
-  const sessions=buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{});
-  const completed=data.completed||{};
-  const today=new Date();today.setHours(0,0,0,0);
-  const tomorrow=addDays(today,1);
-  sessions.filter(s=>{
-    if(completed[s.key])return false;
-    if(s.date<today||s.date>tomorrow)return false;
-    const t=getEffectiveTime(data,s.key,s.actualDay);
-    if(!t)return false;
-    const[h,m]=t.split(':').map(Number);
-    const st=new Date(s.date);st.setHours(h,m,0,0);
-    const diff=(st-now)/60000;
-    return diff>0&&diff<=15&&diff>14;
-  }).forEach(s=>{
-    const t=getEffectiveTime(data,s.key,s.actualDay);
-    const label=s.type==='steady'?'Steady '+s.minutes+'m':s.blocks+' blocks';
-    const n=new Notification('Rowing in 15 min',{
-      body:s.day+' '+t+' \u2014 '+label,
-      tag:'rowing-'+s.key
-    });
-    n.onclick=()=>{window.focus();n.close()};
-  });
-}
-
-function renderNotifPrompt(data){
-  const el=$('#notifPrompt');
-  if(!('Notification' in window)){el.innerHTML='';return}
-  const doneCount=Object.keys(data.completed||{}).length;
-  if(doneCount<1||'notifGranted' in data){el.innerHTML='';return}
-  el.innerHTML='<div class="notif-prompt">'+
-    '<p>Want a reminder 15 minutes before your sessions?</p>'+
-    '<div class="notif-prompt-btns">'+
-      '<button class="btn btn-secondary btn-small" id="notifNo">Not now</button>'+
-      '<button class="btn btn-primary btn-small" id="notifYes">Enable</button>'+
-    '</div></div>';
-  $('#notifYes').addEventListener('click',async()=>{
-    try{
-      const perm=await Notification.requestPermission();
-      data.notifGranted=(perm==='granted');
-    }catch(e){data.notifGranted=false}
-    saveData(data);
-    if(data.notifGranted)startNotifCheck();
-    el.innerHTML='';
-  });
-  $('#notifNo').addEventListener('click',()=>{
-    data.notifGranted=false;saveData(data);el.innerHTML='';
-  });
-}
 
 async function requestWakeLock(){try{if('wakeLock' in navigator)await navigator.wakeLock.request('screen')}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&timerInterval&&!paused)tick()});
@@ -1937,7 +1866,7 @@ $('#resetBtn').addEventListener('click',async()=>{
     clearData();showScreen('#onboarding');showOnboardStep('stepProgram')}});
 
 /* ===== INIT ===== */
-initOnboarding();initFreeSetup();initSwapModal();initTimeModal();initNotifications();
+initOnboarding();initFreeSetup();initSwapModal();initTimeModal();
 const saved=loadData();
 if(saved&&saved.program){
   if(!saved.days)migrateData(saved);
