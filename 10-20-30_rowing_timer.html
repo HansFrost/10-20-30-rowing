@@ -297,6 +297,18 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .summary-row .value{font-weight:700}
 
 /* HELP */
+#installGuide{display:none;position:fixed;inset:0;background:var(--bg);z-index:300;
+  align-items:center;justify-content:center;padding:24px;flex-direction:column}
+#installGuide.active{display:flex}
+#installBox{max-width:400px;width:100%;text-align:center}
+#installBox h2{font-size:1.5rem;font-weight:800;margin-bottom:12px}
+#installBox h3{font-size:1rem;font-weight:700;margin-bottom:8px;color:var(--accent)}
+.install-intro{font-size:.9rem;color:var(--muted);line-height:1.6;margin-bottom:20px}
+.install-steps{background:var(--card);border-radius:14px;padding:16px 20px;margin-bottom:12px;text-align:left}
+.install-steps ol{padding-left:20px;margin:0}.install-steps li{font-size:.85rem;color:var(--text);line-height:1.7;margin-bottom:4px}
+.install-icon{font-weight:700;font-size:1.1em}
+.install-note{font-size:.8rem;color:var(--muted);font-style:italic;margin-top:8px}
+
 #helpOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;
   align-items:center;justify-content:center;padding:20px}
 #helpOverlay.active{display:flex}
@@ -639,12 +651,41 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
         <h4>Export &amp; Import</h4>
         <p><strong>Export</strong> saves your progress as a JSON file. <strong>Import</strong> restores a previous backup. Useful when switching devices.</p>
         <h4>Change Program / Reset</h4>
-        <p>Tap <strong>Change Program</strong> to start fresh with a different program. Tap <strong>Reset Program</strong> at the bottom to clear all progress.</p>
+        <p>Tap <strong>Change Program</strong> to browse programs without losing your current progress. Tap <strong>Reset Program</strong> at the bottom to clear all progress.</p>
         <h4>Concept2 PM5</h4>
         <p>Set PM5 to <strong>&ldquo;Just Row&rdquo;</strong>. Prop your phone near the erg. ErgData can sync in the background.</p>
+        <h4>Install as App</h4>
+        <p>Tap below for instructions on installing this as a fullscreen app on your phone.</p>
+        <button class="btn btn-secondary btn-small" id="helpInstallBtn" style="width:100%;margin-top:4px">Install Guide</button>
       </div>
     </details>
 
+  </div>
+</div>
+
+<!-- INSTALL GUIDE -->
+<div id="installGuide">
+  <div id="installBox">
+    <h2>Install as App</h2>
+    <p class="install-intro">For the best experience, install this as an app on your home screen. No app store needed &mdash; it runs fullscreen without browser bars.</p>
+    <div id="installIos" class="install-steps">
+      <h3>iPhone / iPad (Safari)</h3>
+      <ol>
+        <li>Tap the <strong>Share</strong> button <span class="install-icon">&#x2B06;&#xFE0E;</span> at the bottom of Safari</li>
+        <li>Scroll down and tap <strong>&ldquo;Add to Home Screen&rdquo;</strong></li>
+        <li>Tap <strong>&ldquo;Add&rdquo;</strong> in the top right</li>
+      </ol>
+    </div>
+    <div id="installAndroid" class="install-steps">
+      <h3>Android (Chrome / Brave)</h3>
+      <ol>
+        <li>Tap the <strong>menu</strong> <span class="install-icon">&#x22EE;</span> in the top right</li>
+        <li>Tap <strong>&ldquo;Add to Home screen&rdquo;</strong> or <strong>&ldquo;Install app&rdquo;</strong></li>
+        <li>Tap <strong>&ldquo;Install&rdquo;</strong> to confirm</li>
+      </ol>
+    </div>
+    <p class="install-note">The app stays in sync &mdash; updates appear automatically.</p>
+    <button class="btn btn-primary" id="installDismiss" style="width:100%;margin-top:8px">Got it</button>
   </div>
 </div>
 
@@ -1234,8 +1275,12 @@ function initOnboarding(){
   $('#dateBackBtn').addEventListener('click',()=>history.back());
 
   /* START PROGRAM */
-  $('#onboardBtn').addEventListener('click',()=>{
+  $('#onboardBtn').addEventListener('click',async()=>{
     const v=$('#dateInput').value;if(!v)return;
+    const existing=loadData();
+    if(existing&&existing.program){
+      if(!await customConfirm('Start a new program? Your current progress will be replaced.'))return;
+    }
     const d=parseDate(v);
     /* Snap to Monday */
     const dow=d.getDay();
@@ -2184,9 +2229,8 @@ $('#stopBtn').addEventListener('click',stopTimer);
 $('#doneBackBtn').addEventListener('click',()=>history.back());
 $('#confirmOk').addEventListener('click',()=>closeConfirm(true));
 $('#confirmCancel').addEventListener('click',()=>closeConfirm(false));
-$('#changProgBtn').addEventListener('click',async()=>{
-  if(await customConfirm('Switch to a different program? Current progress will be cleared.')){
-    clearData();showScreen('#onboarding');showOnboardStep('stepProgram')}});
+$('#changProgBtn').addEventListener('click',()=>{
+  showScreen('#onboarding');showOnboardStep('stepProgram')});
 $('#maxHrSaveBtn').addEventListener('click',()=>{
   const data=loadData();if(!data)return;
   const v=parseInt($('#maxHrEdit').value)||DEFAULT_MAX_HR;
@@ -2227,6 +2271,27 @@ if(saved&&saved.program){
 else if(saved){clearData();showScreen('#onboarding');history.replaceState({screen:'#onboarding',step:'stepProgram'},'');}
 else{showScreen('#onboarding');history.replaceState({screen:'#onboarding',step:'stepProgram'},'');}
 _skipHist=false;
+
+/* Install guide */
+function showInstallGuide(){
+  var isStandalone=window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone;
+  if(isStandalone){$('#installBox').innerHTML='<h2>Already Installed</h2><p style="color:var(--muted);margin:16px 0">You are already running the app from your home screen.</p><button class="btn btn-primary" id="installDismiss" style="width:100%">OK</button>';$('#installDismiss').addEventListener('click',()=>$('#installGuide').classList.remove('active'))}
+  var isIos=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  if(isIos){$('#installAndroid').style.display='none'}
+  else{$('#installIos').style.display='none'}
+  $('#installGuide').classList.add('active');
+}
+$('#installDismiss').addEventListener('click',()=>{
+  $('#installGuide').classList.remove('active');
+  localStorage.setItem('install_guide_seen','1');
+});
+$('#helpInstallBtn').addEventListener('click',()=>{
+  $('#helpOverlay').classList.remove('active');
+  showInstallGuide();
+});
+if(!localStorage.getItem('install_guide_seen')&&!window.matchMedia('(display-mode:standalone)').matches&&!window.navigator.standalone){
+  showInstallGuide();
+}
 })();
 </script>
 </body>
