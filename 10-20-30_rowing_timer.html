@@ -1265,6 +1265,7 @@ function initFreeSetup(){
 /* ===== TIMER ===== */
 let timerConfig={blocks:3,restSec:120,warmup:true,cooldown:true,isFree:false,steady:false,steadyMinutes:0};
 let sequence=[],stepIdx=0,remaining=0,timerInterval=null,paused=false,startTime=null,totalSec=0,cheerTimer=null;
+let wkStart=0,wkBank=0;
 
 function buildSequence(){
   const c=timerConfig,seq=[];
@@ -1323,18 +1324,35 @@ function updateTimerProgress(){
   t+=' \u00B7 '+fmtTime(Math.round(el))+' / '+fmtTime(totalSec);
   $('#timerProgressText').textContent=t;
 }
-function tick(){if(paused)return;remaining--;if(remaining<=3&&remaining>0)soundTick();
-  if(remaining<=0){advance();return}updateCountdown();updateTimerProgress()}
-function advance(){stepIdx++;if(stepIdx>=sequence.length){finish();return}
-  const s=sequence[stepIdx];remaining=s.dur;
-  if(s.type==='high')soundSprint();else if(s.type==='rest')soundBlockEnd();
-  else if(s.type==='low'||s.type==='moderate')soundPhase();
-  updateTimerUI()}
-function skipPhase(){if(stepIdx>=sequence.length-1){finish();return}remaining=0;advance()}
+function tick(){
+  if(paused)return;
+  const totalEl=(wkBank+(Date.now()-wkStart))/1000;
+  let cum=0,newIdx=-1;
+  for(let i=0;i<sequence.length;i++){
+    if(totalEl<cum+sequence[i].dur){newIdx=i;break}
+    cum+=sequence[i].dur;
+  }
+  if(newIdx<0){finish();return}
+  const changed=newIdx!==stepIdx;stepIdx=newIdx;
+  remaining=Math.max(0,Math.ceil(sequence[stepIdx].dur-(totalEl-cum)));
+  if(changed){
+    const s=sequence[stepIdx];
+    if(s.type==='high')soundSprint();else if(s.type==='rest')soundBlockEnd();
+    else if(s.type==='low'||s.type==='moderate')soundPhase();
+    updateTimerUI();
+  }else{
+    if(remaining<=3&&remaining>0)soundTick();
+    updateCountdown();updateTimerProgress();
+  }
+}
+function skipPhase(){
+  if(stepIdx>=sequence.length-1){finish();return}
+  wkBank=elapsedBefore(stepIdx+1)*1000;wkStart=Date.now();tick();
+}
 
 function startTimer(){
   ensureAudio();sequence=buildSequence();stepIdx=0;remaining=sequence[0].dur;
-  totalSec=sequence.reduce((a,x)=>a+x.dur,0);paused=false;startTime=Date.now();
+  totalSec=sequence.reduce((a,x)=>a+x.dur,0);paused=false;startTime=Date.now();wkStart=Date.now();wkBank=0;
   Object.keys(cheerSeen).forEach(k=>delete cheerSeen[k]);
   $('#pauseBtn').textContent='PAUSE';$('#encouragement').textContent='';
   showScreen('#timer');updateTimerUI();timerInterval=setInterval(tick,1000);requestWakeLock();
@@ -1362,6 +1380,7 @@ function finish(){
 function sRow(l,v){return '<div class="summary-row"><span class="label">'+l+'</span><span class="value">'+v+'</span></div>'}
 
 async function requestWakeLock(){try{if('wakeLock' in navigator)await navigator.wakeLock.request('screen')}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&timerInterval&&!paused)tick()});
 
 /* ===== MIGRATION ===== */
 function migrateData(data){
@@ -1384,7 +1403,9 @@ $('#helpBtn').addEventListener('click',()=>$('#helpOverlay').classList.add('acti
 $('#helpClose').addEventListener('click',()=>$('#helpOverlay').classList.remove('active'));
 $('#helpOverlay').addEventListener('click',e=>{if(e.target===$('#helpOverlay'))$('#helpOverlay').classList.remove('active')});
 $('#freeBtn').addEventListener('click',()=>showScreen('#freeSetup'));
-$('#pauseBtn').addEventListener('click',()=>{paused=!paused;$('#pauseBtn').textContent=paused?'RESUME':'PAUSE'});
+$('#pauseBtn').addEventListener('click',()=>{
+  if(!paused){wkBank+=Date.now()-wkStart}else{wkStart=Date.now()}
+  paused=!paused;$('#pauseBtn').textContent=paused?'RESUME':'PAUSE'});
 $('#skipBtn').addEventListener('click',skipPhase);
 $('#stopBtn').addEventListener('click',stopTimer);
 $('#doneBackBtn').addEventListener('click',()=>{showScreen('#schedule');renderSchedule()});
