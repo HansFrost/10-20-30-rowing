@@ -148,6 +148,27 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .session-card .s-time:active{opacity:1}
 .session-card .s-time.has-time{opacity:1;font-size:.6rem;width:auto;min-width:24px;padding:0 4px;
   border-radius:6px;font-weight:600;letter-spacing:-.3px;color:var(--accent)}
+.session-card.extra{border-style:dashed;border-color:var(--accent)}
+.session-card .s-delete{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:13px;width:24px;height:24px;
+  display:flex;align-items:center;justify-content:center;border-radius:50%;
+  background:rgba(239,68,68,.15);color:var(--red);cursor:pointer;opacity:.7;transition:opacity .15s}
+.session-card .s-delete:active{opacity:1}
+.add-session-btn{width:24px;height:24px;border-radius:50%;border:1.5px dashed var(--muted);
+  background:none;color:var(--muted);font-size:1rem;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;padding:0;transition:all .15s;line-height:1}
+.add-session-btn:active{transform:scale(.9);border-color:var(--accent);color:var(--accent)}
+#addSessionOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
+  align-items:center;justify-content:center;padding:20px}
+#addSessionOverlay.active{display:flex}
+#addSessionBox{background:var(--card);border-radius:20px;padding:28px 24px;max-width:360px;
+  width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px}
+#addSessionTitle{font-size:1rem;font-weight:700}
+.block-picker{display:flex;gap:6px;justify-content:center}
+.block-btn{width:40px;height:40px;border-radius:10px;border:2px solid var(--border);
+  background:none;color:var(--text);font-size:1rem;font-weight:700;cursor:pointer;transition:all .15s}
+.block-btn.selected{border-color:var(--accent);background:rgba(183,191,16,.15);color:var(--accent)}
+.block-btn:active{transform:scale(.92)}
+.day-btn.taken{opacity:.3;pointer-events:none;text-decoration:line-through}
 
 /* TIME MODAL */
 #timeOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
@@ -720,6 +741,34 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
   </div>
 </div>
 
+<!-- ADD SESSION MODAL -->
+<div id="addSessionOverlay">
+  <div id="addSessionBox">
+    <p id="addSessionTitle">Add session</p>
+    <div class="day-picker" id="addSessionDayPicker">
+      <button class="day-btn" data-day="mon">Mon</button>
+      <button class="day-btn" data-day="tue">Tue</button>
+      <button class="day-btn" data-day="wed">Wed</button>
+      <button class="day-btn" data-day="thu">Thu</button>
+      <button class="day-btn" data-day="fri">Fri</button>
+      <button class="day-btn" data-day="sat">Sat</button>
+      <button class="day-btn" data-day="sun">Sun</button>
+    </div>
+    <p style="font-size:.85rem;color:var(--muted);margin:0">Blocks:</p>
+    <div class="block-picker" id="addSessionBlockPicker">
+      <button class="block-btn" data-blocks="1">1</button>
+      <button class="block-btn" data-blocks="2">2</button>
+      <button class="block-btn" data-blocks="3">3</button>
+      <button class="block-btn" data-blocks="4">4</button>
+      <button class="block-btn" data-blocks="5">5</button>
+    </div>
+    <div style="display:flex;gap:8px;width:100%">
+      <button class="btn btn-secondary btn-small" id="addSessionCancel" style="flex:1">Cancel</button>
+      <button class="btn btn-primary btn-small" id="addSessionSave" style="flex:1">Add</button>
+    </div>
+  </div>
+</div>
+
 <div id="defTimesOverlay">
   <div id="defTimesBox">
     <p class="dt-title">Default Training Times</p>
@@ -1178,11 +1227,28 @@ function buildSchedule(startMon,progKey,days,steadyDay,swaps){
   return sessions;
 }
 
-function totalAllSessions(progKey,numDays){
+function injectExtras(sessions,data,startMon,progWeeks){
+  if(!data.extraSessions||!data.extraSessions.length)return sessions;
+  const all=[...sessions];
+  const dayKeys=['sun','mon','tue','wed','thu','fri','sat'];
+  data.extraSessions.forEach(function(ex){
+    var d=parseDate(ex.date);
+    var weekNum=Math.floor((d-startMon)/(7*86400000))+1;
+    if(weekNum<1||weekNum>progWeeks)return;
+    var dayKey=dayKeys[d.getDay()];
+    all.push({key:'extra-'+ex.date,date:d,day:DAY_LABELS[dayKey],week:weekNum,
+      blocks:ex.blocks,type:'interval',minutes:0,
+      defaultDay:dayKey,actualDay:dayKey,swapped:false,isExtra:true});
+  });
+  all.sort(function(a,b){return a.date-b.date});
+  return all;
+}
+
+function totalAllSessions(progKey,numDays,extraCount){
   const prog=PROGRAMS[progKey];
   let n=prog.weeks*numDays;
   if(prog.steadyMinutes)n+=prog.weeks;
-  return n;
+  return n+(extraCount||0);
 }
 
 /* ===== SCREENS ===== */
@@ -1410,10 +1476,10 @@ function renderSchedule(){
   const progKey=data.program||'intermediate';
   const prog=PROGRAMS[progKey];
   const startMon=parseDate(data.startDate);
-  const sessions=buildSchedule(startMon,progKey,data.days,data.steadyDay,data.swaps||{});
+  const sessions=injectExtras(buildSchedule(startMon,progKey,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks);
   const today=new Date();today.setHours(0,0,0,0);
   const completed=data.completed||{};
-  const total=totalAllSessions(progKey,data.days.length);
+  const total=totalAllSessions(progKey,data.days.length,(data.extraSessions||[]).length);
 
   /* Program name */
   const nameEl=$('#progName');
@@ -1584,11 +1650,13 @@ function renderSchedule(){
     const lo=Math.min(...ibs),hi=Math.max(...ibs);
     const tag=ibs.length?lo===hi?lo+' blocks':lo+'\u2013'+hi+' blocks':'';
     html+='<div class="week-group"><div class="week-label"><span>Week '+w+'</span>'+
-      '<span class="blocks-tag">'+tag+'</span></div><div class="week-sessions">';
+      '<span class="blocks-tag">'+tag+'</span>'+
+      '<button class="add-session-btn" data-add-week="'+w+'">+</button></div><div class="week-sessions">';
     ws.forEach(s=>{
       const isDone=!!completed[s.key],isToday=sameDay(s.date,today);
       const isFuture=s.date>today,isPast=s.date<today;
       let cls='session-card';
+      if(s.isExtra) cls+=' extra';
       if(s.type==='steady') cls+=' steady';
       if(s.swapped) cls+=' swapped';
       if(isDone) cls+=' completed';
@@ -1600,10 +1668,13 @@ function renderSchedule(){
       const sTime=getEffectiveTime(data,s.key,s.actualDay);
       const timeCls=sTime?'s-time has-time':'s-time';
       const timeContent=sTime?sTime:'\uD83D\uDD50';
+      const bottomBtn=s.isExtra?
+        '<div class="s-delete" data-delete-key="'+s.key+'">&#10005;</div>':
+        '<div class="s-swap" data-swap-key="'+s.key+'" data-swap-week="'+s.week+'" data-swap-default="'+s.defaultDay+'" data-swap-current="'+s.actualDay+'">&#8652;</div>';
       html+='<div class="'+cls+'" data-key="'+s.key+'" data-blocks="'+s.blocks+'" data-type="'+s.type+'">'+
         '<div class="s-check" data-toggle="'+s.key+'">'+(isDone?'&#10003;':'')+'</div>'+
         '<div class="'+timeCls+'" data-time-key="'+s.key+'" data-time-day="'+s.actualDay+'">'+timeContent+'</div>'+
-        '<div class="s-swap" data-swap-key="'+s.key+'" data-swap-week="'+s.week+'" data-swap-default="'+s.defaultDay+'" data-swap-current="'+s.actualDay+'">&#8652;</div>'+
+        bottomBtn+
         '<div class="s-day">'+s.day+(s.swapped?' *':'')+'</div>'+
         '<div class="s-date">'+fmtDate(s.date)+'</div>'+
         '<div class="s-blocks">'+label+'</div>'+
@@ -1634,6 +1705,11 @@ function renderSchedule(){
         openSwapModal(el.dataset.swapKey,el.dataset.swapWeek,el.dataset.swapDefault,el.dataset.swapCurrent);
         return;
       }
+      if(e.target.closest('[data-delete-key]')){
+        e.stopPropagation();
+        deleteExtraSession(e.target.closest('[data-delete-key]').dataset.deleteKey);
+        return;
+      }
       const s=sessions.find(x=>x.key===card.dataset.key);
       if(!s)return;
       const now=new Date();now.setHours(0,0,0,0);
@@ -1641,6 +1717,9 @@ function renderSchedule(){
       if(s.type==='interval') launchSession(s,prog);
       else if(s.type==='steady') launchSteadySession(s);
     });
+  });
+  $$('[data-add-week]').forEach(btn=>{
+    btn.addEventListener('click',e=>{e.stopPropagation();openAddSessionModal(+btn.dataset.addWeek)});
   });
 }
 
@@ -1656,7 +1735,7 @@ function toggleDone(key){
   const data=loadData();if(!data)return;
   const prog=PROGRAMS[data.program];
   const startMon=parseDate(data.startDate);
-  const sessions=buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{});
+  const sessions=injectExtras(buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks);
   const sess=sessions.find(s=>s.key===key);
   if(sess){
     const today=new Date();today.setHours(0,0,0,0);
@@ -1840,6 +1919,79 @@ function initSwapModal(){
   });
 }
 
+/* ===== ADD / DELETE EXTRA SESSIONS ===== */
+let addSessionTarget=null;
+function openAddSessionModal(week){
+  addSessionTarget={week};
+  const data=loadData();if(!data)return;
+  const prog=PROGRAMS[data.program];
+  const startMon=parseDate(data.startDate);
+  const weekMon=addDays(startMon,(week-1)*7);
+  $('#addSessionTitle').textContent='Add session to Week '+week;
+  const sessions=injectExtras(buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks);
+  const weekSessions=sessions.filter(s=>s.week===week);
+  const takenDays=weekSessions.map(s=>s.actualDay);
+  $$('#addSessionDayPicker .day-btn').forEach(b=>{
+    b.classList.toggle('taken',takenDays.includes(b.dataset.day));
+    b.classList.remove('selected');
+  });
+  const weekBlocks=weekSessions.filter(s=>s.type==='interval').map(s=>s.blocks);
+  const defaultBlocks=weekBlocks.length?weekBlocks[0]:3;
+  $$('#addSessionBlockPicker .block-btn').forEach(b=>{
+    b.classList.toggle('selected',+b.dataset.blocks===defaultBlocks);
+  });
+  addSessionTarget.weekMon=weekMon;
+  addSessionTarget.selectedDay=null;
+  addSessionTarget.selectedBlocks=defaultBlocks;
+  $('#addSessionOverlay').classList.add('active');
+}
+function initAddSessionModal(){
+  $$('#addSessionDayPicker .day-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      if(b.classList.contains('taken'))return;
+      $$('#addSessionDayPicker .day-btn').forEach(x=>x.classList.remove('selected'));
+      b.classList.add('selected');
+      if(addSessionTarget)addSessionTarget.selectedDay=b.dataset.day;
+    });
+  });
+  $$('#addSessionBlockPicker .block-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      $$('#addSessionBlockPicker .block-btn').forEach(x=>x.classList.remove('selected'));
+      b.classList.add('selected');
+      if(addSessionTarget)addSessionTarget.selectedBlocks=+b.dataset.blocks;
+    });
+  });
+  $('#addSessionSave').addEventListener('click',()=>{
+    if(!addSessionTarget||!addSessionTarget.selectedDay)return;
+    const data=loadData();if(!data)return;
+    if(!data.extraSessions)data.extraSessions=[];
+    const d=addDays(addSessionTarget.weekMon,DAY_OFFSET[addSessionTarget.selectedDay]);
+    const dk=dateStr(d);
+    if(data.extraSessions.find(e=>e.date===dk))return;
+    data.extraSessions.push({date:dk,blocks:addSessionTarget.selectedBlocks});
+    saveData(data);
+    $('#addSessionOverlay').classList.remove('active');
+    addSessionTarget=null;
+    renderSchedule();
+  });
+  $('#addSessionCancel').addEventListener('click',()=>{
+    $('#addSessionOverlay').classList.remove('active');addSessionTarget=null;
+  });
+  $('#addSessionOverlay').addEventListener('click',e=>{
+    if(e.target===e.currentTarget){$('#addSessionOverlay').classList.remove('active');addSessionTarget=null}
+  });
+}
+async function deleteExtraSession(key){
+  if(!await customConfirm('Remove this extra session?'))return;
+  const data=loadData();if(!data)return;
+  const ds=key.replace('extra-','');
+  data.extraSessions=(data.extraSessions||[]).filter(e=>e.date!==ds);
+  delete data.completed[key];
+  if(data.sessionTimes)delete data.sessionTimes[key];
+  saveData(data);
+  renderSchedule();
+}
+
 /* ===== FREE SESSION ===== */
 let freeConfig={blocks:3,restSec:120,warmup:true,cooldown:true};
 function initFreeSetup(){
@@ -1975,7 +2127,7 @@ function finish(){
   if(data&&currentSessionKey){
     const prog=PROGRAMS[data.program];
     const startMon=parseDate(data.startDate);
-    const sessions=buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{});
+    const sessions=injectExtras(buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks);
     const completed=data.completed||{};
     const doneCount=Object.keys(completed).length;
     const si=calcStreak(data,sessions);
@@ -2145,7 +2297,7 @@ function checkFullWeek(sessions){
 
 function checkMilestones(data,sessions,streakInfo){
   const doneCount=Object.keys(data.completed||{}).length;
-  const total=totalAllSessions(data.program,data.days.length);
+  const total=totalAllSessions(data.program,data.days.length,(data.extraSessions||[]).length);
   const shown=data.milestones||[];
   const found=[];
   for(const[id,m]of Object.entries(MILESTONES)){
@@ -2260,7 +2412,7 @@ $('#resetBtn').addEventListener('click',async()=>{
     clearData();showScreen('#onboarding');showOnboardStep('stepProgram')}});
 
 /* ===== INIT ===== */
-initOnboarding();initFreeSetup();initSwapModal();initTimeModal();
+initOnboarding();initFreeSetup();initSwapModal();initTimeModal();initAddSessionModal();
 const saved=loadData();
 _skipHist=true;
 if(saved&&saved.program){
