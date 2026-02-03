@@ -159,6 +159,48 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
   background:var(--card);color:var(--text);font-size:1rem;font-weight:600;text-align:center}
 .time-pick-input:focus{outline:none;border-color:var(--accent)}
 
+/* HABIT STRIP (streak + stage badge) */
+.sched-habit{display:flex;gap:12px;align-items:center;background:var(--card);border-radius:12px;padding:14px 16px}
+.streak-box{display:flex;flex-direction:column;align-items:center;min-width:60px}
+.streak-num{font-size:1.8rem;font-weight:900;line-height:1;color:var(--accent)}
+.streak-label{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px}
+.streak-best{font-size:.6rem;color:var(--muted);margin-top:1px}
+.habit-divider{width:1px;height:36px;background:var(--border)}
+.habit-badge{display:flex;align-items:center;gap:10px;flex:1}
+.habit-ring{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:1rem;font-weight:800;flex-shrink:0;transition:all .3s}
+.habit-ring.stage-1{background:rgba(34,197,94,.15);border:2px solid var(--green);color:var(--green)}
+.habit-ring.stage-2{background:rgba(34,197,94,.25);border:2px solid var(--green);color:var(--green);
+  box-shadow:0 0 8px rgba(34,197,94,.3)}
+.habit-ring.stage-3{background:rgba(79,140,255,.2);border:2px solid var(--accent);color:var(--accent);
+  box-shadow:0 0 12px rgba(79,140,255,.3)}
+.habit-info{display:flex;flex-direction:column}
+.habit-stage{font-size:.85rem;font-weight:700}
+.habit-stage.c-green{color:var(--green)}
+.habit-stage.c-blue{color:var(--accent)}
+.habit-progress{font-size:.7rem;color:var(--muted)}
+
+/* MILESTONE CELEBRATION */
+.milestone-icon{font-size:2.4rem;margin-bottom:4px}
+.milestone-title{font-size:1.1rem;font-weight:800;margin-bottom:4px}
+.milestone-msg{font-size:.85rem;color:var(--muted);line-height:1.5}
+
+/* ENHANCED DONE SCREEN */
+.done-streak{display:flex;align-items:center;gap:8px;justify-content:center;margin:8px 0 4px}
+.done-streak-num{font-size:1.6rem;font-weight:900;color:var(--accent)}
+.done-streak-label{font-size:.85rem;color:var(--muted)}
+.done-pb{font-size:.75rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;text-align:center}
+.done-habit{display:flex;align-items:center;gap:8px;justify-content:center;margin:8px 0}
+.done-next{font-size:.8rem;color:var(--muted);margin-top:8px;font-style:italic;text-align:center}
+.done-quote{font-size:.85rem;color:var(--muted);font-style:italic;text-align:center;max-width:320px;
+  margin:4px auto 0;line-height:1.5}
+
+/* NOTIFICATION PROMPT */
+.notif-prompt{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+.notif-prompt p{font-size:.8rem;color:var(--muted);line-height:1.4;margin:0}
+.notif-prompt-btns{display:flex;gap:8px}
+
 /* FREE SESSION */
 #freeSetup{align-items:center;justify-content:center;gap:20px;text-align:center}
 #freeSetup h2{font-size:1.4rem;font-weight:800}
@@ -354,8 +396,10 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
     <div class="sched-progress-label"><span id="progLabel">0 / 0 sessions</span><span id="progPct">0%</span></div>
     <div class="sched-progress-bar"><div class="sched-progress-fill" id="progFill"></div></div>
   </div>
+  <div id="habitStrip"></div>
   <div id="todayBanner"></div>
   <div id="precommitBanner"></div>
+  <div id="notifPrompt"></div>
   <div id="weekGrid"></div>
   <div style="margin-top:20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px">
     <div class="maxhr-row">
@@ -416,7 +460,11 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
 <div class="screen" id="done">
   <h2>WORKOUT COMPLETE</h2>
   <p class="sub" id="doneSubtext"></p>
+  <div id="doneStreakArea"></div>
   <div id="summaryBox"></div>
+  <div id="doneHabitArea"></div>
+  <div id="doneNextArea"></div>
+  <div id="doneQuoteArea"></div>
   <button class="btn btn-primary" id="doneBackBtn" style="width:100%;max-width:360px">Back to Schedule</button>
 </div>
 
@@ -1190,6 +1238,9 @@ function renderSchedule(){
   $('#progPct').textContent=pct+'%';
   $('#progFill').style.width=pct+'%';
 
+  /* Habit strip (streak + stage badge) */
+  renderHabitStrip(data,sessions);
+
   /* Today banner */
   const todaySessions=sessions.filter(s=>sameDay(s.date,today));
   const todayInterval=todaySessions.find(s=>s.type==='interval'&&!completed[s.key]);
@@ -1245,6 +1296,9 @@ function renderSchedule(){
   } else {
     pcEl.innerHTML='';
   }
+
+  /* Notification prompt */
+  renderNotifPrompt(data);
 
   /* Week grid */
   let html='';
@@ -1321,9 +1375,20 @@ function getNext(sessions,today,completed){
 
 function toggleDone(key){
   const data=loadData();if(!data)return;
+  const wasCompleted=!!data.completed[key];
   if(data.completed[key]) delete data.completed[key];
   else data.completed[key]=new Date().toISOString();
-  saveData(data);renderSchedule();
+  saveData(data);
+  if(!wasCompleted){
+    const prog=PROGRAMS[data.program];
+    const startMon=parseDate(data.startDate);
+    const sessions=buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{});
+    const si=calcStreak(data,sessions);
+    if(si.current>(data.bestStreak||0)){data.bestStreak=si.current;saveData(data)}
+    const milestones=checkMilestones(data,sessions,si);
+    if(milestones.length){showMilestones(milestones,data).then(()=>renderSchedule());return}
+  }
+  renderSchedule();
 }
 
 function launchSession(sess,prog){
@@ -1590,9 +1655,224 @@ function finish(){
     h+=sRow('Total cycles',timerConfig.blocks*5);h+=sRow('Sprint time',fmtTime(sprintSec));
     h+=sRow('Sprints',timerConfig.blocks*5);
   }
-  $('#summaryBox').innerHTML=h;showScreen('#done');
+  $('#summaryBox').innerHTML=h;
+
+  /* Enhanced done screen with Blue Path info */
+  const data=loadData();
+  if(data&&currentSessionKey){
+    const prog=PROGRAMS[data.program];
+    const startMon=parseDate(data.startDate);
+    const sessions=buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{});
+    const completed=data.completed||{};
+    const doneCount=Object.keys(completed).length;
+    const si=calcStreak(data,sessions);
+    const stage=getHabitStage(doneCount);
+    const today=new Date();today.setHours(0,0,0,0);
+    const isNewBest=si.current>(data.bestStreak||0)&&si.current>1;
+    if(si.current>(data.bestStreak||0)){data.bestStreak=si.current;saveData(data)}
+
+    let sh='<div class="done-streak"><div class="done-streak-num">'+si.current+'</div><div class="done-streak-label">session streak</div></div>';
+    if(isNewBest)sh+='<div class="done-pb">NEW PERSONAL BEST!</div>';
+    $('#doneStreakArea').innerHTML=sh;
+
+    $('#doneHabitArea').innerHTML='<div class="done-habit">'+
+      '<div class="habit-ring '+stage.cls+'">'+stage.ring+'</div>'+
+      '<span class="habit-stage '+stage.colorCls+'">'+stage.name+'</span></div>';
+
+    $('#doneNextArea').innerHTML='<div class="done-next">Next: '+getNext(sessions,today,completed)+'</div>';
+    $('#doneQuoteArea').innerHTML='<div class="done-quote">'+(STAGE_QUOTES[stage.id]||'')+'</div>';
+
+    const milestones=checkMilestones(data,sessions,si);
+    if(milestones.length)setTimeout(()=>showMilestones(milestones,data),1200);
+  } else {
+    $('#doneStreakArea').innerHTML='';
+    $('#doneHabitArea').innerHTML='';
+    $('#doneNextArea').innerHTML='';
+    $('#doneQuoteArea').innerHTML='';
+  }
+
+  showScreen('#done');
 }
 function sRow(l,v){return '<div class="summary-row"><span class="label">'+l+'</span><span class="value">'+v+'</span></div>'}
+
+/* ===== BLUE PATH HABIT SYSTEM ===== */
+const STAGE_QUOTES={
+  0:'Every journey starts with a single stroke.',
+  1:'You showed up. That is more than most people do.',
+  2:'Momentum is building. You are becoming a rower.',
+  3:'This is not something you do. This is who you are.'
+};
+
+const MILESTONES={
+  first:{test:(d)=>d>=1,icon:'\uD83C\uDF1F',title:'First Session!',msg:'You showed up. That is the hardest part. The journey begins now.'},
+  sessions3:{test:(d)=>d>=3,icon:'\uD83C\uDF31',title:'3 Sessions Complete',msg:'You crossed the Green Dot threshold. You tried it \u2014 and came back.'},
+  week1:{test:(d,s)=>checkFullWeek(s),icon:'\uD83D\uDCC5',title:'First Full Week!',msg:'Every session in a calendar week \u2014 done. Consistency is building.'},
+  streak5:{test:(d,s,st)=>st.current>=5,icon:'\uD83D\uDD25',title:'5 Session Streak!',msg:'Five in a row. Your habit loop is forming. Keep the chain alive.'},
+  sessions10:{test:(d)=>d>=10,icon:'\uD83D\uDE80',title:'10 Sessions!',msg:'Double digits. You are in Green Span territory \u2014 doing this for real.'},
+  streak10:{test:(d,s,st)=>st.current>=10,icon:'\uD83D\uDC99',title:'10 Session Streak!',msg:'The Blue Path is forming. This is becoming who you are.'},
+  pct50:{test:(d,s,st,t)=>t>0&&d>=Math.ceil(t*.5),icon:'\u2B50',title:'Halfway There!',msg:'50% of the program complete. The momentum is undeniable.'},
+  pct75:{test:(d,s,st,t)=>t>0&&d>=Math.ceil(t*.75),icon:'\uD83C\uDFC6',title:'75% Complete!',msg:'Three quarters done. You can see the finish line from here.'},
+  pct100:{test:(d,s,st,t)=>t>0&&d>=t,icon:'\uD83C\uDF1E',title:'Program Complete!',msg:'You finished the entire program. You are a different person than when you started.'}
+};
+
+function customAlertHtml(html){
+  return new Promise(resolve=>{
+    confirmResolve=()=>resolve();
+    $('#confirmMsg').innerHTML=html;
+    $('#confirmCancel').style.display='none';
+    $('#confirmOverlay').classList.add('active');
+  });
+}
+
+function calcStreak(data,sessions){
+  const completed=data.completed||{};
+  const today=new Date();today.setHours(0,0,0,0);
+  const past=sessions.filter(s=>s.date<=today).sort((a,b)=>a.date-b.date);
+  if(!past.length)return{current:0,best:data.bestStreak||0};
+  let streak=0;
+  for(let i=past.length-1;i>=0;i--){
+    if(completed[past[i].key])streak++;else break;
+  }
+  return{current:streak,best:Math.max(streak,data.bestStreak||0)};
+}
+
+function getHabitStage(doneCount){
+  if(doneCount>=11)return{id:3,name:'Blue Path',cls:'stage-3',colorCls:'c-blue',ring:'B',next:null,threshold:11};
+  if(doneCount>=4)return{id:2,name:'Building Momentum',cls:'stage-2',colorCls:'c-green',ring:'M',next:11,threshold:4};
+  if(doneCount>=1)return{id:1,name:'Getting Started',cls:'stage-1',colorCls:'c-green',ring:'G',next:4,threshold:1};
+  return{id:0,name:'Not Started',cls:'',colorCls:'',ring:'-',next:1,threshold:0};
+}
+
+function checkFullWeek(sessions){
+  const data=loadData();if(!data)return false;
+  const completed=data.completed||{};
+  const prog=PROGRAMS[data.program];
+  for(let w=1;w<=prog.weeks;w++){
+    const ws=sessions.filter(s=>s.week===w);
+    if(ws.length>0&&ws.every(s=>!!completed[s.key]))return true;
+  }
+  return false;
+}
+
+function checkMilestones(data,sessions,streakInfo){
+  const doneCount=Object.keys(data.completed||{}).length;
+  const total=totalAllSessions(data.program,data.days.length);
+  const shown=data.milestones||[];
+  const found=[];
+  for(const[id,m]of Object.entries(MILESTONES)){
+    if(shown.includes(id))continue;
+    if(m.test(doneCount,sessions,streakInfo,total))found.push({id,icon:m.icon,title:m.title,msg:m.msg});
+  }
+  return found;
+}
+
+async function showMilestones(milestones,data){
+  for(const m of milestones){
+    await customAlertHtml(
+      '<div class="milestone-icon">'+m.icon+'</div>'+
+      '<div class="milestone-title">'+m.title+'</div>'+
+      '<div class="milestone-msg">'+m.msg+'</div>'
+    );
+    if(!data.milestones)data.milestones=[];
+    data.milestones.push(m.id);
+    saveData(data);
+  }
+}
+
+function renderHabitStrip(data,sessions){
+  const el=$('#habitStrip');
+  const completed=data.completed||{};
+  const doneCount=Object.keys(completed).length;
+  if(doneCount===0){el.innerHTML='';return}
+  const si=calcStreak(data,sessions);
+  const stage=getHabitStage(doneCount);
+  if(si.best>(data.bestStreak||0)){data.bestStreak=si.best;saveData(data)}
+  const bestTxt=si.best>0?'Best: '+si.best:'';
+  const progTxt=stage.next?doneCount+' / '+stage.next+' to next stage':doneCount+' sessions completed';
+  el.innerHTML='<div class="sched-habit">'+
+    '<div class="streak-box">'+
+      '<div class="streak-num">'+si.current+'</div>'+
+      '<div class="streak-label">Streak</div>'+
+      (bestTxt?'<div class="streak-best">'+bestTxt+'</div>':'')+
+    '</div>'+
+    '<div class="habit-divider"></div>'+
+    '<div class="habit-badge">'+
+      '<div class="habit-ring '+stage.cls+'">'+stage.ring+'</div>'+
+      '<div class="habit-info">'+
+        '<div class="habit-stage '+stage.colorCls+'">'+stage.name+'</div>'+
+        '<div class="habit-progress">'+progTxt+'</div>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
+/* ===== NOTIFICATIONS ===== */
+let notifInterval=null;
+
+function initNotifications(){
+  const data=loadData();
+  if(!data||!('Notification' in window))return;
+  if(data.notifGranted&&Notification.permission==='granted')startNotifCheck();
+}
+
+function startNotifCheck(){
+  if(notifInterval)return;
+  notifInterval=setInterval(checkNotifications,60000);
+}
+
+function checkNotifications(){
+  const data=loadData();
+  if(!data||!data.notifGranted||Notification.permission!=='granted')return;
+  const now=new Date();
+  const startMon=parseDate(data.startDate);
+  const sessions=buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{});
+  const completed=data.completed||{};
+  const today=new Date();today.setHours(0,0,0,0);
+  const tomorrow=addDays(today,1);
+  sessions.filter(s=>{
+    if(completed[s.key])return false;
+    if(s.date<today||s.date>tomorrow)return false;
+    const t=getEffectiveTime(data,s.key,s.actualDay);
+    if(!t)return false;
+    const[h,m]=t.split(':').map(Number);
+    const st=new Date(s.date);st.setHours(h,m,0,0);
+    const diff=(st-now)/60000;
+    return diff>0&&diff<=15&&diff>14;
+  }).forEach(s=>{
+    const t=getEffectiveTime(data,s.key,s.actualDay);
+    const label=s.type==='steady'?'Steady '+s.minutes+'m':s.blocks+' blocks';
+    const n=new Notification('Rowing in 15 min',{
+      body:s.day+' '+t+' \u2014 '+label,
+      tag:'rowing-'+s.key
+    });
+    n.onclick=()=>{window.focus();n.close()};
+  });
+}
+
+function renderNotifPrompt(data){
+  const el=$('#notifPrompt');
+  if(!('Notification' in window)){el.innerHTML='';return}
+  const doneCount=Object.keys(data.completed||{}).length;
+  if(doneCount<1||'notifGranted' in data){el.innerHTML='';return}
+  el.innerHTML='<div class="notif-prompt">'+
+    '<p>Want a reminder 15 minutes before your sessions?</p>'+
+    '<div class="notif-prompt-btns">'+
+      '<button class="btn btn-secondary btn-small" id="notifNo">Not now</button>'+
+      '<button class="btn btn-primary btn-small" id="notifYes">Enable</button>'+
+    '</div></div>';
+  $('#notifYes').addEventListener('click',async()=>{
+    try{
+      const perm=await Notification.requestPermission();
+      data.notifGranted=(perm==='granted');
+    }catch(e){data.notifGranted=false}
+    saveData(data);
+    if(data.notifGranted)startNotifCheck();
+    el.innerHTML='';
+  });
+  $('#notifNo').addEventListener('click',()=>{
+    data.notifGranted=false;saveData(data);el.innerHTML='';
+  });
+}
 
 async function requestWakeLock(){try{if('wakeLock' in navigator)await navigator.wakeLock.request('screen')}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&timerInterval&&!paused)tick()});
@@ -1657,7 +1937,7 @@ $('#resetBtn').addEventListener('click',async()=>{
     clearData();showScreen('#onboarding');showOnboardStep('stepProgram')}});
 
 /* ===== INIT ===== */
-initOnboarding();initFreeSetup();initSwapModal();initTimeModal();
+initOnboarding();initFreeSetup();initSwapModal();initTimeModal();initNotifications();
 const saved=loadData();
 if(saved&&saved.program){
   if(!saved.days)migrateData(saved);
