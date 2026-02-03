@@ -1548,8 +1548,11 @@ function renderSchedule(){
         return;
       }
       const s=sessions.find(x=>x.key===card.dataset.key);
-      if(s&&s.type==='interval') launchSession(s,prog);
-      else if(s&&s.type==='steady') launchSteadySession(s);
+      if(!s)return;
+      const now=new Date();now.setHours(0,0,0,0);
+      if(s.date>now)return;
+      if(s.type==='interval') launchSession(s,prog);
+      else if(s.type==='steady') launchSteadySession(s);
     });
   });
 }
