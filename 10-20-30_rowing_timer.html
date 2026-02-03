@@ -1749,10 +1749,10 @@ const STAGE_QUOTES={
 
 const MILESTONES={
   first:{test:(d)=>d>=1,icon:'\uD83C\uDF1F',title:'First Session!',msg:'You showed up. That is the hardest part. The journey begins now.'},
-  sessions3:{test:(d)=>d>=3,icon:'\uD83C\uDF31',title:'3 Sessions Complete',msg:'You crossed the Green Dot threshold. You tried it \u2014 and came back.'},
+  sessions3:{test:(d)=>d>=3,icon:'\uD83C\uDF31',title:'3 Sessions Complete',msg:'You tried it \u2014 and came back. That is how habits begin.'},
   week1:{test:(d,s)=>checkFullWeek(s),icon:'\uD83D\uDCC5',title:'First Full Week!',msg:'Every session in a calendar week \u2014 done. Consistency is building.'},
   streak5:{test:(d,s,st)=>st.current>=5,icon:'\uD83D\uDD25',title:'5 Session Streak!',msg:'Five in a row. Your habit loop is forming. Keep the chain alive.'},
-  sessions10:{test:(d)=>d>=10,icon:'\uD83D\uDE80',title:'10 Sessions!',msg:'Double digits. You are in Green Span territory \u2014 doing this for real.'},
+  sessions10:{test:(d)=>d>=10,icon:'\uD83D\uDE80',title:'10 Sessions!',msg:'Double digits. This is no longer an experiment \u2014 you are doing this for real.'},
   streak10:{test:(d,s,st)=>st.current>=10,icon:'\uD83D\uDC99',title:'10 Session Streak!',msg:'This is becoming second nature. This is who you are.'},
   pct50:{test:(d,s,st,t)=>t>0&&d>=Math.ceil(t*.5),icon:'\u2B50',title:'Halfway There!',msg:'50% of the program complete. The momentum is undeniable.'},
   pct75:{test:(d,s,st,t)=>t>0&&d>=Math.ceil(t*.75),icon:'\uD83C\uDFC6',title:'75% Complete!',msg:'Three quarters done. You can see the finish line from here.'},
