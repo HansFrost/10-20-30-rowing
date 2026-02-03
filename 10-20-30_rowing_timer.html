@@ -446,6 +446,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
       <button class="btn btn-secondary btn-small" id="helpBtn">?</button>
       <button class="btn btn-secondary btn-small" id="changProgBtn">Change Program</button>
       <button class="btn btn-secondary btn-small" id="freeBtn">Free Session</button>
+      <button class="btn btn-secondary btn-small" id="exitFsBtn" style="display:none">Exit Fullscreen</button>
     </div>
   </div>
   <div class="sched-progress">
@@ -524,6 +525,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
   <div id="doneNextArea"></div>
   <div id="doneQuoteArea"></div>
   <button class="btn btn-primary" id="doneBackBtn" style="width:100%;max-width:360px">Back to Schedule</button>
+  <button class="btn btn-secondary btn-small" id="doneExitFsBtn" style="display:none;margin-top:8px">Exit Fullscreen</button>
 </div>
 
 <!-- HELP -->
@@ -2173,6 +2175,16 @@ function showFullscreenHint(){
   tip.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--card);color:var(--text);padding:12px 18px;border-radius:10px;font-size:.8rem;z-index:999;text-align:center;max-width:280px;border:1px solid var(--border)';
   document.body.appendChild(tip);setTimeout(()=>tip.remove(),4000);
 }
+function toggleExitFsBtns(){
+  var isFs=!!(document.fullscreenElement||document.webkitFullscreenElement);
+  $('#exitFsBtn').style.display=isFs?'':'none';
+  $('#doneExitFsBtn').style.display=isFs?'':'none';
+}
+document.addEventListener('fullscreenchange',toggleExitFsBtns);
+document.addEventListener('webkitfullscreenchange',toggleExitFsBtns);
+function exitFullscreen(){(document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document)}
+$('#exitFsBtn').addEventListener('click',exitFullscreen);
+$('#doneExitFsBtn').addEventListener('click',exitFullscreen);
 $('#doneBackBtn').addEventListener('click',()=>{showScreen('#schedule');renderSchedule()});
 $('#confirmOk').addEventListener('click',()=>closeConfirm(true));
 $('#confirmCancel').addEventListener('click',()=>closeConfirm(false));
