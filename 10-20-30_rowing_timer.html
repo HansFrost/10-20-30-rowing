@@ -1687,7 +1687,7 @@ function finish(){
   }
   $('#summaryBox').innerHTML=h;
 
-  /* Enhanced done screen with Blue Path info */
+  /* Enhanced done screen with habit info */
   const data=loadData();
   if(data&&currentSessionKey){
     const prog=PROGRAMS[data.program];
@@ -1739,7 +1739,7 @@ function finish(){
 }
 function sRow(l,v){return '<div class="summary-row"><span class="label">'+l+'</span><span class="value">'+v+'</span></div>'}
 
-/* ===== BLUE PATH HABIT SYSTEM ===== */
+/* ===== HABIT SYSTEM ===== */
 const STAGE_QUOTES={
   0:'Every journey starts with a single stroke.',
   1:'You showed up. That is more than most people do.',
@@ -1753,7 +1753,7 @@ const MILESTONES={
   week1:{test:(d,s)=>checkFullWeek(s),icon:'\uD83D\uDCC5',title:'First Full Week!',msg:'Every session in a calendar week \u2014 done. Consistency is building.'},
   streak5:{test:(d,s,st)=>st.current>=5,icon:'\uD83D\uDD25',title:'5 Session Streak!',msg:'Five in a row. Your habit loop is forming. Keep the chain alive.'},
   sessions10:{test:(d)=>d>=10,icon:'\uD83D\uDE80',title:'10 Sessions!',msg:'Double digits. You are in Green Span territory \u2014 doing this for real.'},
-  streak10:{test:(d,s,st)=>st.current>=10,icon:'\uD83D\uDC99',title:'10 Session Streak!',msg:'The Blue Path is forming. This is becoming who you are.'},
+  streak10:{test:(d,s,st)=>st.current>=10,icon:'\uD83D\uDC99',title:'10 Session Streak!',msg:'This is becoming second nature. This is who you are.'},
   pct50:{test:(d,s,st,t)=>t>0&&d>=Math.ceil(t*.5),icon:'\u2B50',title:'Halfway There!',msg:'50% of the program complete. The momentum is undeniable.'},
   pct75:{test:(d,s,st,t)=>t>0&&d>=Math.ceil(t*.75),icon:'\uD83C\uDFC6',title:'75% Complete!',msg:'Three quarters done. You can see the finish line from here.'},
   pct100:{test:(d,s,st,t)=>t>0&&d>=t,icon:'\uD83C\uDF1E',title:'Program Complete!',msg:'You finished the entire program. You are a different person than when you started.'}
@@ -1766,7 +1766,7 @@ const DONE_PRAISE=[
   'That\u2019s {sprints} all-out sprints completed. Most people never push this hard.',
   'Session #{total} in the books. Consistency beats intensity every time \u2014 and you have both.',
   '{blocks} blocks of 10-20-30 intervals. Researchers would be proud of this data.',
-  'Another session, another step on the Blue Path. {streak} in a row and counting.',
+  'Another session, another step toward second nature. {streak} in a row and counting.',
   '{sprints} sprints. Your VO2max thanks you.',
   '{blocks} blocks completed \u2014 the kind of effort that rewires your physiology.',
   'You just did what most people only think about. {streak}-session streak is real.',
@@ -1836,7 +1836,7 @@ function calcStreak(data,sessions){
 }
 
 function getHabitStage(doneCount){
-  if(doneCount>=11)return{id:3,name:'Blue Path',cls:'stage-3',colorCls:'c-blue',ring:'B',next:null,threshold:11};
+  if(doneCount>=11)return{id:3,name:'Locked In',cls:'stage-3',colorCls:'c-blue',ring:'L',next:null,threshold:11};
   if(doneCount>=4)return{id:2,name:'Building Momentum',cls:'stage-2',colorCls:'c-green',ring:'M',next:11,threshold:4};
   if(doneCount>=1)return{id:1,name:'Getting Started',cls:'stage-1',colorCls:'c-green',ring:'G',next:4,threshold:1};
   return{id:0,name:'Not Started',cls:'',colorCls:'',ring:'-',next:1,threshold:0};
