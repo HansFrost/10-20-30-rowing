@@ -1821,17 +1821,16 @@ function customAlertHtml(html){
 
 function calcStreak(data,sessions){
   const completed=data.completed||{};
-  const today=new Date();today.setHours(0,0,0,0);
-  const past=sessions.filter(s=>s.date<=today).sort((a,b)=>a.date-b.date);
-  if(!past.length)return{current:0,best:data.bestStreak||0};
+  const sorted=[...sessions].sort((a,b)=>a.date-b.date);
+  if(!sorted.length)return{current:0,best:data.bestStreak||0};
   let lastDone=-1;
-  for(let i=past.length-1;i>=0;i--){
-    if(completed[past[i].key]){lastDone=i;break;}
+  for(let i=sorted.length-1;i>=0;i--){
+    if(completed[sorted[i].key]){lastDone=i;break;}
   }
   if(lastDone===-1)return{current:0,best:data.bestStreak||0};
   let streak=0;
   for(let i=lastDone;i>=0;i--){
-    if(completed[past[i].key])streak++;else break;
+    if(completed[sorted[i].key])streak++;else break;
   }
   return{current:streak,best:Math.max(streak,data.bestStreak||0)};
 }
