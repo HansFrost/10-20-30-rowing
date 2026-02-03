@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 <title>10-20-30 Rowing &middot; Training Program</title>
 <meta name="description" content="Evidence-based 10-20-30 interval training program for Concept2 rowing machines. Beginner to advanced with guided timer, HR zones, and progress tracking.">
 <meta property="og:title" content="10-20-30 Rowing Program">
@@ -346,16 +349,17 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 }
 @media(orientation:landscape) and (max-height:500px){
   #timer.active{display:grid;grid-template-columns:1fr 1fr;align-content:center;
-    justify-items:center;max-width:none;padding:6px 24px;gap:2px 16px;text-align:center}
+    justify-items:center;max-width:none;padding:4px 20px;gap:1px 12px;text-align:center;
+    height:100vh;max-height:100vh;overflow:hidden;box-sizing:border-box}
   #countdown{grid-column:1;grid-row:1/span 5;align-self:center;
-    font-size:clamp(4rem,35vh,10rem);letter-spacing:-3px}
+    font-size:clamp(3rem,28vh,8rem);letter-spacing:-3px}
   #phaseLabel,#phaseName,#hrZone,#instruction,#timerControls{grid-column:2}
   #encouragement,#timerProgress{display:none}
-  #phaseName{font-size:clamp(3rem,20vh,5.5rem)}
-  #phaseLabel{font-size:clamp(1.2rem,7vh,2rem)}
-  #hrZone{font-size:clamp(1.1rem,6vh,1.6rem)}
-  #instruction{font-size:clamp(1.3rem,8vh,2.2rem)}
-  .timer-btn{padding:12px 24px;font-size:clamp(1rem,5vh,1.4rem)}
+  #phaseName{font-size:clamp(1.8rem,14vh,4rem)}
+  #phaseLabel{font-size:clamp(.9rem,5vh,1.4rem)}
+  #hrZone{font-size:clamp(.8rem,4vh,1.2rem)}
+  #instruction{font-size:clamp(1rem,6vh,1.6rem)}
+  .timer-btn{padding:8px 18px;font-size:clamp(.85rem,4vh,1.1rem)}
 }
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
 .pulse{animation:pulse .3s ease}
@@ -506,6 +510,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
     <button class="timer-btn" id="pauseBtn">PAUSE</button>
     <button class="timer-btn skip" id="skipBtn">SKIP</button>
     <button class="timer-btn stop" id="stopBtn">STOP</button>
+    <button class="timer-btn" id="fullscreenBtn" title="Toggle fullscreen">&#x26F6;</button>
   </div>
 </div>
 
@@ -2153,6 +2158,14 @@ $('#pauseBtn').addEventListener('click',()=>{
   paused=!paused;$('#pauseBtn').textContent=paused?'RESUME':'PAUSE'});
 $('#skipBtn').addEventListener('click',skipPhase);
 $('#stopBtn').addEventListener('click',stopTimer);
+$('#fullscreenBtn').addEventListener('click',()=>{
+  if(!document.fullscreenElement){
+    (document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen||function(){}).call(document.documentElement);
+  }else{
+    (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document);
+  }
+});
+if(!document.fullscreenEnabled&&!document.webkitFullscreenEnabled)$('#fullscreenBtn').style.display='none';
 $('#doneBackBtn').addEventListener('click',()=>{showScreen('#schedule');renderSchedule()});
 $('#confirmOk').addEventListener('click',()=>closeConfirm(true));
 $('#confirmCancel').addEventListener('click',()=>closeConfirm(false));
