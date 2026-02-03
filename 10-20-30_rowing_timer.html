@@ -389,6 +389,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
       </div>
     </div>
     <button class="btn btn-primary" id="progNextBtn" style="width:100%;max-width:380px">NEXT</button>
+    <button class="btn btn-secondary btn-small" id="onboardImportBtn" style="margin-top:4px">Import Progress</button>
   </div>
 
   <!-- Step 2: Days -->
@@ -2174,6 +2175,7 @@ $('#exportBtn').addEventListener('click',()=>{
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='rowing-102030-progress.json';a.click();URL.revokeObjectURL(a.href)});
 $('#importBtn').addEventListener('click',()=>$('#importFile').click());
+$('#onboardImportBtn').addEventListener('click',()=>$('#importFile').click());
 $('#importFile').addEventListener('change',e=>{
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
@@ -2181,7 +2183,7 @@ $('#importFile').addEventListener('change',e=>{
     try{
       const data=JSON.parse(ev.target.result);
       if(!data.startDate||!data.program||!PROGRAMS[data.program]){await customAlert('Invalid progress file.');return}
-      if(!await customConfirm('Import this progress? It will replace your current data.'))return;
+      if(loadData()&&!await customConfirm('Import this progress? It will replace your current data.'))return;
       saveData(data);renderSchedule();showScreen('#schedule');
     }catch(err){customAlert('Could not read file. Make sure it is a valid progress export.')}
   };
