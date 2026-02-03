@@ -1896,16 +1896,17 @@ function initSwapModal(){
     if(!swapTarget)return;
     const data=loadData();if(!data)return;
     if(swapTarget.isExtra){
-      if(!await customConfirm('Remove this extra session?'))return;
+      $('#swapOverlay').classList.remove('active');
+      if(!await customConfirm('Remove this extra session?')){swapTarget=null;return}
       const ds=swapTarget.key.replace('extra-','');
       data.extraSessions=(data.extraSessions||[]).filter(e=>e.date!==ds);
       delete data.completed[swapTarget.key];
       if(data.sessionTimes)delete data.sessionTimes[swapTarget.key];
     } else {
       if(data.swaps)delete data.swaps[swapTarget.key];
+      $('#swapOverlay').classList.remove('active');
     }
     saveData(data);
-    $('#swapOverlay').classList.remove('active');
     swapTarget=null;
     renderSchedule();
   });
