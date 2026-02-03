@@ -111,7 +111,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .finish-stat-num{font-size:1.3rem;font-weight:800;color:var(--fg);line-height:1.2}
 .finish-stat-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
 .finish-msg{font-size:.85rem;color:var(--fg);font-style:italic;line-height:1.5;margin:8px 0}
-.week-group{margin:4px auto 0;width:calc(3 * 140px + 2 * 8px)}
+.week-group{margin:16px auto 0;width:calc(3 * 140px + 2 * 8px)}
 .week-label{font-size:.8rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);
   margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
 .week-label .blocks-tag{font-size:.7rem;background:rgba(255,255,255,.06);padding:2px 8px;
@@ -761,6 +761,9 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
       <button class="block-btn" data-blocks="4">4</button>
       <button class="block-btn" data-blocks="5">5</button>
     </div>
+    <p style="font-size:.85rem;color:var(--muted);margin:0">Time (optional):</p>
+    <input type="time" id="addSessionTime" style="padding:10px 16px;border-radius:12px;border:2px solid var(--border);
+      background:var(--card);color:var(--text);font-size:1.1rem;font-weight:700;text-align:center;width:140px">
     <div style="display:flex;gap:8px;width:100%">
       <button class="btn btn-secondary btn-small" id="addSessionCancel" style="flex:1">Cancel</button>
       <button class="btn btn-primary btn-small" id="addSessionSave" style="flex:1">Add</button>
@@ -1942,6 +1945,7 @@ function openAddSessionModal(week){
   $$('#addSessionBlockPicker .block-btn').forEach(b=>{
     b.classList.toggle('selected',+b.dataset.blocks===defaultBlocks);
   });
+  $('#addSessionTime').value='';
   addSessionTarget.weekMon=weekMon;
   addSessionTarget.selectedDay=null;
   addSessionTarget.selectedBlocks=defaultBlocks;
@@ -1971,6 +1975,11 @@ function initAddSessionModal(){
     const dk=dateStr(d);
     if(data.extraSessions.find(e=>e.date===dk))return;
     data.extraSessions.push({date:dk,blocks:addSessionTarget.selectedBlocks});
+    const timeVal=$('#addSessionTime').value;
+    if(timeVal){
+      if(!data.sessionTimes)data.sessionTimes={};
+      data.sessionTimes['extra-'+dk]=timeVal;
+    }
     saveData(data);
     $('#addSessionOverlay').classList.remove('active');
     addSessionTarget=null;
