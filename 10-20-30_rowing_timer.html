@@ -1521,13 +1521,13 @@ function toggleDone(key){
   const wasCompleted=!!data.completed[key];
   if(data.completed[key]) delete data.completed[key];
   else data.completed[key]=new Date().toISOString();
+  const prog=PROGRAMS[data.program];
+  const startMon=parseDate(data.startDate);
+  const sessions=buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{});
+  const si=calcStreak(data,sessions);
+  data.bestStreak=si.best;
   saveData(data);
   if(!wasCompleted){
-    const prog=PROGRAMS[data.program];
-    const startMon=parseDate(data.startDate);
-    const sessions=buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{});
-    const si=calcStreak(data,sessions);
-    if(si.current>(data.bestStreak||0)){data.bestStreak=si.current;saveData(data)}
     const milestones=checkMilestones(data,sessions,si);
     if(milestones.length){showMilestones(milestones,data).then(()=>renderSchedule());return}
   }
@@ -1840,8 +1840,9 @@ function finish(){
     const si=calcStreak(data,sessions);
     const stage=getHabitStage(doneCount);
     const today=new Date();today.setHours(0,0,0,0);
-    const isNewBest=si.current>(data.bestStreak||0)&&si.current>1;
-    if(si.current>(data.bestStreak||0)){data.bestStreak=si.current;saveData(data)}
+    const oldBest=data.bestStreak||0;
+    const isNewBest=si.best>oldBest&&si.best>1;
+    if(si.best!==oldBest){data.bestStreak=si.best;saveData(data)}
 
     let sh='<div class="done-streak"><div class="done-streak-num">'+si.current+'</div><div class="done-streak-label">session streak</div></div>';
     if(isNewBest)sh+='<div class="done-pb">NEW PERSONAL BEST!</div>';
@@ -1964,17 +1965,23 @@ function customAlertHtml(html){
 function calcStreak(data,sessions){
   const completed=data.completed||{};
   const sorted=[...sessions].sort((a,b)=>a.date-b.date);
-  if(!sorted.length)return{current:0,best:data.bestStreak||0};
+  if(!sorted.length)return{current:0,best:0};
+  /* Scan all streaks to find true best */
+  let best=0,run=0;
+  for(let i=0;i<sorted.length;i++){
+    if(completed[sorted[i].key]){run++;if(run>best)best=run}else{run=0}
+  }
+  /* Current streak: count backward from last completed */
   let lastDone=-1;
   for(let i=sorted.length-1;i>=0;i--){
     if(completed[sorted[i].key]){lastDone=i;break;}
   }
-  if(lastDone===-1)return{current:0,best:data.bestStreak||0};
-  let streak=0;
+  if(lastDone===-1)return{current:0,best:0};
+  let current=0;
   for(let i=lastDone;i>=0;i--){
-    if(completed[sorted[i].key])streak++;else break;
+    if(completed[sorted[i].key])current++;else break;
   }
-  return{current:streak,best:Math.max(streak,data.bestStreak||0)};
+  return{current,best};
 }
 
 function getHabitStage(doneCount){
@@ -2027,7 +2034,7 @@ function renderHabitStrip(data,sessions){
   if(doneCount===0){el.innerHTML='';return}
   const si=calcStreak(data,sessions);
   const stage=getHabitStage(doneCount);
-  if(si.best>(data.bestStreak||0)){data.bestStreak=si.best;saveData(data)}
+  if(si.best!==(data.bestStreak||0)){data.bestStreak=si.best;saveData(data)}
   const bestTxt=si.best>0?'Best: '+si.best:'';
   const progTxt=stage.next?doneCount+' / '+stage.next+' to next stage':doneCount+' sessions completed';
   el.innerHTML='<div class="sched-habit">'+
