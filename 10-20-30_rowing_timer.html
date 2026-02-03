@@ -166,6 +166,23 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
 .hr-table td{color:var(--muted)}
 .hr-table .zc{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
 
+/* CONFIRM MODAL */
+#confirmOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
+  align-items:center;justify-content:center;padding:20px}
+#confirmOverlay.active{display:flex}
+#confirmBox{background:var(--card);border-radius:20px;padding:28px 24px;max-width:360px;
+  width:100%;text-align:center}
+#confirmMsg{font-size:.95rem;line-height:1.6;margin-bottom:20px}
+#confirmBtns{display:flex;gap:10px}
+#confirmBtns .btn{flex:1}
+
+/* MAX HR INPUT */
+.maxhr-row{display:flex;align-items:center;justify-content:center;gap:8px;font-size:.9rem;color:var(--muted)}
+.maxhr-input{padding:10px 8px;border-radius:10px;border:2px solid var(--border);
+  background:var(--card);color:var(--text);font-size:1rem;font-weight:600;
+  width:72px;text-align:center}
+.maxhr-input:focus{outline:none;border-color:var(--accent)}
+
 @media(max-width:380px){
   #countdown{font-size:7rem}#phaseName{font-size:2.5rem}
   .week-sessions{gap:6px}.session-card{padding:10px 6px;min-width:70px}
@@ -206,6 +223,11 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
   <div class="onboard-step" id="stepDate">
     <p>Pick the <strong>Tuesday</strong> you want to start on:</p>
     <input type="date" id="dateInput">
+    <div class="maxhr-row">
+      <span>Max Heart Rate:</span>
+      <input type="number" class="maxhr-input" id="maxHrInput" value="176" min="100" max="230">
+      <span>bpm</span>
+    </div>
     <button class="btn btn-primary" id="onboardBtn" style="width:100%;max-width:380px">START PROGRAM</button>
     <button class="btn btn-secondary btn-small" id="dateBackBtn">Back</button>
     <p style="font-size:.75rem;color:var(--muted)">You can reset this later from the schedule screen.</p>
@@ -232,6 +254,12 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
   <div id="todayBanner"></div>
   <div id="weekGrid"></div>
   <div style="margin-top:20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px">
+    <div class="maxhr-row">
+      <span>Max HR:</span>
+      <input type="number" class="maxhr-input" id="maxHrEdit" min="100" max="230">
+      <span>bpm</span>
+      <button class="btn btn-secondary btn-small" id="maxHrSaveBtn" style="font-size:.7rem;padding:6px 10px">Save</button>
+    </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-secondary btn-small" id="exportBtn" style="font-size:.75rem">Export Progress</button>
       <button class="btn btn-secondary btn-small" id="importBtn" style="font-size:.75rem">Import Progress</button>
@@ -300,15 +328,8 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
       <li><strong>20 sec MODERATE</strong> &mdash; steady, comfortable pace</li>
       <li><strong>10 sec HIGH</strong> &mdash; all-out sprint, max power</li>
     </ul>
-    <h3>Your Heart Rate Zones (Max HR: 176 bpm)</h3>
-    <table class="hr-table">
-      <tr><th>Phase</th><th>HR Range</th><th>% Max</th></tr>
-      <tr><td><span class="zc" style="background:#2d3a4a"></span>Warm-up</td><td>106&ndash;123 bpm</td><td>60&ndash;70%</td></tr>
-      <tr><td><span class="zc" style="background:#0d6b3d"></span>Low (30s)</td><td>114&ndash;132 bpm</td><td>65&ndash;75%</td></tr>
-      <tr><td><span class="zc" style="background:#b8860b"></span>Moderate (20s)</td><td>132&ndash;150 bpm</td><td>75&ndash;85%</td></tr>
-      <tr><td><span class="zc" style="background:#c0392b"></span>High (10s)</td><td>158&ndash;176 bpm</td><td>90&ndash;100%</td></tr>
-      <tr><td><span class="zc" style="background:#2c3e6b"></span>Rest</td><td>&lt; 123 bpm</td><td>&lt; 70%</td></tr>
-    </table>
+    <h3 id="helpHrTitle">Your Heart Rate Zones</h3>
+    <div id="helpHrTable"></div>
     <h3 id="helpProgTitle">Program Details</h3>
     <div id="helpProgDetails"></div>
     <h3>Starting a Session</h3>
@@ -332,6 +353,17 @@ body.phase-rest{background:var(--bg-rest)}body.phase-done{background:var(--bg)}
   </div>
 </div>
 
+<!-- CONFIRM MODAL -->
+<div id="confirmOverlay">
+  <div id="confirmBox">
+    <p id="confirmMsg"></p>
+    <div id="confirmBtns">
+      <button class="btn btn-secondary btn-small" id="confirmCancel">Cancel</button>
+      <button class="btn btn-primary btn-small" id="confirmOk">OK</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
 /* ===== AUDIO ===== */
@@ -348,20 +380,37 @@ function soundBlockEnd(){beep(440,.3,.4);setTimeout(()=>beep(440,.3,.4),350)}
 function soundSprint(){beep(1200,.1,.6);setTimeout(()=>beep(1400,.15,.6),120)}
 function soundDone(){beep(523,.2,.5);setTimeout(()=>beep(659,.2,.5),200);setTimeout(()=>beep(784,.4,.5),400)}
 
-/* ===== HR ZONES (Max 176) ===== */
-const MAX_HR=176;
-const HR_ZONES={
-  warmup:{lo:Math.round(MAX_HR*.60),hi:Math.round(MAX_HR*.70),label:'60\u201370%'},
-  low:{lo:Math.round(MAX_HR*.65),hi:Math.round(MAX_HR*.75),label:'65\u201375%'},
-  moderate:{lo:Math.round(MAX_HR*.75),hi:Math.round(MAX_HR*.85),label:'75\u201385%'},
-  high:{lo:Math.round(MAX_HR*.90),hi:MAX_HR,label:'90\u2013100%'},
-  rest:{lo:0,hi:Math.round(MAX_HR*.70),label:'< 70%'},
-  cooldown:{lo:Math.round(MAX_HR*.50),hi:Math.round(MAX_HR*.65),label:'50\u201365%'},
-  countdown:{lo:0,hi:0,label:''}
-};
+/* ===== HR ZONES (dynamic) ===== */
+const DEFAULT_MAX_HR=176;
+function getMaxHR(){const d=loadData();return(d&&d.maxHR)||DEFAULT_MAX_HR}
+function calcZones(mhr){
+  return{
+    warmup:{lo:Math.round(mhr*.60),hi:Math.round(mhr*.70),label:'60\u201370%'},
+    low:{lo:Math.round(mhr*.65),hi:Math.round(mhr*.75),label:'65\u201375%'},
+    moderate:{lo:Math.round(mhr*.75),hi:Math.round(mhr*.85),label:'75\u201385%'},
+    high:{lo:Math.round(mhr*.90),hi:mhr,label:'90\u2013100%'},
+    rest:{lo:0,hi:Math.round(mhr*.70),label:'< 70%'},
+    cooldown:{lo:Math.round(mhr*.50),hi:Math.round(mhr*.65),label:'50\u201365%'},
+    countdown:{lo:0,hi:0,label:''}
+  };
+}
 function hrText(type){
-  const z=HR_ZONES[type];if(!z||!z.label)return '';
+  const z=calcZones(getMaxHR())[type];if(!z||!z.label)return '';
   return z.lo===0?'\u2764 < '+z.hi+' bpm ('+z.label+')':'\u2764 '+z.lo+'\u2013'+z.hi+' bpm ('+z.label+')';
+}
+function renderHrTable(mhr){
+  const z=calcZones(mhr);
+  const rows=[
+    ['#2d3a4a','Warm-up',z.warmup],['#0d6b3d','Low (30s)',z.low],
+    ['#b8860b','Moderate (20s)',z.moderate],['#c0392b','High (10s)',z.high],
+    ['#2c3e6b','Rest',z.rest]
+  ];
+  let h='<table class="hr-table"><tr><th>Phase</th><th>HR Range</th><th>% Max</th></tr>';
+  rows.forEach(r=>{
+    const rng=r[2].lo===0?'< '+r[2].hi+' bpm':r[2].lo+'\u2013'+r[2].hi+' bpm';
+    h+='<tr><td><span class="zc" style="background:'+r[0]+'"></span>'+r[1]+'</td><td>'+rng+'</td><td>'+r[2].label+'</td></tr>';
+  });
+  return h+'</table>';
 }
 
 /* ===== ENCOURAGEMENT ===== */
@@ -448,6 +497,29 @@ function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b
 function fmtDate(d){return d.getDate()+' '+MONTH_SHORT[d.getMonth()]}
 function fmtTime(sec){const m=Math.floor(sec/60),s=sec%60;return m+':'+String(s).padStart(2,'0')}
 
+/* ===== CUSTOM CONFIRM/ALERT ===== */
+let confirmResolve=null;
+function customConfirm(msg){
+  return new Promise(resolve=>{
+    confirmResolve=resolve;
+    $('#confirmMsg').textContent=msg;
+    $('#confirmCancel').style.display='';
+    $('#confirmOverlay').classList.add('active');
+  });
+}
+function customAlert(msg){
+  return new Promise(resolve=>{
+    confirmResolve=()=>resolve();
+    $('#confirmMsg').textContent=msg;
+    $('#confirmCancel').style.display='none';
+    $('#confirmOverlay').classList.add('active');
+  });
+}
+function closeConfirm(result){
+  $('#confirmOverlay').classList.remove('active');
+  if(confirmResolve){confirmResolve(result);confirmResolve=null}
+}
+
 /* ===== BUILD SCHEDULE FROM PROGRAM ===== */
 function buildSchedule(startTue,progKey){
   const prog=PROGRAMS[progKey];
@@ -512,7 +584,8 @@ function initOnboarding(){
     const v=$('#dateInput').value;if(!v)return;
     const d=parseDate(v);
     if(d.getDay()!==2){const off=(d.getDay()-2+7)%7;d.setDate(d.getDate()-off)}
-    saveData({startDate:dateStr(d),program:selectedProg,completed:{}});
+    const mhr=parseInt($('#maxHrInput').value)||DEFAULT_MAX_HR;
+    saveData({startDate:dateStr(d),program:selectedProg,maxHR:Math.min(230,Math.max(100,mhr)),completed:{}});
     renderSchedule();showScreen('#schedule');
   });
 }
@@ -533,9 +606,13 @@ function renderSchedule(){
 
   $('#progBadge').textContent=prog.name+' \u00B7 '+prog.weeks+' weeks';
 
-  // Update help
+  // Update help & HR zones
+  const mhr=data.maxHR||DEFAULT_MAX_HR;
+  $('#helpHrTitle').textContent='Your Heart Rate Zones (Max HR: '+mhr+' bpm)';
+  $('#helpHrTable').innerHTML=renderHrTable(mhr);
   $('#helpProgTitle').textContent=prog.name+' Program';
   $('#helpProgDetails').innerHTML='<p>'+prog.desc+'</p>';
+  $('#maxHrEdit').value=mhr;
 
   // Progress
   const doneCount=Object.keys(completed).length;
@@ -752,11 +829,19 @@ $('#pauseBtn').addEventListener('click',()=>{paused=!paused;$('#pauseBtn').textC
 $('#skipBtn').addEventListener('click',skipPhase);
 $('#stopBtn').addEventListener('click',stopTimer);
 $('#doneBackBtn').addEventListener('click',()=>{showScreen('#schedule');renderSchedule()});
-$('#changProgBtn').addEventListener('click',()=>{
-  if(confirm('Switch to a different program? Current progress will be cleared.')){clearData();showScreen('#onboarding');
+$('#confirmOk').addEventListener('click',()=>closeConfirm(true));
+$('#confirmCancel').addEventListener('click',()=>closeConfirm(false));
+$('#changProgBtn').addEventListener('click',async()=>{
+  if(await customConfirm('Switch to a different program? Current progress will be cleared.')){
+    clearData();showScreen('#onboarding');
     $('#stepDate').classList.remove('active');$('#stepProgram').classList.add('active')}});
+$('#maxHrSaveBtn').addEventListener('click',()=>{
+  const data=loadData();if(!data)return;
+  const v=parseInt($('#maxHrEdit').value)||DEFAULT_MAX_HR;
+  data.maxHR=Math.min(230,Math.max(100,v));
+  saveData(data);renderSchedule()});
 $('#exportBtn').addEventListener('click',()=>{
-  const data=loadData();if(!data){alert('No progress to export.');return}
+  const data=loadData();if(!data){customAlert('No progress to export.');return}
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='rowing-102030-progress.json';a.click();URL.revokeObjectURL(a.href)});
@@ -764,17 +849,18 @@ $('#importBtn').addEventListener('click',()=>$('#importFile').click());
 $('#importFile').addEventListener('change',e=>{
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
-  reader.onload=ev=>{
+  reader.onload=async ev=>{
     try{
       const data=JSON.parse(ev.target.result);
-      if(!data.startDate||!data.program||!PROGRAMS[data.program]){alert('Invalid progress file.');return}
-      if(!confirm('Import this progress? It will replace your current data.'))return;
+      if(!data.startDate||!data.program||!PROGRAMS[data.program]){await customAlert('Invalid progress file.');return}
+      if(!await customConfirm('Import this progress? It will replace your current data.'))return;
       saveData(data);renderSchedule();showScreen('#schedule');
-    }catch(err){alert('Could not read file. Make sure it is a valid progress export.')}
+    }catch(err){customAlert('Could not read file. Make sure it is a valid progress export.')}
   };
   reader.readAsText(file);e.target.value=''});
-$('#resetBtn').addEventListener('click',()=>{
-  if(confirm('Reset the entire program? All progress will be lost.')){clearData();showScreen('#onboarding');
+$('#resetBtn').addEventListener('click',async()=>{
+  if(await customConfirm('Reset the entire program? All progress will be lost.')){
+    clearData();showScreen('#onboarding');
     $('#stepDate').classList.remove('active');$('#stepProgram').classList.add('active')}});
 
 /* ===== INIT ===== */
