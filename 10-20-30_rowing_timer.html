@@ -122,6 +122,42 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
 .session-card.steady{border-style:dashed;opacity:.7}
 .session-card.steady .s-blocks{color:var(--gold)}
 .session-card.swapped{border-color:rgba(234,179,8,.35)}
+.session-card .s-time{position:absolute;bottom:4px;left:4px;font-size:11px;width:24px;height:24px;
+  display:flex;align-items:center;justify-content:center;border-radius:50%;
+  background:rgba(255,255,255,.07);color:var(--muted);cursor:pointer;opacity:.5;transition:opacity .15s}
+.session-card .s-time:active{opacity:1}
+.session-card .s-time.has-time{opacity:1;font-size:.6rem;width:auto;min-width:24px;padding:0 4px;
+  border-radius:6px;font-weight:600;letter-spacing:-.3px;color:var(--accent)}
+
+/* TIME MODAL */
+#timeOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
+  align-items:center;justify-content:center;padding:20px}
+#timeOverlay.active{display:flex}
+#timeBox{background:var(--card);border-radius:20px;padding:28px 24px;max-width:360px;
+  width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px}
+#timeTitle{font-size:1rem;font-weight:700}
+#timeModalInput{padding:14px 20px;border-radius:12px;border:2px solid var(--border);
+  background:var(--card);color:var(--text);font-size:1.3rem;font-weight:700;text-align:center;width:160px}
+#timeModalInput:focus{outline:none;border-color:var(--accent)}
+
+/* PRECOMMIT BANNER */
+.sched-precommit{background:linear-gradient(135deg,rgba(234,179,8,.12),rgba(234,179,8,.04));
+  border:1px solid rgba(234,179,8,.25);border-radius:14px;padding:16px;text-align:center}
+.precommit-chip{display:inline-flex;align-items:center;gap:6px;background:var(--card);
+  border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:.8rem;
+  cursor:pointer;transition:all .15s}
+.precommit-chip:active{transform:scale(.97)}
+.precommit-chip .pc-day{font-weight:700}
+.precommit-chip .pc-date{color:var(--muted)}
+
+/* ONBOARDING TIME PICKERS */
+.time-pick-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;
+  border-bottom:1px solid rgba(255,255,255,.06)}
+.time-pick-row:last-child{border-bottom:none}
+.time-pick-day{font-size:.9rem;font-weight:600;min-width:50px}
+.time-pick-input{padding:8px 12px;border-radius:10px;border:2px solid var(--border);
+  background:var(--card);color:var(--text);font-size:1rem;font-weight:600;text-align:center}
+.time-pick-input:focus{outline:none;border-color:var(--accent)}
 
 /* FREE SESSION */
 #freeSetup{align-items:center;justify-content:center;gap:20px;text-align:center}
@@ -278,6 +314,10 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">Which day is your <strong>steady-state</strong> session?</p>
       <div class="day-picker" id="steadyPicker"></div>
     </div>
+    <div id="timesSection" style="display:none">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">Set <strong>default training times</strong> (optional)</p>
+      <div id="timesPickerList"></div>
+    </div>
     <button class="btn btn-primary" id="daysNextBtn" style="width:100%;max-width:380px" disabled>NEXT</button>
     <button class="btn btn-secondary btn-small" id="daysBackBtn">Back</button>
   </div>
@@ -315,6 +355,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
     <div class="sched-progress-bar"><div class="sched-progress-fill" id="progFill"></div></div>
   </div>
   <div id="todayBanner"></div>
+  <div id="precommitBanner"></div>
   <div id="weekGrid"></div>
   <div style="margin-top:20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px">
     <div class="maxhr-row">
@@ -463,6 +504,19 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
       <button class="btn btn-secondary btn-small" id="swapReset" style="flex:1;font-size:.75rem">Reset to default</button>
       <button class="btn btn-secondary btn-small" id="swapCancel" style="flex:1">Cancel</button>
     </div>
+  </div>
+</div>
+
+<div id="timeOverlay">
+  <div id="timeBox">
+    <p id="timeTitle">Set time</p>
+    <input type="time" id="timeModalInput" value="07:00">
+    <p id="timeSlotInfo" style="font-size:.85rem;color:var(--muted)"></p>
+    <div style="display:flex;gap:8px;width:100%">
+      <button class="btn btn-secondary btn-small" id="timeClear" style="flex:1;font-size:.75rem">Clear time</button>
+      <button class="btn btn-primary btn-small" id="timeSave" style="flex:1">Save</button>
+    </div>
+    <button class="btn btn-secondary btn-small" id="timeCancel" style="width:100%">Cancel</button>
   </div>
 </div>
 
@@ -987,11 +1041,14 @@ function initOnboarding(){
     const dow=d.getDay();
     if(dow!==1){const off=dow===0?6:dow-1;d.setDate(d.getDate()-off)}
     const mhr=parseInt($('#maxHrInput').value)||DEFAULT_MAX_HR;
+    const defaultTimes={};
+    $$('.time-pick-input').forEach(inp=>{if(inp.value)defaultTimes[inp.dataset.day]=inp.value});
     const saveObj={
       startDate:dateStr(d),program:selectedProg,
       days:selectedDays,
       maxHR:Math.min(230,Math.max(100,mhr)),
-      swaps:{},completed:{}
+      swaps:{},completed:{},
+      defaultTimes,sessionTimes:{}
     };
     if(selectedProg==='advanced')saveObj.steadyDay=selectedSteady;
     saveData(saveObj);
@@ -1030,6 +1087,7 @@ function initDayPicker(){
   }
 
   $('#steadySection').style.display='none';
+  $('#timesSection').style.display='none';
   selectedSteady='';
   updateDayPickerState();
 }
@@ -1060,10 +1118,22 @@ function updateDayPickerState(){
     }
     /* NEXT enabled when interval days correct AND steady selected */
     const steadyBtn=$('#steadyPicker .day-btn.steady');
-    $('#daysNextBtn').disabled=!(count===needed&&steadyBtn);
+    const ready=count===needed&&steadyBtn;
+    $('#daysNextBtn').disabled=!ready;
+    if(ready){
+      const allDays=selected.slice().sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
+      if(selectedSteady)allDays.push(selectedSteady);
+      allDays.sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
+      $('#timesSection').style.display='';buildTimePickers(allDays);
+    } else {$('#timesSection').style.display='none'}
   } else {
     $('#steadySection').style.display='none';
-    $('#daysNextBtn').disabled=(count!==needed);
+    const ready=count===needed;
+    $('#daysNextBtn').disabled=!ready;
+    if(ready){
+      const allDays=selected.slice().sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
+      $('#timesSection').style.display='';buildTimePickers(allDays);
+    } else {$('#timesSection').style.display='none'}
   }
 }
 
@@ -1128,14 +1198,20 @@ function renderSchedule(){
   const bannerEl=$('#todayBanner');
 
   if(todayInterval){
+    const tTime=getEffectiveTime(data,todayInterval.key,todayInterval.actualDay);
+    const tSlot=tTime?calcSlotMinutes(todayInterval,prog):0;
+    const timeInfo=tTime?' \u00B7 '+tTime+'\u2013'+fmtEndTime(tTime,tSlot):'';
     bannerEl.innerHTML='<div class="sched-today-banner">'+
-      '<div class="day-label">TODAY &middot; '+todayInterval.day+'</div>'+
+      '<div class="day-label">TODAY &middot; '+todayInterval.day+timeInfo+'</div>'+
       '<div class="day-title">Week '+todayInterval.week+' &middot; '+todayInterval.blocks+' Blocks</div>'+
       '<button class="btn btn-primary" id="todayStartBtn">START TODAY\'S SESSION</button></div>';
     $('#todayStartBtn').addEventListener('click',()=>launchSession(todayInterval,prog));
   } else if(todaySteady){
+    const tTime=getEffectiveTime(data,todaySteady.key,todaySteady.actualDay);
+    const tSlot=tTime?calcSlotMinutes(todaySteady,prog):0;
+    const timeInfo=tTime?' \u00B7 '+tTime+'\u2013'+fmtEndTime(tTime,tSlot):'';
     bannerEl.innerHTML='<div class="sched-today-banner">'+
-      '<div class="day-label">TODAY &middot; '+todaySteady.day+'</div>'+
+      '<div class="day-label">TODAY &middot; '+todaySteady.day+timeInfo+'</div>'+
       '<div class="day-title">Steady-State '+todaySteady.minutes+' min</div>'+
       '<button class="btn btn-primary" id="todaySteadyBtn">START STEADY SESSION</button></div>';
     $('#todaySteadyBtn').addEventListener('click',()=>launchSteadySession(todaySteady));
@@ -1147,6 +1223,27 @@ function renderSchedule(){
     bannerEl.innerHTML='<div class="sched-rest-banner">'+
       '<p style="font-weight:700;margin-bottom:4px">Rest Day ('+WEEKDAY_NAMES[today.getDay()]+')</p>'+
       '<p>Next: '+getNext(sessions,today,completed)+'</p></div>';
+  }
+
+  /* Precommit banner — upcoming sessions without times (next 7 days) */
+  const weekAhead=addDays(today,7);
+  const uncommitted=sessions.filter(s=>s.date>=today&&s.date<=weekAhead&&!completed[s.key]&&!getEffectiveTime(data,s.key,s.actualDay));
+  const pcEl=$('#precommitBanner');
+  if(uncommitted.length){
+    let pcHtml='<div class="sched-precommit"><p style="font-size:.8rem;font-weight:600;margin-bottom:8px">\uD83D\uDCC5 Set times for upcoming sessions</p><div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">';
+    uncommitted.forEach(s=>{
+      pcHtml+='<span class="precommit-chip" data-pc-key="'+s.key+'" data-pc-day="'+s.actualDay+'"><span class="pc-day">'+s.day+'</span><span class="pc-date">'+fmtDate(s.date)+'</span></span>';
+    });
+    pcHtml+='</div></div>';
+    pcEl.innerHTML=pcHtml;
+    $$('.precommit-chip').forEach(chip=>{
+      chip.addEventListener('click',()=>{
+        const s=sessions.find(x=>x.key===chip.dataset.pcKey);
+        if(s)openTimeModal(s.key,s.actualDay,s,prog);
+      });
+    });
+  } else {
+    pcEl.innerHTML='';
   }
 
   /* Week grid */
@@ -1170,8 +1267,12 @@ function renderSchedule(){
       else if(isPast&&!isDone) cls+=' past';
 
       const label=s.type==='steady'?'Steady '+s.minutes+'m':s.blocks+' blocks';
+      const sTime=getEffectiveTime(data,s.key,s.actualDay);
+      const timeCls=sTime?'s-time has-time':'s-time';
+      const timeContent=sTime?sTime:'\uD83D\uDD50';
       html+='<div class="'+cls+'" data-key="'+s.key+'" data-blocks="'+s.blocks+'" data-type="'+s.type+'">'+
         '<div class="s-check" data-toggle="'+s.key+'">'+(isDone?'&#10003;':'')+'</div>'+
+        '<div class="'+timeCls+'" data-time-key="'+s.key+'" data-time-day="'+s.actualDay+'">'+timeContent+'</div>'+
         '<div class="s-swap" data-swap-key="'+s.key+'" data-swap-week="'+s.week+'" data-swap-default="'+s.defaultDay+'" data-swap-current="'+s.actualDay+'">&#8652;</div>'+
         '<div class="s-day">'+s.day+(s.swapped?' *':'')+'</div>'+
         '<div class="s-date">'+fmtDate(s.date)+'</div>'+
@@ -1188,6 +1289,13 @@ function renderSchedule(){
       if(e.target.closest('[data-toggle]')){
         e.stopPropagation();
         toggleDone(e.target.closest('[data-toggle]').dataset.toggle);
+        return;
+      }
+      if(e.target.closest('[data-time-key]')){
+        e.stopPropagation();
+        const el=e.target.closest('[data-time-key]');
+        const s=sessions.find(x=>x.key===el.dataset.timeKey);
+        if(s)openTimeModal(s.key,el.dataset.timeDay,s,prog);
         return;
       }
       if(e.target.closest('[data-swap-key]')){
@@ -1231,6 +1339,85 @@ function launchSteadySession(sess){
   timerConfig.steady=true;timerConfig.steadyMinutes=sess.minutes;
   timerConfig.warmup=true;timerConfig.cooldown=true;timerConfig.isFree=false;
   startTimer();
+}
+
+/* ===== TIME SLOTS ===== */
+function calcSlotMinutes(sess,prog){
+  let sec;
+  if(sess.type==='steady') sec=240+sess.minutes*60+300;
+  else sec=240+sess.blocks*5*60+(sess.blocks-1)*(prog.restSec+10)+300;
+  return Math.round(sec/60*5/3/5)*5;
+}
+function getEffectiveTime(data,key,day){
+  if(data.sessionTimes&&data.sessionTimes[key])return data.sessionTimes[key];
+  if(data.defaultTimes&&data.defaultTimes[day])return data.defaultTimes[day];
+  return null;
+}
+function fmtEndTime(startStr,slotMin){
+  const[h,m]=startStr.split(':').map(Number);
+  const end=h*60+m+slotMin;
+  return String(Math.floor(end/60)%24).padStart(2,'0')+':'+String(end%60).padStart(2,'0');
+}
+
+let timeTarget=null;
+function openTimeModal(key,day,sess,prog){
+  const data=loadData();
+  timeTarget={key,day,sess,prog};
+  const slotMin=calcSlotMinutes(sess,prog);
+  const effective=getEffectiveTime(data,key,day);
+  $('#timeTitle').textContent='Set time for '+sess.day+' '+fmtDate(sess.date);
+  const inp=$('#timeModalInput');
+  inp.value=effective||'07:00';
+  updateTimeSlotInfo(slotMin);
+  inp.oninput=()=>updateTimeSlotInfo(slotMin);
+  $('#timeOverlay').classList.add('active');
+}
+function updateTimeSlotInfo(slotMin){
+  const v=$('#timeModalInput').value;
+  if(v){
+    const end=fmtEndTime(v,slotMin);
+    $('#timeSlotInfo').textContent='Calendar slot: '+slotMin+' min ('+v+' \u2013 '+end+')';
+  } else {
+    $('#timeSlotInfo').textContent='Calendar slot: '+slotMin+' min';
+  }
+}
+function initTimeModal(){
+  $('#timeSave').addEventListener('click',()=>{
+    if(!timeTarget)return;
+    const data=loadData();if(!data)return;
+    const v=$('#timeModalInput').value;
+    if(!data.sessionTimes)data.sessionTimes={};
+    if(v){data.sessionTimes[timeTarget.key]=v}
+    else{delete data.sessionTimes[timeTarget.key]}
+    saveData(data);
+    $('#timeOverlay').classList.remove('active');
+    timeTarget=null;renderSchedule();
+  });
+  $('#timeClear').addEventListener('click',()=>{
+    if(!timeTarget)return;
+    const data=loadData();if(!data)return;
+    if(!data.sessionTimes)data.sessionTimes={};
+    delete data.sessionTimes[timeTarget.key];
+    saveData(data);
+    $('#timeOverlay').classList.remove('active');
+    timeTarget=null;renderSchedule();
+  });
+  $('#timeCancel').addEventListener('click',()=>{
+    $('#timeOverlay').classList.remove('active');
+    timeTarget=null;
+  });
+  $('#timeOverlay').addEventListener('click',e=>{
+    if(e.target===e.currentTarget){$('#timeOverlay').classList.remove('active');timeTarget=null}
+  });
+}
+
+function buildTimePickers(days){
+  let html='';
+  days.forEach(d=>{
+    html+='<div class="time-pick-row"><span class="time-pick-day">'+DAY_LABELS[d]+'</span>'+
+      '<input type="time" class="time-pick-input" data-day="'+d+'" value="07:00"></div>';
+  });
+  $('#timesPickerList').innerHTML=html;
 }
 
 /* ===== SWAP MODAL ===== */
@@ -1470,7 +1657,7 @@ $('#resetBtn').addEventListener('click',async()=>{
     clearData();showScreen('#onboarding');showOnboardStep('stepProgram')}});
 
 /* ===== INIT ===== */
-initOnboarding();initFreeSetup();initSwapModal();
+initOnboarding();initFreeSetup();initSwapModal();initTimeModal();
 const saved=loadData();
 if(saved&&saved.program){
   if(!saved.days)migrateData(saved);
