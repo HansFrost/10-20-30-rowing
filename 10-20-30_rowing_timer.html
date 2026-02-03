@@ -126,6 +126,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
 .session-card.completed .s-check{background:var(--green);border-color:var(--green);color:#fff}
 .session-card.today{border-color:var(--accent);box-shadow:0 0 0 2px rgba(79,140,255,.25)}
 .session-card.future{opacity:.5}
+.session-card.future .s-check{pointer-events:none;opacity:.3}
 .session-card.past:not(.completed){opacity:.4}
 .session-card.steady{border-style:dashed;opacity:.7}
 .session-card.steady .s-blocks{color:var(--gold)}
@@ -1563,12 +1564,17 @@ function getNext(sessions,today,completed){
 
 function toggleDone(key){
   const data=loadData();if(!data)return;
-  const wasCompleted=!!data.completed[key];
-  if(data.completed[key]) delete data.completed[key];
-  else data.completed[key]=new Date().toISOString();
   const prog=PROGRAMS[data.program];
   const startMon=parseDate(data.startDate);
   const sessions=buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{});
+  const sess=sessions.find(s=>s.key===key);
+  if(sess){
+    const today=new Date();today.setHours(0,0,0,0);
+    if(sess.date>today)return;
+  }
+  const wasCompleted=!!data.completed[key];
+  if(data.completed[key]) delete data.completed[key];
+  else data.completed[key]=new Date().toISOString();
   const si=calcStreak(data,sessions);
   data.bestStreak=si.best;
   saveData(data);
