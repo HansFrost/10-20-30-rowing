@@ -148,6 +148,11 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .session-card .s-time.has-time{opacity:1;font-size:.6rem;width:auto;min-width:24px;padding:0 4px;
   border-radius:6px;font-weight:600;letter-spacing:-.3px;color:var(--accent)}
 .session-card.extra{border-style:dashed;border-color:var(--accent)}
+.session-card .s-delete{position:absolute;top:7px;left:7px;width:20px;height:20px;
+  border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;
+  justify-content:center;font-size:11px;color:var(--muted);cursor:pointer;opacity:.6;transition:all .15s;
+  background:none}
+.session-card .s-delete:active{opacity:1;color:var(--red,#ef4444);border-color:var(--red,#ef4444)}
 .add-session-btn{width:24px;height:24px;border-radius:50%;border:1.5px dashed var(--muted);
   background:none;color:var(--muted);font-size:1rem;font-weight:700;cursor:pointer;
   display:flex;align-items:center;justify-content:center;padding:0;transition:all .15s;line-height:1}
@@ -1659,11 +1664,13 @@ function renderSchedule(){
       const sTime=getEffectiveTime(data,s.key,s.actualDay);
       const timeCls=sTime?'s-time has-time':'s-time';
       const timeContent=sTime?sTime:'\uD83D\uDD50';
-      const bottomBtn='<div class="s-swap" data-swap-key="'+s.key+'" data-swap-week="'+s.week+'" data-swap-default="'+s.defaultDay+'" data-swap-current="'+s.actualDay+'"'+(s.isExtra?' data-swap-extra="1"':'')+'>&#8652;</div>';
+      const swapBtn='<div class="s-swap" data-swap-key="'+s.key+'" data-swap-week="'+s.week+'" data-swap-default="'+s.defaultDay+'" data-swap-current="'+s.actualDay+'"'+(s.isExtra?' data-swap-extra="1"':'')+'>&#8652;</div>';
+      const deleteBtn=s.isExtra?'<div class="s-delete" data-delete-extra="'+s.key+'">&times;</div>':'';
       html+='<div class="'+cls+'" data-key="'+s.key+'" data-blocks="'+s.blocks+'" data-type="'+s.type+'">'+
         '<div class="s-check" data-toggle="'+s.key+'">'+(isDone?'&#10003;':'')+'</div>'+
+        deleteBtn+
         '<div class="'+timeCls+'" data-time-key="'+s.key+'" data-time-day="'+s.actualDay+'">'+timeContent+'</div>'+
-        bottomBtn+
+        swapBtn+
         '<div class="s-day">'+s.day+(s.swapped?' *':'')+'</div>'+
         '<div class="s-date">'+fmtDate(s.date)+'</div>'+
         '<div class="s-blocks">'+label+'</div>'+
@@ -1686,6 +1693,11 @@ function renderSchedule(){
         const el=e.target.closest('[data-time-key]');
         const s=sessions.find(x=>x.key===el.dataset.timeKey);
         if(s)openTimeModal(s.key,el.dataset.timeDay,s,prog);
+        return;
+      }
+      if(e.target.closest('[data-delete-extra]')){
+        e.stopPropagation();
+        deleteExtraSession(e.target.closest('[data-delete-extra]').dataset.deleteExtra);
         return;
       }
       if(e.target.closest('[data-swap-key]')){
@@ -1848,9 +1860,7 @@ function openSwapModal(key,week,defaultDay,currentDay,isExtra){
   });
   const resetBtn=$('#swapReset');
   if(isExtra){
-    resetBtn.textContent='Remove session';
-    resetBtn.style.display='';
-    resetBtn.style.color='var(--red)';
+    resetBtn.style.display='none';
   } else {
     resetBtn.textContent='Reset to default';
     resetBtn.style.display=(currentDay!==defaultDay)?'':'none';
@@ -1892,27 +1902,28 @@ function initSwapModal(){
   $('#swapCancel').addEventListener('click',()=>{
     $('#swapOverlay').classList.remove('active');swapTarget=null;
   });
-  $('#swapReset').addEventListener('click',async()=>{
+  $('#swapReset').addEventListener('click',()=>{
     if(!swapTarget)return;
     const data=loadData();if(!data)return;
-    if(swapTarget.isExtra){
-      $('#swapOverlay').classList.remove('active');
-      if(!await customConfirm('Remove this extra session?')){swapTarget=null;return}
-      const ds=swapTarget.key.replace('extra-','');
-      data.extraSessions=(data.extraSessions||[]).filter(e=>e.date!==ds);
-      delete data.completed[swapTarget.key];
-      if(data.sessionTimes)delete data.sessionTimes[swapTarget.key];
-    } else {
-      if(data.swaps)delete data.swaps[swapTarget.key];
-      $('#swapOverlay').classList.remove('active');
-    }
+    if(data.swaps)delete data.swaps[swapTarget.key];
     saveData(data);
+    $('#swapOverlay').classList.remove('active');
     swapTarget=null;
     renderSchedule();
   });
 }
 
 /* ===== ADD / DELETE EXTRA SESSIONS ===== */
+async function deleteExtraSession(key){
+  if(!await customConfirm('Remove this extra session?'))return;
+  const data=loadData();if(!data)return;
+  const ds=key.replace('extra-','');
+  data.extraSessions=(data.extraSessions||[]).filter(e=>e.date!==ds);
+  delete data.completed[key];
+  if(data.sessionTimes)delete data.sessionTimes[key];
+  saveData(data);
+  renderSchedule();
+}
 let addSessionTarget=null;
 function openAddSessionModal(week){
   addSessionTarget={week};
