@@ -50,8 +50,9 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .btn-small{padding:10px 16px;font-size:.85rem;border-radius:10px}
 
 /* ONBOARDING */
-#onboarding{align-items:center;gap:16px;text-align:center;overflow-y:auto}
-#onboarding::before,#onboarding::after{content:'';flex:1 0 0px}
+#onboarding{align-items:center;gap:16px;text-align:center;
+  max-height:100vh;max-height:100dvh;overflow-y:auto}
+#onboarding::before,#onboarding::after{content:'';flex:1}
 #onboarding h1{font-size:1.8rem;font-weight:800;line-height:1.2}
 #onboarding h1 small{display:block;font-size:.9rem;font-weight:400;color:var(--muted);margin-top:6px}
 #onboarding p{color:var(--muted);font-size:.9rem;line-height:1.6;max-width:360px}
@@ -241,8 +242,9 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .quick-session-btn:hover{background:var(--accent);color:#fff}
 
 /* FREE SESSION */
-#freeSetup{align-items:center;gap:20px;text-align:center;overflow-y:auto}
-#freeSetup::before,#freeSetup::after{content:'';flex:1 0 0px}
+#freeSetup{align-items:center;gap:20px;text-align:center;
+  max-height:100vh;max-height:100dvh;overflow-y:auto}
+#freeSetup::before,#freeSetup::after{content:'';flex:1}
 #freeSetup h2{font-size:1.4rem;font-weight:800}
 .setup-group{width:100%;max-width:360px;background:var(--card);border-radius:16px;padding:20px}
 .setup-group label{display:block;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;
@@ -263,7 +265,8 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .toggle.on::after{transform:translateX(24px)}
 
 /* TIMER */
-#timer{align-items:center;justify-content:center;gap:clamp(2px,1vh,6px);text-align:center;padding:clamp(8px,2vh,20px)}
+#timer{align-items:center;justify-content:center;gap:clamp(2px,1vh,6px);text-align:center;padding:clamp(8px,2vh,20px);
+  max-height:100vh;max-height:100dvh;overflow:hidden}
 #phaseLabel{font-size:clamp(.75rem,min(4vw,2.5vh),1.3rem);text-transform:uppercase;letter-spacing:3px;opacity:.8;font-weight:600}
 #phaseName{font-size:clamp(1.8rem,min(13vw,8vh),4.5rem);font-weight:900;line-height:1}
 #hrZone{font-size:clamp(.7rem,min(3.5vw,2vh),1.1rem);opacity:.7;margin-top:2px;font-weight:600;letter-spacing:.5px}
@@ -282,8 +285,9 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .timer-btn.skip{border-color:rgba(245,158,11,.4)}
 
 /* DONE */
-#done{align-items:center;gap:16px;text-align:center;overflow-y:auto}
-#done::before,#done::after{content:'';flex:1 0 0px}
+#done{align-items:center;gap:16px;text-align:center;
+  max-height:100vh;max-height:100dvh;overflow-y:auto}
+#done::before,#done::after{content:'';flex:1}
 #done h2{font-size:2.2rem;font-weight:900}
 #done .sub{font-size:1rem;color:var(--muted)}
 #summaryBox{background:var(--card);border-radius:16px;padding:20px;width:100%;max-width:360px;text-align:left}
