@@ -1145,8 +1145,24 @@ function totalAllSessions(progKey,numDays){
 }
 
 /* ===== SCREENS ===== */
-function showScreen(id){$$('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');document.body.className=''}
-function showOnboardStep(id){$$('.onboard-step').forEach(s=>s.classList.remove('active'));$('#'+id).classList.add('active')}
+let _skipHist=false;
+function showScreen(id){
+  $$('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');document.body.className='';
+  if(!_skipHist)history.pushState({screen:id},'');
+}
+function showOnboardStep(id){
+  $$('.onboard-step').forEach(s=>s.classList.remove('active'));$('#'+id).classList.add('active');
+  if(!_skipHist)history.pushState({screen:'#onboarding',step:id},'');
+}
+window.addEventListener('popstate',function(e){
+  var st=e.state;if(!st||!st.screen)return;
+  _skipHist=true;
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer)}
+  $$('.screen').forEach(s=>s.classList.remove('active'));$(st.screen).classList.add('active');document.body.className='';
+  if(st.screen==='#schedule')renderSchedule();
+  if(st.step)showOnboardStep(st.step);
+  _skipHist=false;
+});
 
 /* ===== ONBOARDING ===== */
 let selectedProg='intermediate';
@@ -1214,8 +1230,8 @@ function initOnboarding(){
   });
 
   /* Back buttons */
-  $('#daysBackBtn').addEventListener('click',()=>showOnboardStep('stepProgram'));
-  $('#dateBackBtn').addEventListener('click',()=>showOnboardStep('stepDays'));
+  $('#daysBackBtn').addEventListener('click',()=>history.back());
+  $('#dateBackBtn').addEventListener('click',()=>history.back());
 
   /* START PROGRAM */
   $('#onboardBtn').addEventListener('click',()=>{
@@ -1791,7 +1807,7 @@ function initFreeSetup(){
   tog('warmupToggle','warmup');tog('cooldownToggle','cooldown');
   $('#freeStartBtn').addEventListener('click',()=>{
     currentSessionKey=null;Object.assign(timerConfig,freeConfig);timerConfig.isFree=true;timerConfig.steady=false;startTimer()});
-  $('#freeBackBtn').addEventListener('click',()=>{showScreen('#schedule');renderSchedule()});
+  $('#freeBackBtn').addEventListener('click',()=>history.back());
 }
 
 /* ===== TIMER ===== */
@@ -2165,7 +2181,7 @@ $('#pauseBtn').addEventListener('click',()=>{
   paused=!paused;$('#pauseBtn').textContent=paused?'RESUME':'PAUSE'});
 $('#skipBtn').addEventListener('click',skipPhase);
 $('#stopBtn').addEventListener('click',stopTimer);
-$('#doneBackBtn').addEventListener('click',()=>{showScreen('#schedule');renderSchedule()});
+$('#doneBackBtn').addEventListener('click',()=>history.back());
 $('#confirmOk').addEventListener('click',()=>closeConfirm(true));
 $('#confirmCancel').addEventListener('click',()=>closeConfirm(false));
 $('#changProgBtn').addEventListener('click',async()=>{
@@ -2202,12 +2218,15 @@ $('#resetBtn').addEventListener('click',async()=>{
 /* ===== INIT ===== */
 initOnboarding();initFreeSetup();initSwapModal();initTimeModal();
 const saved=loadData();
+_skipHist=true;
 if(saved&&saved.program){
   if(!saved.days)migrateData(saved);
   renderSchedule();showScreen('#schedule');
+  history.replaceState({screen:'#schedule'},'');
 }
-else if(saved){clearData();showScreen('#onboarding')}
-else showScreen('#onboarding');
+else if(saved){clearData();showScreen('#onboarding');history.replaceState({screen:'#onboarding',step:'stepProgram'},'');}
+else{showScreen('#onboarding');history.replaceState({screen:'#onboarding',step:'stepProgram'},'');}
+_skipHist=false;
 })();
 </script>
 </body>
