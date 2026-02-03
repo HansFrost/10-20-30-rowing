@@ -140,6 +140,16 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
   background:var(--card);color:var(--text);font-size:1.3rem;font-weight:700;text-align:center;width:160px}
 #timeModalInput:focus{outline:none;border-color:var(--accent)}
 
+/* DEFAULT TIMES MODAL */
+#defTimesOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
+  align-items:center;justify-content:center;padding:20px}
+#defTimesOverlay.active{display:flex}
+#defTimesBox{background:var(--card);border-radius:20px;padding:28px 24px;max-width:360px;
+  width:100%;display:flex;flex-direction:column;align-items:center;gap:16px}
+#defTimesBox .dt-title{font-size:1rem;font-weight:700;text-align:center}
+#defTimesBox .dt-desc{font-size:.8rem;color:var(--muted);text-align:center;line-height:1.4}
+#defTimesList{width:100%}
+
 /* PRECOMMIT BANNER */
 .sched-precommit{background:linear-gradient(135deg,rgba(234,179,8,.12),rgba(234,179,8,.04));
   border:1px solid rgba(234,179,8,.25);border-radius:14px;padding:16px;text-align:center}
@@ -417,6 +427,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
       <span>bpm</span>
       <button class="btn btn-secondary btn-small" id="maxHrSaveBtn" style="font-size:.7rem;padding:6px 10px">Save</button>
     </div>
+    <button class="btn btn-secondary btn-small" id="defTimesBtn" style="font-size:.75rem;width:100%">Set Default Training Times</button>
     <div style="display:flex;gap:8px">
       <button class="btn btn-secondary btn-small" id="exportBtn" style="font-size:.75rem">Export Progress</button>
       <button class="btn btn-secondary btn-small" id="importBtn" style="font-size:.75rem">Import Progress</button>
@@ -560,6 +571,18 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
     <div style="display:flex;gap:8px;width:100%">
       <button class="btn btn-secondary btn-small" id="swapReset" style="flex:1;font-size:.75rem">Reset to default</button>
       <button class="btn btn-secondary btn-small" id="swapCancel" style="flex:1">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="defTimesOverlay">
+  <div id="defTimesBox">
+    <p class="dt-title">Default Training Times</p>
+    <p class="dt-desc">Set a default time for each training day. Individual sessions can still be overridden.</p>
+    <div id="defTimesList"></div>
+    <div style="display:flex;gap:8px;width:100%">
+      <button class="btn btn-secondary btn-small" id="defTimesCancel" style="flex:1">Cancel</button>
+      <button class="btn btn-primary btn-small" id="defTimesSave" style="flex:1">Save</button>
     </div>
   </div>
 </div>
@@ -1505,6 +1528,35 @@ function initTimeModal(){
     if(e.target===e.currentTarget){$('#timeOverlay').classList.remove('active');timeTarget=null}
   });
 }
+
+function openDefTimesModal(){
+  const data=loadData();if(!data)return;
+  const days=data.days||[];
+  const dt=data.defaultTimes||{};
+  let html='';
+  days.forEach(d=>{
+    html+='<div class="time-pick-row"><span class="time-pick-day">'+DAY_LABELS[d]+'</span>'+
+      '<input type="time" class="dt-input" data-day="'+d+'" value="'+(dt[d]||'')+'"></div>';
+  });
+  $('#defTimesList').innerHTML=html;
+  $('#defTimesOverlay').classList.add('active');
+}
+$('#defTimesBtn').addEventListener('click',openDefTimesModal);
+$('#defTimesSave').addEventListener('click',()=>{
+  const data=loadData();if(!data)return;
+  if(!data.defaultTimes)data.defaultTimes={};
+  $$('.dt-input').forEach(inp=>{
+    if(inp.value)data.defaultTimes[inp.dataset.day]=inp.value;
+    else delete data.defaultTimes[inp.dataset.day];
+  });
+  saveData(data);
+  $('#defTimesOverlay').classList.remove('active');
+  renderSchedule();
+});
+$('#defTimesCancel').addEventListener('click',()=>{$('#defTimesOverlay').classList.remove('active')});
+$('#defTimesOverlay').addEventListener('click',e=>{
+  if(e.target===e.currentTarget)$('#defTimesOverlay').classList.remove('active');
+});
 
 function buildTimePickers(days){
   let html='';
