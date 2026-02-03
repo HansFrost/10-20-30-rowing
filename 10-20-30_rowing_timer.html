@@ -77,7 +77,10 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
 /* SCHEDULE */
 #schedule{gap:16px;padding-bottom:100px}
 .sched-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-.sched-header h1{font-size:1.3rem;font-weight:800}
+.sched-header h1{font-size:1.3rem;font-weight:800;cursor:pointer}
+.sched-header h1:hover{text-decoration:underline;text-decoration-style:dotted;text-underline-offset:4px}
+.sched-header h1[contenteditable="true"]{outline:2px solid var(--accent);border-radius:4px;padding:0 4px;
+  text-decoration:none}
 .sched-header .prog-badge{font-size:.7rem;background:rgba(79,140,255,.15);color:var(--accent);
   padding:3px 10px;border-radius:8px;font-weight:600}
 .sched-header-btns{display:flex;gap:8px}
@@ -402,7 +405,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
 <div class="screen" id="schedule">
   <div class="sched-header">
     <div>
-      <h1>My Program</h1>
+      <h1 id="progName">My Program</h1>
       <span class="prog-badge" id="progBadge"></span>
     </div>
     <div class="sched-header-btns">
@@ -1249,6 +1252,24 @@ function renderSchedule(){
   const today=new Date();today.setHours(0,0,0,0);
   const completed=data.completed||{};
   const total=totalAllSessions(progKey,data.days.length);
+
+  /* Program name */
+  const nameEl=$('#progName');
+  nameEl.textContent=data.programName||'My Program';
+  nameEl.onclick=()=>{
+    nameEl.contentEditable='true';nameEl.focus();
+    const r=document.createRange();r.selectNodeContents(nameEl);
+    const s=window.getSelection();s.removeAllRanges();s.addRange(r);
+  };
+  const saveName=()=>{
+    nameEl.contentEditable='false';
+    const v=nameEl.textContent.trim();
+    if(v&&v!=='My Program'){data.programName=v}else{delete data.programName}
+    nameEl.textContent=data.programName||'My Program';
+    saveData(data);
+  };
+  nameEl.onblur=saveName;
+  nameEl.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();nameEl.blur()}};
 
   /* Badge */
   let badge=prog.name+' \u00B7 '+prog.weeks+'w \u00B7 '+data.days.map(d=>DAY_LABELS[d]).join('/');
