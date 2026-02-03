@@ -406,6 +406,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 <!-- ONBOARDING -->
 <div class="screen" id="onboarding">
   <h1>10-20-30 Rowing<small>Training Program</small></h1>
+  <button class="btn btn-secondary btn-small" id="backToProgram" style="display:none;margin-bottom:4px">&larr; Back to current program</button>
 
   <!-- Step 1: Program -->
   <div class="onboard-step active" id="stepProgram">
@@ -2366,7 +2367,11 @@ $('#doneBackBtn').addEventListener('click',()=>history.back());
 $('#confirmOk').addEventListener('click',()=>closeConfirm(true));
 $('#confirmCancel').addEventListener('click',()=>closeConfirm(false));
 $('#changProgBtn').addEventListener('click',()=>{
+  $('#backToProgram').style.display='';
   showScreen('#onboarding');showOnboardStep('stepProgram')});
+$('#backToProgram').addEventListener('click',()=>{
+  $('#backToProgram').style.display='none';
+  renderSchedule();showScreen('#schedule')});
 $('#maxHrSaveBtn').addEventListener('click',()=>{
   const data=loadData();if(!data)return;
   const v=parseInt($('#maxHrEdit').value)||DEFAULT_MAX_HR;
