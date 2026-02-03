@@ -107,7 +107,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .finish-stat-num{font-size:1.3rem;font-weight:800;color:var(--fg);line-height:1.2}
 .finish-stat-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
 .finish-msg{font-size:.85rem;color:var(--fg);font-style:italic;line-height:1.5;margin:8px 0}
-.week-group{margin-top:4px}
+.week-group{margin:4px auto 0;width:calc(3 * 140px + 2 * 8px)}
 .week-label{font-size:.8rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);
   margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
 .week-label .blocks-tag{font-size:.7rem;background:rgba(255,255,255,.06);padding:2px 8px;
@@ -335,7 +335,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .maxhr-input:focus{outline:none;border-color:var(--accent)}
 
 @media(max-width:380px){
-  .week-sessions{grid-template-columns:repeat(3,1fr);gap:6px}.session-card{padding:10px 6px;min-width:70px;width:auto}
+  .week-group{width:auto}.week-sessions{grid-template-columns:repeat(3,1fr);gap:6px}.session-card{padding:10px 6px;min-width:70px;width:auto}
 }
 @media(orientation:landscape) and (max-height:500px){
   #timer.active{display:grid;grid-template-columns:1fr 1fr;align-content:center;
