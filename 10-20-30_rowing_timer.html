@@ -1355,10 +1355,19 @@ function renderSchedule(){
 
   /* Progress */
   const doneCount=Object.keys(completed).length;
-  $('#progLabel').textContent=doneCount+' / '+total+' sessions';
-  const pct=Math.round(doneCount/total*100);
-  $('#progPct').textContent=pct+'%';
-  $('#progFill').style.width=pct+'%';
+  const lastSession=sessions[sessions.length-1];
+  const programOver=lastSession&&lastSession.date<today;
+  if(programOver){
+    $('#progLabel').textContent='Program finished \u2014 '+doneCount+' / '+total+' sessions';
+    const pct=Math.round(doneCount/total*100);
+    $('#progPct').textContent=pct+'%';
+    $('#progFill').style.width=pct+'%';
+  } else {
+    $('#progLabel').textContent=doneCount+' / '+total+' sessions';
+    const pct=Math.round(doneCount/total*100);
+    $('#progPct').textContent=pct+'%';
+    $('#progFill').style.width=pct+'%';
+  }
 
   /* Habit strip (streak + stage badge) */
   renderHabitStrip(data,sessions);
@@ -1410,6 +1419,15 @@ function renderSchedule(){
       bTagHtml+streakWarnHtml+
       '<button class="btn btn-primary" id="todaySteadyBtn">START STEADY SESSION</button></div>';
     $('#todaySteadyBtn').addEventListener('click',()=>launchSteadySession(todaySteady));
+  } else if(programOver){
+    const pctDone=Math.round(doneCount/total*100);
+    bannerEl.innerHTML='<div class="sched-rest-banner">'+
+      '<p style="font-weight:700;color:var(--green);margin-bottom:4px">Program Finished!</p>'+
+      bTagHtml+
+      '<p>You completed '+doneCount+' of '+total+' sessions ('+pctDone+'%).</p>'+
+      (doneCount===total?'<p style="color:var(--green);font-weight:600">Perfect completion!</p>':
+        '<p style="font-size:.8rem;color:var(--muted)">Tap <strong>Change Program</strong> to start a new program.</p>')+
+    '</div>';
   } else if(todayAllDone){
     bannerEl.innerHTML='<div class="sched-rest-banner">'+
       '<p style="font-weight:700;color:var(--green);margin-bottom:4px">Today\'s session is done!</p>'+
