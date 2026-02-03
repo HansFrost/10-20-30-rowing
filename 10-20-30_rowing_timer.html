@@ -2159,13 +2159,20 @@ $('#pauseBtn').addEventListener('click',()=>{
 $('#skipBtn').addEventListener('click',skipPhase);
 $('#stopBtn').addEventListener('click',stopTimer);
 $('#fullscreenBtn').addEventListener('click',()=>{
-  if(!document.fullscreenElement){
-    (document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen||function(){}).call(document.documentElement);
-  }else{
-    (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document);
-  }
+  var el=document.documentElement,rfs=el.requestFullscreen||el.webkitRequestFullscreen;
+  if(document.fullscreenElement||document.webkitFullscreenElement){
+    (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+  }else if(rfs){
+    rfs.call(el).catch(function(){showFullscreenHint()});
+  }else{showFullscreenHint()}
 });
-if(!document.fullscreenEnabled&&!document.webkitFullscreenEnabled)$('#fullscreenBtn').style.display='none';
+function showFullscreenHint(){
+  var msg=$('#fullscreenBtn');
+  var tip=document.createElement('div');
+  tip.textContent='Tap \u201cAdd to Home Screen\u201d in your browser menu for fullscreen';
+  tip.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--card);color:var(--text);padding:12px 18px;border-radius:10px;font-size:.8rem;z-index:999;text-align:center;max-width:280px;border:1px solid var(--border)';
+  document.body.appendChild(tip);setTimeout(()=>tip.remove(),4000);
+}
 $('#doneBackBtn').addEventListener('click',()=>{showScreen('#schedule');renderSchedule()});
 $('#confirmOk').addEventListener('click',()=>closeConfirm(true));
 $('#confirmCancel').addEventListener('click',()=>closeConfirm(false));
