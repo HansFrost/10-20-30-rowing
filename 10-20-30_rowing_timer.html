@@ -149,10 +149,6 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .session-card .s-time.has-time{opacity:1;font-size:.6rem;width:auto;min-width:24px;padding:0 4px;
   border-radius:6px;font-weight:600;letter-spacing:-.3px;color:var(--accent)}
 .session-card.extra{border-style:dashed;border-color:var(--accent)}
-.session-card .s-delete{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:13px;width:24px;height:24px;
-  display:flex;align-items:center;justify-content:center;border-radius:50%;
-  background:rgba(239,68,68,.15);color:var(--red);cursor:pointer;opacity:.7;transition:opacity .15s}
-.session-card .s-delete:active{opacity:1}
 .add-session-btn{width:24px;height:24px;border-radius:50%;border:1.5px dashed var(--muted);
   background:none;color:var(--muted);font-size:1rem;font-weight:700;cursor:pointer;
   display:flex;align-items:center;justify-content:center;padding:0;transition:all .15s;line-height:1}
@@ -785,7 +781,6 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
   <div id="timeBox">
     <p id="timeTitle">Set time</p>
     <input type="time" id="timeModalInput" value="07:00">
-    <p id="timeSlotInfo" style="font-size:.85rem;color:var(--muted)"></p>
     <div style="display:flex;gap:8px;width:100%">
       <button class="btn btn-secondary btn-small" id="timeClear" style="flex:1;font-size:.75rem">Clear time</button>
       <button class="btn btn-primary btn-small" id="timeSave" style="flex:1">Save</button>
@@ -1550,8 +1545,7 @@ function renderSchedule(){
 
   if(todayInterval){
     const tTime=getEffectiveTime(data,todayInterval.key,todayInterval.actualDay);
-    const tSlot=tTime?calcSlotMinutes(todayInterval,prog):0;
-    const timeInfo=tTime?' \u00B7 '+tTime+'\u2013'+fmtEndTime(tTime,tSlot):'';
+    const timeInfo=tTime?' \u00B7 '+tTime:'';
     bannerEl.innerHTML='<div class="sched-today-banner">'+
       '<div class="day-label">TODAY &middot; '+todayInterval.day+timeInfo+'</div>'+
       '<div class="day-title">Week '+todayInterval.week+' &middot; '+todayInterval.blocks+' Blocks</div>'+
@@ -1567,8 +1561,7 @@ function renderSchedule(){
     });
   } else if(todaySteady){
     const tTime=getEffectiveTime(data,todaySteady.key,todaySteady.actualDay);
-    const tSlot=tTime?calcSlotMinutes(todaySteady,prog):0;
-    const timeInfo=tTime?' \u00B7 '+tTime+'\u2013'+fmtEndTime(tTime,tSlot):'';
+    const timeInfo=tTime?' \u00B7 '+tTime:'';
     bannerEl.innerHTML='<div class="sched-today-banner">'+
       '<div class="day-label">TODAY &middot; '+todaySteady.day+timeInfo+'</div>'+
       '<div class="day-title">Steady-State '+todaySteady.minutes+' min</div>'+
@@ -1668,9 +1661,7 @@ function renderSchedule(){
       const sTime=getEffectiveTime(data,s.key,s.actualDay);
       const timeCls=sTime?'s-time has-time':'s-time';
       const timeContent=sTime?sTime:'\uD83D\uDD50';
-      const bottomBtn=s.isExtra?
-        '<div class="s-delete" data-delete-key="'+s.key+'">&#10005;</div>':
-        '<div class="s-swap" data-swap-key="'+s.key+'" data-swap-week="'+s.week+'" data-swap-default="'+s.defaultDay+'" data-swap-current="'+s.actualDay+'">&#8652;</div>';
+      const bottomBtn='<div class="s-swap" data-swap-key="'+s.key+'" data-swap-week="'+s.week+'" data-swap-default="'+s.defaultDay+'" data-swap-current="'+s.actualDay+'"'+(s.isExtra?' data-swap-extra="1"':'')+'>&#8652;</div>';
       html+='<div class="'+cls+'" data-key="'+s.key+'" data-blocks="'+s.blocks+'" data-type="'+s.type+'">'+
         '<div class="s-check" data-toggle="'+s.key+'">'+(isDone?'&#10003;':'')+'</div>'+
         '<div class="'+timeCls+'" data-time-key="'+s.key+'" data-time-day="'+s.actualDay+'">'+timeContent+'</div>'+
@@ -1702,12 +1693,7 @@ function renderSchedule(){
       if(e.target.closest('[data-swap-key]')){
         e.stopPropagation();
         const el=e.target.closest('[data-swap-key]');
-        openSwapModal(el.dataset.swapKey,el.dataset.swapWeek,el.dataset.swapDefault,el.dataset.swapCurrent);
-        return;
-      }
-      if(e.target.closest('[data-delete-key]')){
-        e.stopPropagation();
-        deleteExtraSession(e.target.closest('[data-delete-key]').dataset.deleteKey);
+        openSwapModal(el.dataset.swapKey,el.dataset.swapWeek,el.dataset.swapDefault,el.dataset.swapCurrent,!!el.dataset.swapExtra);
         return;
       }
       const s=sessions.find(x=>x.key===card.dataset.key);
@@ -1770,44 +1756,20 @@ function launchSteadySession(sess){
 }
 
 /* ===== TIME SLOTS ===== */
-function calcSlotMinutes(sess,prog){
-  let sec;
-  if(sess.type==='steady') sec=240+sess.minutes*60+300;
-  else sec=240+sess.blocks*5*60+(sess.blocks-1)*(prog.restSec+10)+300;
-  return Math.round(sec/60*5/3/5)*5;
-}
 function getEffectiveTime(data,key,day){
   if(data.sessionTimes&&data.sessionTimes[key])return data.sessionTimes[key];
   if(data.defaultTimes&&data.defaultTimes[day])return data.defaultTimes[day];
   return null;
 }
-function fmtEndTime(startStr,slotMin){
-  const[h,m]=startStr.split(':').map(Number);
-  const end=h*60+m+slotMin;
-  return String(Math.floor(end/60)%24).padStart(2,'0')+':'+String(end%60).padStart(2,'0');
-}
-
 let timeTarget=null;
 function openTimeModal(key,day,sess,prog){
   const data=loadData();
   timeTarget={key,day,sess,prog};
-  const slotMin=calcSlotMinutes(sess,prog);
   const effective=getEffectiveTime(data,key,day);
   $('#timeTitle').textContent='Set time for '+sess.day+' '+fmtDate(sess.date);
   const inp=$('#timeModalInput');
   inp.value=effective||'07:00';
-  updateTimeSlotInfo(slotMin);
-  inp.oninput=()=>updateTimeSlotInfo(slotMin);
   $('#timeOverlay').classList.add('active');
-}
-function updateTimeSlotInfo(slotMin){
-  const v=$('#timeModalInput').value;
-  if(v){
-    const end=fmtEndTime(v,slotMin);
-    $('#timeSlotInfo').textContent='Calendar slot: '+slotMin+' min ('+v+' \u2013 '+end+')';
-  } else {
-    $('#timeSlotInfo').textContent='Calendar slot: '+slotMin+' min';
-  }
 }
 function initTimeModal(){
   $('#timeSave').addEventListener('click',()=>{
@@ -1880,13 +1842,22 @@ function buildTimePickers(days){
 /* ===== SWAP MODAL ===== */
 let swapTarget=null;
 
-function openSwapModal(key,week,defaultDay,currentDay){
-  swapTarget={key,week,defaultDay,currentDay};
+function openSwapModal(key,week,defaultDay,currentDay,isExtra){
+  swapTarget={key,week,defaultDay,currentDay,isExtra:!!isExtra};
   $('#swapTitle').textContent='Move Week '+week+' '+DAY_LABELS[currentDay]+' to:';
   $$('#swapDayPicker .day-btn').forEach(b=>{
     b.classList.toggle('selected',b.dataset.day===currentDay);
   });
-  $('#swapReset').style.display=(currentDay!==defaultDay)?'':'none';
+  const resetBtn=$('#swapReset');
+  if(isExtra){
+    resetBtn.textContent='Remove session';
+    resetBtn.style.display='';
+    resetBtn.style.color='var(--red)';
+  } else {
+    resetBtn.textContent='Reset to default';
+    resetBtn.style.display=(currentDay!==defaultDay)?'':'none';
+    resetBtn.style.color='';
+  }
   $('#swapOverlay').classList.add('active');
 }
 
@@ -1896,9 +1867,24 @@ function initSwapModal(){
       if(!swapTarget)return;
       const newDay=b.dataset.day;
       const data=loadData();if(!data)return;
-      if(!data.swaps)data.swaps={};
-      if(newDay===swapTarget.defaultDay) delete data.swaps[swapTarget.key];
-      else data.swaps[swapTarget.key]=newDay;
+      if(swapTarget.isExtra){
+        /* Extra session: update the date in extraSessions */
+        const oldDate=swapTarget.key.replace('extra-','');
+        const ex=(data.extraSessions||[]).find(e=>e.date===oldDate);
+        if(!ex){$('#swapOverlay').classList.remove('active');swapTarget=null;return}
+        const startMon=parseDate(data.startDate);
+        const weekMon=addDays(startMon,(+swapTarget.week-1)*7);
+        const newDate=dateStr(addDays(weekMon,DAY_OFFSET[newDay]));
+        /* Move completion & time if they exist */
+        const oldKey=swapTarget.key,newKey='extra-'+newDate;
+        ex.date=newDate;
+        if(data.completed[oldKey]){data.completed[newKey]=data.completed[oldKey];delete data.completed[oldKey]}
+        if(data.sessionTimes&&data.sessionTimes[oldKey]){data.sessionTimes[newKey]=data.sessionTimes[oldKey];delete data.sessionTimes[oldKey]}
+      } else {
+        if(!data.swaps)data.swaps={};
+        if(newDay===swapTarget.defaultDay) delete data.swaps[swapTarget.key];
+        else data.swaps[swapTarget.key]=newDay;
+      }
       saveData(data);
       $('#swapOverlay').classList.remove('active');
       swapTarget=null;
@@ -1908,10 +1894,18 @@ function initSwapModal(){
   $('#swapCancel').addEventListener('click',()=>{
     $('#swapOverlay').classList.remove('active');swapTarget=null;
   });
-  $('#swapReset').addEventListener('click',()=>{
+  $('#swapReset').addEventListener('click',async()=>{
     if(!swapTarget)return;
     const data=loadData();if(!data)return;
-    if(data.swaps)delete data.swaps[swapTarget.key];
+    if(swapTarget.isExtra){
+      if(!await customConfirm('Remove this extra session?'))return;
+      const ds=swapTarget.key.replace('extra-','');
+      data.extraSessions=(data.extraSessions||[]).filter(e=>e.date!==ds);
+      delete data.completed[swapTarget.key];
+      if(data.sessionTimes)delete data.sessionTimes[swapTarget.key];
+    } else {
+      if(data.swaps)delete data.swaps[swapTarget.key];
+    }
     saveData(data);
     $('#swapOverlay').classList.remove('active');
     swapTarget=null;
@@ -1980,16 +1974,6 @@ function initAddSessionModal(){
   $('#addSessionOverlay').addEventListener('click',e=>{
     if(e.target===e.currentTarget){$('#addSessionOverlay').classList.remove('active');addSessionTarget=null}
   });
-}
-async function deleteExtraSession(key){
-  if(!await customConfirm('Remove this extra session?'))return;
-  const data=loadData();if(!data)return;
-  const ds=key.replace('extra-','');
-  data.extraSessions=(data.extraSessions||[]).filter(e=>e.date!==ds);
-  delete data.completed[key];
-  if(data.sessionTimes)delete data.sessionTimes[key];
-  saveData(data);
-  renderSchedule();
 }
 
 /* ===== FREE SESSION ===== */
