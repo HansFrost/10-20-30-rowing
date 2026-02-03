@@ -1330,7 +1330,7 @@ function scheduleCheer(type,dur){clearTimeout(cheerTimer);showCheer(type);
 function updateTimerUI(){
   const s=sequence[stepIdx];
   document.body.className='phase-'+(s.type==='countdown'?'rest':s.type==='cooldown'?'warmup':s.type);
-  $('#phaseLabel').textContent=s.type==='countdown'?'NEXT':s.blk?'BLOCK '+s.blk:'SESSION';
+  $('#phaseLabel').textContent=s.type==='countdown'?'NEXT':s.blk?(s.cyc?'BLOCK '+s.blk+'/'+timerConfig.blocks+' \u00B7 CYCLE '+s.cyc+'/5':'BLOCK '+s.blk+'/'+timerConfig.blocks):'SESSION';
   $('#phaseName').textContent=s.name;
   $('#phaseName').classList.remove('pulse');void $('#phaseName').offsetWidth;$('#phaseName').classList.add('pulse');
   $('#hrZone').textContent=hrText(s.type);
