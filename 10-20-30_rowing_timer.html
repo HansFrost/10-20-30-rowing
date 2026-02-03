@@ -262,27 +262,12 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
   margin-top:6px;transition:background .2s,color .2s}
 .quick-session-btn:hover{background:var(--accent);color:#fff}
 
-/* FREE SESSION */
-#freeSetup{align-items:center;gap:20px;text-align:center;overflow-y:auto}
-#freeSetup::before,#freeSetup::after{content:'';flex:1}
-#freeSetup h2{font-size:1.4rem;font-weight:800}
-.setup-group{width:100%;max-width:360px;background:var(--card);border-radius:16px;padding:20px}
-.setup-group label{display:block;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;
-  color:var(--muted);margin-bottom:10px}
 .btn-row{display:flex;gap:8px}
 .btn-row button{flex:1;padding:12px 0;border:2px solid var(--border);border-radius:12px;
   background:transparent;color:#fff;font-size:1.1rem;font-weight:700;cursor:pointer;
   transition:all .15s}
 .btn-row button.selected{background:rgba(255,255,255,.15);border-color:#fff}
 .btn-row button:active{transform:scale(.95)}
-.toggle-row{display:flex;align-items:center;justify-content:space-between}
-.toggle-row label{margin-bottom:0}
-.toggle{width:52px;height:28px;background:rgba(255,255,255,.12);border-radius:14px;
-  position:relative;cursor:pointer;border:none;transition:background .2s;flex-shrink:0}
-.toggle.on{background:var(--green)}
-.toggle::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;
-  border-radius:50%;background:#fff;transition:transform .2s}
-.toggle.on::after{transform:translateX(24px)}
 
 /* TIMER */
 #timer{align-items:center;justify-content:center;gap:clamp(2px,1vh,6px);text-align:center;padding:clamp(8px,2vh,20px);
@@ -485,7 +470,6 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
     <div class="sched-header-btns">
       <button class="btn btn-secondary btn-small" id="helpBtn">?</button>
       <button class="btn btn-secondary btn-small" id="changProgBtn">Change Program</button>
-      <button class="btn btn-secondary btn-small" id="freeBtn">Free Session</button>
     </div>
   </div>
   <div class="sched-progress">
@@ -514,25 +498,6 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
   </div>
 </div>
 
-<!-- FREE SESSION -->
-<div class="screen" id="freeSetup">
-  <h2>Free Session</h2>
-  <div class="setup-group"><label>Number of Blocks</label>
-    <div class="btn-row" id="blockBtns">
-      <button data-val="2">2</button><button data-val="3" class="selected">3</button><button data-val="4">4</button>
-    </div>
-  </div>
-  <div class="setup-group"><label>Rest Between Blocks</label>
-    <div class="btn-row" id="restBtns">
-      <button data-val="120" class="selected">2 min</button><button data-val="150">2:30</button><button data-val="180">3 min</button>
-    </div>
-  </div>
-  <div class="setup-group toggle-row"><label>4-min Warm-up</label><button class="toggle on" id="warmupToggle"></button></div>
-  <div class="setup-group toggle-row"><label>5-min Cool-down</label><button class="toggle on" id="cooldownToggle"></button></div>
-  <button class="btn btn-primary" id="freeStartBtn" style="width:100%;max-width:360px">START</button>
-  <button class="btn btn-secondary btn-small" id="freeBackBtn">Back to Schedule</button>
-  <p style="font-size:.75rem;color:var(--muted);text-align:center;margin-top:4px">Set Concept2 PM5 to "Just Row" mode.</p>
-</div>
 
 <!-- TIMER -->
 <div class="screen" id="timer">
@@ -1751,14 +1716,14 @@ function launchSession(sess,prog){
   currentSessionKey=sess.key;
   timerConfig.blocks=sess.blocks;
   timerConfig.restSec=prog.restSec;
-  timerConfig.warmup=true;timerConfig.cooldown=true;timerConfig.isFree=false;timerConfig.steady=false;
+  timerConfig.warmup=true;timerConfig.cooldown=true;timerConfig.steady=false;
   startTimer();
 }
 
 function launchSteadySession(sess){
   currentSessionKey=sess.key;
   timerConfig.steady=true;timerConfig.steadyMinutes=sess.minutes;
-  timerConfig.warmup=true;timerConfig.cooldown=true;timerConfig.isFree=false;
+  timerConfig.warmup=true;timerConfig.cooldown=true;
   startTimer();
 }
 
@@ -1987,23 +1952,8 @@ function initAddSessionModal(){
   });
 }
 
-/* ===== FREE SESSION ===== */
-let freeConfig={blocks:3,restSec:120,warmup:true,cooldown:true};
-function initFreeSetup(){
-  function sel(id,key){$$('#'+id+' button').forEach(b=>{b.addEventListener('click',()=>{
-    $$('#'+id+' button').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
-    freeConfig[key]=parseInt(b.dataset.val)})})}
-  sel('blockBtns','blocks');sel('restBtns','restSec');
-  function tog(id,key){$('#'+id).addEventListener('click',()=>{
-    freeConfig[key]=!freeConfig[key];$('#'+id).classList.toggle('on',freeConfig[key])})}
-  tog('warmupToggle','warmup');tog('cooldownToggle','cooldown');
-  $('#freeStartBtn').addEventListener('click',()=>{
-    currentSessionKey=null;Object.assign(timerConfig,freeConfig);timerConfig.isFree=true;timerConfig.steady=false;startTimer()});
-  $('#freeBackBtn').addEventListener('click',()=>history.back());
-}
-
 /* ===== TIMER ===== */
-let timerConfig={blocks:3,restSec:120,warmup:true,cooldown:true,isFree:false,steady:false,steadyMinutes:0};
+let timerConfig={blocks:3,restSec:120,warmup:true,cooldown:true,steady:false,steadyMinutes:0};
 let sequence=[],stepIdx=0,remaining=0,timerInterval=null,paused=false,startTime=null,totalSec=0,cheerTimer=null;
 let wkStart=0,wkBank=0;
 
@@ -2098,14 +2048,14 @@ function startTimer(){
   showScreen('#timer');updateTimerUI();timerInterval=setInterval(tick,1000);requestWakeLock();
 }
 function stopTimer(){clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);
-  if(timerConfig.isFree)showScreen('#freeSetup');else{showScreen('#schedule');renderSchedule()}}
+  showScreen('#schedule');renderSchedule()}
 
 function finish(){
   clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);soundDone();
   const elapsed=Math.round((Date.now()-startTime)/1000);
   if(currentSessionKey){const d=loadData();if(d){d.completed[currentSessionKey]=new Date().toISOString();saveData(d)}}
   document.body.className='phase-done';
-  $('#doneSubtext').textContent=currentSessionKey?'Session marked complete!':'Free session finished.';
+  $('#doneSubtext').textContent='Session marked complete!';
   let h='';h+=sRow('Total time',fmtTime(elapsed));
   if(timerConfig.steady){
     h+=sRow('Steady-state',timerConfig.steadyMinutes+' min');
@@ -2367,7 +2317,6 @@ function migrateData(data){
 $('#helpBtn').addEventListener('click',()=>$('#helpOverlay').classList.add('active'));
 $('#helpClose').addEventListener('click',()=>$('#helpOverlay').classList.remove('active'));
 $('#helpOverlay').addEventListener('click',e=>{if(e.target===$('#helpOverlay'))$('#helpOverlay').classList.remove('active')});
-$('#freeBtn').addEventListener('click',()=>showScreen('#freeSetup'));
 $('#pauseBtn').addEventListener('click',()=>{
   if(!paused){wkBank+=Date.now()-wkStart}else{wkStart=Date.now()}
   paused=!paused;$('#pauseBtn').textContent=paused?'RESUME':'PAUSE'});
@@ -2411,7 +2360,7 @@ $('#resetBtn').addEventListener('click',async()=>{
     clearData();showScreen('#onboarding');showOnboardStep('stepProgram')}});
 
 /* ===== INIT ===== */
-initOnboarding();initFreeSetup();initSwapModal();initTimeModal();initAddSessionModal();
+initOnboarding();initSwapModal();initTimeModal();initAddSessionModal();
 const saved=loadData();
 _skipHist=true;
 if(saved&&saved.program){
