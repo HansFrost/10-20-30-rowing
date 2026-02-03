@@ -33,7 +33,8 @@
 body{font-family:'Dosis',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
   background:var(--bg);color:var(--text);height:100vh;height:100dvh;display:flex;
   flex-direction:column;-webkit-tap-highlight-color:transparent;overflow:hidden;
-  transition:background .3s;zoom:1.25}
+  transition:background .3s}
+@media(max-width:768px){body{zoom:1.25}}
 body.phase-warmup{background:var(--bg-warmup)}body.phase-low{background:var(--bg-low)}
 body.phase-moderate{background:var(--bg-moderate)}body.phase-high{background:var(--bg-high)}
 body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}body.phase-done{background:var(--bg)}
