@@ -94,7 +94,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
 .sched-rest-banner{background:var(--card);border-radius:14px;padding:18px;text-align:center}
 .sched-rest-banner p{color:var(--muted);font-size:.9rem}
 .week-group{margin-top:4px}
-.week-label{font-size:.75rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);
+.week-label{font-size:.8rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);
   margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
 .week-label .blocks-tag{font-size:.7rem;background:rgba(255,255,255,.06);padding:2px 8px;
   border-radius:6px;letter-spacing:0}
@@ -103,10 +103,10 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
   padding:12px;cursor:pointer;transition:all .15s;position:relative;text-align:center;
   flex:1;min-width:80px;max-width:140px}
 .session-card:active{transform:scale(.97)}
-.session-card .s-day{font-size:.72rem;text-transform:uppercase;letter-spacing:1px;
+.session-card .s-day{font-size:.78rem;text-transform:uppercase;letter-spacing:1px;
   color:var(--muted);margin-bottom:2px}
-.session-card .s-date{font-size:.95rem;font-weight:700;margin-bottom:3px}
-.session-card .s-blocks{font-size:.68rem;color:var(--muted);padding-bottom:18px}
+.session-card .s-date{font-size:1rem;font-weight:700;margin-bottom:3px}
+.session-card .s-blocks{font-size:.75rem;color:var(--muted);padding-bottom:18px}
 .session-card .s-check{position:absolute;top:7px;right:7px;width:20px;height:20px;
   border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;
   justify-content:center;font-size:11px;transition:all .15s}
@@ -146,14 +146,14 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
 
 /* TIMER */
 #timer{align-items:center;justify-content:center;gap:6px;text-align:center;padding:20px}
-#phaseLabel{font-size:1rem;text-transform:uppercase;letter-spacing:3px;opacity:.8;font-weight:600}
-#phaseName{font-size:3.2rem;font-weight:900;line-height:1}
-#hrZone{font-size:.85rem;opacity:.7;margin-top:2px;font-weight:600;letter-spacing:.5px}
-#countdown{font-size:9rem;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-4px}
-#instruction{font-size:1.3rem;font-weight:500;opacity:.85;min-height:1.8em;margin-top:2px}
-#encouragement{font-size:.9rem;opacity:.6;font-style:italic;min-height:1.4em;transition:opacity .3s}
+#phaseLabel{font-size:clamp(.85rem,4vw,1.3rem);text-transform:uppercase;letter-spacing:3px;opacity:.8;font-weight:600}
+#phaseName{font-size:clamp(2.2rem,13vw,4.5rem);font-weight:900;line-height:1}
+#hrZone{font-size:clamp(.8rem,3.5vw,1.1rem);opacity:.7;margin-top:2px;font-weight:600;letter-spacing:.5px}
+#countdown{font-size:clamp(7rem,37vw,12rem);font-weight:900;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-4px}
+#instruction{font-size:clamp(1rem,5vw,1.6rem);font-weight:500;opacity:.85;min-height:1.8em;margin-top:2px}
+#encouragement{font-size:clamp(.85rem,3.7vw,1.1rem);opacity:.6;font-style:italic;min-height:1.4em;transition:opacity .3s}
 #timerProgress{width:100%;max-width:400px;margin-top:12px}
-#timerProgressText{font-size:.8rem;opacity:.6;margin-bottom:6px;letter-spacing:.5px}
+#timerProgressText{font-size:clamp(.75rem,2.5vw,.95rem);opacity:.6;margin-bottom:6px;letter-spacing:.5px}
 #timerProgressBar{width:100%;height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
 #timerProgressFill{height:100%;background:rgba(255,255,255,.55);border-radius:3px;transition:width .3s;width:0}
 #timerControls{display:flex;gap:10px;margin-top:16px}
@@ -212,12 +212,21 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
 .maxhr-input:focus{outline:none;border-color:var(--accent)}
 
 @media(max-width:380px){
-  #countdown{font-size:7rem}#phaseName{font-size:2.5rem}
   .week-sessions{gap:6px}.session-card{padding:10px 6px;min-width:70px}
 }
 @media(orientation:landscape) and (max-height:500px){
-  #countdown{font-size:5.5rem}#phaseName{font-size:2rem}
-  #timer{gap:2px;padding:10px}
+  #timer.active{display:grid;grid-template-columns:1fr 1fr;align-content:center;
+    justify-items:center;max-width:none;padding:6px 24px;gap:2px 16px;text-align:center}
+  #countdown{grid-column:1;grid-row:1/span 7;align-self:center;
+    font-size:clamp(4rem,35vh,10rem);letter-spacing:-3px}
+  #phaseLabel,#phaseName,#hrZone,#instruction,#encouragement,#timerProgress,#timerControls{grid-column:2}
+  #phaseName{font-size:clamp(1.6rem,9vh,3rem)}
+  #phaseLabel{font-size:clamp(.75rem,3.5vh,1.1rem)}
+  #instruction{font-size:clamp(.85rem,4vh,1.3rem)}
+  #encouragement{font-size:clamp(.7rem,3vh,.95rem)}
+  #timerProgress{width:100%;justify-self:stretch}
+  #timerProgressText{font-size:clamp(.7rem,2.5vh,.85rem)}
+  .timer-btn{padding:8px 16px;font-size:.85rem}
 }
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
 .pulse{animation:pulse .3s ease}
@@ -393,6 +402,15 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1e4d5b}b
     <p>Tap the <strong>&#8652;</strong> icon in the bottom-left corner of any session card. A picker appears where you choose a new day. The session keeps its original identity so your completion status is preserved. A <strong>yellow border</strong> and <strong>*</strong> mark indicate moved sessions. Tap <strong>Reset to default</strong> in the picker to undo.</p>
     <h3>Starting a Session</h3>
     <p>Tap <strong>START TODAY&rsquo;S SESSION</strong> or tap any session card to launch the timer. Both interval and steady-state sessions have a guided timer with warm-up and cool-down.</p>
+    <h3>Target Stroke Rates</h3>
+    <ul>
+      <li><strong>LOW (30s)</strong> &mdash; 16&ndash;20 spm &mdash; easy paddle, recover</li>
+      <li><strong>MODERATE (20s)</strong> &mdash; 22&ndash;26 spm &mdash; steady full strokes</li>
+      <li><strong>SPRINT (10s)</strong> &mdash; 30+ spm &mdash; all-out max power</li>
+      <li><strong>Warm-up / Cool-down</strong> &mdash; 18&ndash;20 spm</li>
+      <li><strong>Steady-state</strong> &mdash; 20&ndash;24 spm</li>
+    </ul>
+    <p>Stroke rate targets are shown on the timer during each phase. Use the PM5 stroke rate display to match.</p>
     <h3>Timer Controls</h3>
     <ul>
       <li><strong>PAUSE</strong> &mdash; pause / resume</li>
@@ -1281,25 +1299,25 @@ let wkStart=0,wkBank=0;
 function buildSequence(){
   const c=timerConfig,seq=[];
   if(c.steady){
-    if(c.warmup) seq.push({type:'warmup',name:'WARM-UP',dur:240,inst:'Easy rowing \u2022 Build gradually',blk:0,cyc:0});
-    seq.push({type:'steady',name:'STEADY STATE',dur:c.steadyMinutes*60,inst:'Comfortable pace \u2022 Full strokes',blk:0,cyc:0});
-    if(c.cooldown) seq.push({type:'cooldown',name:'COOL-DOWN',dur:300,inst:'Easy rowing \u2022 Bring HR down',blk:0,cyc:0});
+    if(c.warmup) seq.push({type:'warmup',name:'WARM-UP',dur:240,inst:'Build gradually \u2022 18\u201320 spm',blk:0,cyc:0});
+    seq.push({type:'steady',name:'STEADY STATE',dur:c.steadyMinutes*60,inst:'Comfortable pace \u2022 20\u201324 spm',blk:0,cyc:0});
+    if(c.cooldown) seq.push({type:'cooldown',name:'COOL-DOWN',dur:300,inst:'Bring HR down \u2022 18\u201320 spm',blk:0,cyc:0});
     return seq;
   }
-  if(c.warmup) seq.push({type:'warmup',name:'WARM-UP',dur:240,inst:'Easy rowing \u2022 Build gradually',blk:0,cyc:0});
+  if(c.warmup) seq.push({type:'warmup',name:'WARM-UP',dur:240,inst:'Build gradually \u2022 18\u201320 spm',blk:0,cyc:0});
   seq.push({type:'countdown',name:'GET READY',dur:10,inst:'Block 1 starting...',blk:1,cyc:0});
   for(let b=1;b<=c.blocks;b++){
     for(let cy=1;cy<=5;cy++){
-      seq.push({type:'low',name:'LOW',dur:30,inst:'Easy paddle \u2022 Recover',blk:b,cyc:cy});
-      seq.push({type:'moderate',name:'MODERATE',dur:20,inst:'Steady pace \u2022 Full strokes',blk:b,cyc:cy});
-      seq.push({type:'high',name:'SPRINT',dur:10,inst:'ALL OUT! Max power!',blk:b,cyc:cy});
+      seq.push({type:'low',name:'LOW',dur:30,inst:'Easy paddle \u2022 16\u201320 spm',blk:b,cyc:cy});
+      seq.push({type:'moderate',name:'MODERATE',dur:20,inst:'Steady pace \u2022 22\u201326 spm',blk:b,cyc:cy});
+      seq.push({type:'high',name:'SPRINT',dur:10,inst:'ALL OUT! \u2022 30+ spm',blk:b,cyc:cy});
     }
     if(b<c.blocks){
       seq.push({type:'rest',name:'REST',dur:c.restSec,inst:'Light paddle or stop \u2022 Breathe',blk:b,cyc:0});
       seq.push({type:'countdown',name:'GET READY',dur:10,inst:'Block '+(b+1)+' starting...',blk:b+1,cyc:0});
     }
   }
-  if(c.cooldown) seq.push({type:'cooldown',name:'COOL-DOWN',dur:300,inst:'Easy rowing \u2022 Bring HR down',blk:0,cyc:0});
+  if(c.cooldown) seq.push({type:'cooldown',name:'COOL-DOWN',dur:300,inst:'Bring HR down \u2022 18\u201320 spm',blk:0,cyc:0});
   return seq;
 }
 
