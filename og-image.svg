@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#101828"/>
+  <rect width="1200" height="5" fill="#4f8cff"/>
+  <rect y="625" width="1200" height="5" fill="#4f8cff"/>
+  <g transform="translate(100,165)">
+    <rect width="280" height="64" rx="12" fill="#0d6b3d"/>
+    <text x="140" y="42" font-family="-apple-system,BlinkMacSystemFont,system-ui,sans-serif" font-size="26" fill="#fff" text-anchor="middle" font-weight="700">30s  LOW</text>
+    <rect y="84" width="210" height="64" rx="12" fill="#b8860b"/>
+    <text x="105" y="126" font-family="-apple-system,BlinkMacSystemFont,system-ui,sans-serif" font-size="26" fill="#fff" text-anchor="middle" font-weight="700">20s  MODERATE</text>
+    <rect y="168" width="140" height="64" rx="12" fill="#c0392b"/>
+    <text x="70" y="210" font-family="-apple-system,BlinkMacSystemFont,system-ui,sans-serif" font-size="26" fill="#fff" text-anchor="middle" font-weight="700">10s  SPRINT</text>
+  </g>
+  <text x="740" y="290" font-family="-apple-system,BlinkMacSystemFont,system-ui,sans-serif" font-size="80" fill="#f1f5f9" font-weight="800" text-anchor="middle">10-20-30</text>
+  <text x="740" y="345" font-family="-apple-system,BlinkMacSystemFont,system-ui,sans-serif" font-size="34" fill="#94a3b8" text-anchor="middle" font-weight="600">Rowing Program</text>
+  <text x="600" y="570" font-family="-apple-system,BlinkMacSystemFont,system-ui,sans-serif" font-size="20" fill="#4f8cff" text-anchor="middle">Concept2 Interval Training Timer</text>
+</svg>
