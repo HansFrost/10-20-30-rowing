@@ -51,7 +51,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 
 /* ONBOARDING */
 #onboarding{align-items:center;gap:16px;text-align:center;
-  max-height:100vh;max-height:100dvh;overflow-y:auto}
+  max-height:calc(100vh / 1.25);max-height:calc(100dvh / 1.25);overflow-y:auto}
 #onboarding::before,#onboarding::after{content:'';flex:1}
 #onboarding h1{font-size:1.8rem;font-weight:800;line-height:1.2}
 #onboarding h1 small{display:block;font-size:.9rem;font-weight:400;color:var(--muted);margin-top:6px}
@@ -260,7 +260,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 
 /* FREE SESSION */
 #freeSetup{align-items:center;gap:20px;text-align:center;
-  max-height:100vh;max-height:100dvh;overflow-y:auto}
+  max-height:calc(100vh / 1.25);max-height:calc(100dvh / 1.25);overflow-y:auto}
 #freeSetup::before,#freeSetup::after{content:'';flex:1}
 #freeSetup h2{font-size:1.4rem;font-weight:800}
 .setup-group{width:100%;max-width:360px;background:var(--card);border-radius:16px;padding:20px}
@@ -283,7 +283,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 
 /* TIMER */
 #timer{align-items:center;justify-content:center;gap:clamp(2px,1vh,6px);text-align:center;padding:clamp(8px,2vh,20px);
-  max-height:100vh;max-height:100dvh;overflow:hidden}
+  max-height:calc(100vh / 1.25);max-height:calc(100dvh / 1.25);overflow:hidden}
 #phaseLabel{font-size:clamp(.75rem,min(4vw,2.5vh),1.3rem);text-transform:uppercase;letter-spacing:3px;opacity:.8;font-weight:600}
 #phaseName{font-size:clamp(1.8rem,min(13vw,8vh),4.5rem);font-weight:900;line-height:1}
 #hrZone{font-size:clamp(.7rem,min(3.5vw,2vh),1.1rem);opacity:.7;margin-top:2px;font-weight:600;letter-spacing:.5px}
@@ -303,7 +303,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 
 /* DONE */
 #done{align-items:center;gap:16px;text-align:center;
-  max-height:100vh;max-height:100dvh;overflow-y:auto}
+  max-height:calc(100vh / 1.25);max-height:calc(100dvh / 1.25);overflow-y:auto}
 #done::before,#done::after{content:'';flex:1}
 #done h2{font-size:2.2rem;font-weight:900}
 #done .sub{font-size:1rem;color:var(--muted)}
@@ -386,7 +386,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 @media(orientation:landscape) and (max-height:500px){
   #timer.active{display:grid;grid-template-columns:1fr 1fr;align-content:center;
     justify-items:center;max-width:none;padding:4px 20px;gap:1px 12px;text-align:center;
-    height:100vh;max-height:100vh;overflow:hidden;box-sizing:border-box}
+    height:calc(100vh / 1.25);max-height:calc(100vh / 1.25);overflow:hidden;box-sizing:border-box}
   #countdown{grid-column:1;grid-row:1/span 5;align-self:center;
     font-size:clamp(3rem,28vh,8rem);letter-spacing:-3px}
   #phaseLabel,#phaseName,#hrZone,#instruction,#timerControls{grid-column:2}
