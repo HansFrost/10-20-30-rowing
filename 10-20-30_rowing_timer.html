@@ -193,6 +193,21 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 #defTimesBox .dt-desc{font-size:.8rem;color:var(--muted);text-align:center;line-height:1.4}
 #defTimesList{width:100%}
 
+/* CHANGE DAYS MODAL */
+#changeDaysOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
+  align-items:center;justify-content:center;padding:20px}
+#changeDaysOverlay.active{display:flex}
+#changeDaysBox{background:var(--card);border-radius:20px;padding:28px 24px;max-width:380px;
+  width:100%;display:flex;flex-direction:column;align-items:center;gap:14px}
+#changeDaysBox .dt-title{font-size:1rem;font-weight:700;text-align:center}
+#changeDaysBox .dt-desc{font-size:.8rem;color:var(--muted);text-align:center;line-height:1.4}
+#cdNumDaysBtns{display:flex;gap:6px;justify-content:center}
+#cdNumDaysBtns button{width:42px;height:42px;border-radius:50%;border:2px solid var(--border);
+  background:transparent;color:var(--muted);font-size:.85rem;font-weight:700;
+  cursor:pointer;transition:all .15s}
+#cdNumDaysBtns button.selected{border-color:var(--accent);background:rgba(183,191,16,.15);color:#fff}
+#cdNumDaysBtns button:active{transform:scale(.9)}
+
 /* PRECOMMIT BANNER */
 .sched-precommit{background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.04));
   border:1px solid rgba(245,158,11,.25);border-radius:14px;padding:16px;text-align:center}
@@ -490,7 +505,10 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
       <span>bpm</span>
       <button class="btn btn-secondary btn-small" id="maxHrSaveBtn" style="font-size:.7rem;padding:6px 10px">Save</button>
     </div>
-    <button class="btn btn-secondary btn-small" id="defTimesBtn" style="font-size:.75rem;width:100%">Set Default Training Times</button>
+    <div style="display:flex;gap:8px;width:100%">
+      <button class="btn btn-secondary btn-small" id="changeDaysBtn" style="font-size:.75rem;flex:1">Change Training Days</button>
+      <button class="btn btn-secondary btn-small" id="defTimesBtn" style="font-size:.75rem;flex:1">Set Default Times</button>
+    </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-secondary btn-small" id="exportBtn" style="font-size:.75rem">Export Progress</button>
       <button class="btn btn-secondary btn-small" id="importBtn" style="font-size:.75rem">Import Progress</button>
@@ -746,6 +764,36 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
     <div style="display:flex;gap:8px;width:100%">
       <button class="btn btn-secondary btn-small" id="defTimesCancel" style="flex:1">Cancel</button>
       <button class="btn btn-primary btn-small" id="defTimesSave" style="flex:1">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="changeDaysOverlay">
+  <div id="changeDaysBox">
+    <p class="dt-title">Change Training Days</p>
+    <p class="dt-desc">Update which days you train each week. Session data will be preserved.</p>
+    <p style="font-size:.85rem;color:var(--muted);margin:0">Sessions per week:</p>
+    <div id="cdNumDaysBtns">
+      <button data-val="2">2</button><button data-val="3">3</button><button data-val="4">4</button><button data-val="5">5</button>
+    </div>
+    <p id="cdDaysPrompt" style="font-size:.85rem;margin:0">Choose your training days:</p>
+    <div class="day-picker" id="cdDayPicker">
+      <button class="day-btn" data-day="mon">Mon</button>
+      <button class="day-btn" data-day="tue">Tue</button>
+      <button class="day-btn" data-day="wed">Wed</button>
+      <button class="day-btn" data-day="thu">Thu</button>
+      <button class="day-btn" data-day="fri">Fri</button>
+      <button class="day-btn" data-day="sat">Sat</button>
+      <button class="day-btn" data-day="sun">Sun</button>
+    </div>
+    <p id="cdDaysCount" style="font-size:.8rem;color:var(--muted);margin:0">0 / 3 selected</p>
+    <div id="cdSteadySection" style="display:none">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">Which day is your <strong>steady-state</strong> session?</p>
+      <div class="day-picker" id="cdSteadyPicker"></div>
+    </div>
+    <div style="display:flex;gap:8px;width:100%">
+      <button class="btn btn-secondary btn-small" id="changeDaysCancel" style="flex:1">Cancel</button>
+      <button class="btn btn-primary btn-small" id="changeDaysSave" style="flex:1" disabled>Save</button>
     </div>
   </div>
 </div>
@@ -1803,6 +1851,205 @@ $('#defTimesCancel').addEventListener('click',()=>{$('#defTimesOverlay').classLi
 $('#defTimesOverlay').addEventListener('click',e=>{
   if(e.target===e.currentTarget)$('#defTimesOverlay').classList.remove('active');
 });
+
+/* ===== CHANGE DAYS MODAL ===== */
+let cdNumDays=3,cdSteady='';
+
+function cdGetSelected(){
+  const days=[];
+  $$('#cdDayPicker .day-btn.selected').forEach(b=>days.push(b.dataset.day));
+  return days;
+}
+
+function cdUpdateState(){
+  const data=loadData();if(!data)return;
+  const prog=PROGRAMS[data.program||'intermediate'];
+  const isAdv=!!prog.defaultSteady;
+  const selected=cdGetSelected();
+  const count=selected.length;
+
+  $('#cdDaysCount').textContent=count+' / '+cdNumDays+' selected';
+
+  /* Disable day buttons when at limit */
+  $$('#cdDayPicker .day-btn').forEach(b=>{
+    if(!b.classList.contains('selected')&&count>=cdNumDays)b.style.opacity='.35';
+    else b.style.opacity='';
+  });
+
+  if(isAdv){
+    if(count===cdNumDays){
+      $('#cdSteadySection').style.display='';
+      cdBuildSteadyPicker(selected);
+    } else {
+      $('#cdSteadySection').style.display='none';
+      cdSteady='';
+    }
+    const steadyBtn=$('#cdSteadyPicker .day-btn.steady');
+    $('#changeDaysSave').disabled=!(count===cdNumDays&&steadyBtn);
+  } else {
+    $('#cdSteadySection').style.display='none';
+    $('#changeDaysSave').disabled=count!==cdNumDays;
+  }
+}
+
+function cdBuildSteadyPicker(intervalDays){
+  const available=ALL_DAYS.filter(d=>!intervalDays.includes(d));
+  let html='';
+  available.forEach(d=>{
+    const cls=d===cdSteady?'day-btn steady':'day-btn';
+    html+='<button class="'+cls+'" data-day="'+d+'">'+DAY_LABELS[d]+'</button>';
+  });
+  $('#cdSteadyPicker').innerHTML=html;
+  $$('#cdSteadyPicker .day-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      $$('#cdSteadyPicker .day-btn').forEach(x=>x.classList.remove('steady'));
+      b.classList.add('steady');
+      cdSteady=b.dataset.day;
+      cdUpdateState();
+    });
+  });
+}
+
+function openChangeDaysModal(){
+  const data=loadData();if(!data)return;
+  const prog=PROGRAMS[data.program||'intermediate'];
+  const isAdv=!!prog.defaultSteady;
+  const currentDays=data.days||[];
+  cdNumDays=currentDays.length;
+  cdSteady=data.steadyDay||'';
+
+  /* Num days buttons */
+  $$('#cdNumDaysBtns button').forEach(b=>{
+    const v=parseInt(b.dataset.val);
+    b.style.display=(v>=prog.minDays&&v<=prog.maxDays)?'':'none';
+    b.classList.toggle('selected',v===cdNumDays);
+  });
+
+  /* Prompt text */
+  $('#cdDaysPrompt').textContent=isAdv?'Choose '+cdNumDays+' interval training days:':'Choose '+cdNumDays+' training days:';
+
+  /* Day picker: pre-select current days */
+  $$('#cdDayPicker .day-btn').forEach(b=>{
+    b.classList.toggle('selected',currentDays.includes(b.dataset.day));
+  });
+
+  cdUpdateState();
+  $('#changeDaysOverlay').classList.add('active');
+}
+
+/* Num days buttons */
+$$('#cdNumDaysBtns button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const data=loadData();if(!data)return;
+    const prog=PROGRAMS[data.program||'intermediate'];
+    const isAdv=!!prog.defaultSteady;
+    $$('#cdNumDaysBtns button').forEach(x=>x.classList.remove('selected'));
+    b.classList.add('selected');
+    cdNumDays=parseInt(b.dataset.val);
+    /* Trim excess selected days */
+    const sel=cdGetSelected();
+    if(sel.length>cdNumDays){
+      sel.sort((a,c)=>DAY_OFFSET[a]-DAY_OFFSET[c]);
+      sel.slice(cdNumDays).forEach(d=>{
+        const btn=$('#cdDayPicker .day-btn[data-day="'+d+'"]');
+        if(btn)btn.classList.remove('selected');
+      });
+    }
+    $('#cdDaysPrompt').textContent=isAdv?'Choose '+cdNumDays+' interval training days:':'Choose '+cdNumDays+' training days:';
+    cdUpdateState();
+  });
+});
+
+/* Day picker toggle */
+$$('#cdDayPicker .day-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const sel=cdGetSelected();
+    if(b.classList.contains('selected')){
+      b.classList.remove('selected');
+    } else if(sel.length<cdNumDays){
+      b.classList.add('selected');
+    }
+    cdUpdateState();
+  });
+});
+
+/* Save */
+$('#changeDaysSave').addEventListener('click',()=>{
+  const data=loadData();if(!data)return;
+  const prog=PROGRAMS[data.program||'intermediate'];
+  const isAdv=!!prog.defaultSteady;
+  const oldDays=(data.days||[]).slice();
+  const newDays=cdGetSelected().sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
+  const newSteady=isAdv?cdSteady:'';
+
+  /* Build positional mapping old→new */
+  const dayMap={};
+  for(let i=0;i<Math.min(oldDays.length,newDays.length);i++){
+    if(oldDays[i]!==newDays[i])dayMap[oldDays[i]]=newDays[i];
+  }
+  /* Map old steady→new steady */
+  if(isAdv&&data.steadyDay&&newSteady&&data.steadyDay!==newSteady){
+    dayMap[data.steadyDay]=newSteady;
+  }
+
+  /* Remap a session key like "1-tue" using the dayMap */
+  function remapKey(key){
+    for(const old in dayMap){
+      /* Match "-oldDay" at end, or "-oldDay-ss" for steady keys */
+      if(key.endsWith('-'+old))return key.slice(0,-(old.length))+dayMap[old];
+      if(key.endsWith('-'+old+'-ss'))return key.slice(0,-(old.length+3))+dayMap[old]+'-ss';
+    }
+    return key;
+  }
+
+  /* Remap completed */
+  if(data.completed){
+    const nc={};
+    for(const k in data.completed)nc[remapKey(k)]=data.completed[k];
+    data.completed=nc;
+  }
+  /* Remap swaps */
+  if(data.swaps){
+    const ns={};
+    for(const k in data.swaps)ns[remapKey(k)]=data.swaps[k];
+    data.swaps=ns;
+  }
+  /* Remap sessionTimes */
+  if(data.sessionTimes){
+    const nt={};
+    for(const k in data.sessionTimes)nt[remapKey(k)]=data.sessionTimes[k];
+    data.sessionTimes=nt;
+  }
+  /* Remap defaultTimes */
+  if(data.defaultTimes){
+    const nd={};
+    for(const d in data.defaultTimes){
+      nd[dayMap[d]||d]=data.defaultTimes[d];
+    }
+    data.defaultTimes=nd;
+  }
+
+  /* Remove data for days that no longer exist (if day count reduced) */
+  if(newDays.length<oldDays.length){
+    const orphanDays=oldDays.slice(newDays.length);
+    orphanDays.forEach(od=>{
+      if(data.defaultTimes)delete data.defaultTimes[od];
+    });
+  }
+
+  data.days=newDays;
+  if(isAdv)data.steadyDay=newSteady;
+  saveData(data);
+  $('#changeDaysOverlay').classList.remove('active');
+  renderSchedule();
+});
+
+/* Cancel / close */
+$('#changeDaysCancel').addEventListener('click',()=>{$('#changeDaysOverlay').classList.remove('active')});
+$('#changeDaysOverlay').addEventListener('click',e=>{
+  if(e.target===e.currentTarget)$('#changeDaysOverlay').classList.remove('active');
+});
+$('#changeDaysBtn').addEventListener('click',openChangeDaysModal);
 
 function buildTimePickers(days){
   let html='';
