@@ -305,6 +305,8 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .timer-btn:active{transform:scale(.95)}
 .timer-btn.stop{border-color:rgba(239,68,68,.4)}
 .timer-btn.skip{border-color:rgba(245,158,11,.4)}
+.timer-btn.finish{border-color:rgba(34,197,94,.4)}
+#doneContinueBtn{width:100%;max-width:360px;background:transparent;border:2px solid var(--accent);color:var(--accent)}
 
 /* DONE */
 #done{align-items:center;gap:16px;text-align:center;overflow-y:auto}
@@ -534,6 +536,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
   <div id="timerControls">
     <button class="timer-btn" id="pauseBtn">PAUSE</button>
     <button class="timer-btn skip" id="skipBtn">SKIP</button>
+    <button class="timer-btn finish" id="finishBtn">FINISH</button>
     <button class="timer-btn stop" id="stopBtn">STOP</button>
   </div>
 </div>
@@ -547,6 +550,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
   <div id="doneHabitArea"></div>
   <div id="doneNextArea"></div>
   <div id="doneQuoteArea"></div>
+  <button class="btn btn-primary" id="doneContinueBtn" style="display:none;width:100%;max-width:360px">Continue Session</button>
   <button class="btn btn-primary" id="doneBackBtn" style="width:100%;max-width:360px">Back to Schedule</button>
 </div>
 
@@ -2207,6 +2211,7 @@ function initAddSessionModal(){
 let timerConfig={blocks:3,restSec:120,warmup:true,cooldown:true,steady:false,steadyMinutes:0};
 let sequence=[],stepIdx=0,remaining=0,timerInterval=null,paused=false,startTime=null,totalSec=0,cheerTimer=null;
 let wkStart=0,wkBank=0;
+let finishedEarly=false;
 
 function buildSequence(){
   const c=timerConfig,seq=[];
@@ -2293,7 +2298,7 @@ function skipPhase(){
 
 function startTimer(){
   ensureAudio();sequence=buildSequence();stepIdx=0;remaining=sequence[0].dur;
-  totalSec=sequence.reduce((a,x)=>a+x.dur,0);paused=false;startTime=Date.now();wkStart=Date.now();wkBank=0;
+  totalSec=sequence.reduce((a,x)=>a+x.dur,0);paused=false;finishedEarly=false;startTime=Date.now();wkStart=Date.now();wkBank=0;
   Object.keys(cheerSeen).forEach(k=>delete cheerSeen[k]);
   $('#pauseBtn').textContent='PAUSE';$('#encouragement').textContent='';
   showScreen('#timer');updateTimerUI();timerInterval=setInterval(tick,1000);requestWakeLock();
@@ -2301,12 +2306,28 @@ function startTimer(){
 function stopTimer(){clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);
   showScreen('#schedule');renderSchedule()}
 
+function finishEarly(){
+  finishedEarly=true;
+  if(!paused){wkBank+=Date.now()-wkStart}
+  paused=true;
+  clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);
+  finish();
+}
+function resumeSession(){
+  finishedEarly=false;
+  paused=false;wkStart=Date.now();
+  showScreen('#timer');
+  timerInterval=setInterval(tick,1000);
+  $('#pauseBtn').textContent='PAUSE';
+  updateTimerUI();requestWakeLock();
+}
 function finish(){
   clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);soundDone();
   const elapsed=Math.round((Date.now()-startTime)/1000);
   if(currentSessionKey){const d=loadData();if(d){d.completed[currentSessionKey]=new Date().toISOString();saveData(d)}}
   document.body.className='phase-done';
-  $('#doneSubtext').textContent='Session marked complete!';
+  $('#doneContinueBtn').style.display=finishedEarly?'':'none';
+  $('#doneSubtext').textContent=finishedEarly?'Session paused \u2014 you can continue or wrap up.':'Session marked complete!';
   let h='';h+=sRow('Total time',fmtTime(elapsed));
   if(timerConfig.steady){
     h+=sRow('Steady-state',timerConfig.steadyMinutes+' min');
@@ -2572,8 +2593,10 @@ $('#pauseBtn').addEventListener('click',()=>{
   if(!paused){wkBank+=Date.now()-wkStart}else{wkStart=Date.now()}
   paused=!paused;$('#pauseBtn').textContent=paused?'RESUME':'PAUSE'});
 $('#skipBtn').addEventListener('click',skipPhase);
+$('#finishBtn').addEventListener('click',finishEarly);
 $('#stopBtn').addEventListener('click',stopTimer);
-$('#doneBackBtn').addEventListener('click',()=>history.back());
+$('#doneContinueBtn').addEventListener('click',resumeSession);
+$('#doneBackBtn').addEventListener('click',()=>{finishedEarly=false;renderSchedule();showScreen('#schedule')});
 $('#confirmOk').addEventListener('click',()=>closeConfirm(true));
 $('#confirmCancel').addEventListener('click',()=>closeConfirm(false));
 $('#changProgBtn').addEventListener('click',()=>{
