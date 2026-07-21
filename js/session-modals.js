@@ -315,7 +315,7 @@ function initSwapModal(){
 async function deleteExtraSession(key){
   if(!await customConfirm('Remove this extra session?'))return;
   const data=loadData();if(!data)return;
-  const ds=key.replace('extra-','');
+  const ds=key.replace(/^(extra-|walk-)/,'');
   data.extraSessions=(data.extraSessions||[]).filter(e=>e.date!==ds);
   delete data.completed[key];
   if(data.sessionTimes)delete data.sessionTimes[key];
@@ -344,10 +344,25 @@ function openAddSessionModal(week){
   addSessionTarget.weekMon=weekMon;
   addSessionTarget.selectedDay=null;
   addSessionTarget.selectedBlocks=defaultBlocks;
+  addSessionTarget.sessionType='interval';
+  asSetType('interval');
   $('#addSessionSave').disabled=true;
   $('#addSessionOverlay').classList.add('active');
 }
+function asSetType(type){
+  $$('#addSessionTypePicker button').forEach(b=>b.classList.toggle('selected',b.dataset.stype===type));
+  const showBlocks=type==='interval'?'':'none';
+  $('#addSessionBlocksLabel').style.display=showBlocks;
+  $('#addSessionBlockPicker').style.display=showBlocks;
+}
 function initAddSessionModal(){
+  $$('#addSessionTypePicker button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      if(!addSessionTarget)return;
+      addSessionTarget.sessionType=b.dataset.stype;
+      asSetType(b.dataset.stype);
+    });
+  });
   $$('#addSessionDayPicker .day-btn').forEach(b=>{
     b.addEventListener('click',()=>{
       if(b.classList.contains('taken'))return;
@@ -371,11 +386,14 @@ function initAddSessionModal(){
     const d=addDays(addSessionTarget.weekMon,DAY_OFFSET[addSessionTarget.selectedDay]);
     const dk=dateStr(d);
     if(data.extraSessions.find(e=>e.date===dk))return;
-    data.extraSessions.push({date:dk,blocks:addSessionTarget.selectedBlocks});
+    const isWalk=addSessionTarget.sessionType==='walk';
+    if(isWalk)data.extraSessions.push({date:dk,type:'walk'});
+    else data.extraSessions.push({date:dk,blocks:addSessionTarget.selectedBlocks});
     const timeVal=$('#addSessionTime').value;
     if(timeVal){
       if(!data.sessionTimes)data.sessionTimes={};
-      data.sessionTimes['extra-'+dk]=timeVal;
+      /* walk sessions key their times as walk-<date> so the timer completion matches */
+      data.sessionTimes[(isWalk?'walk-':'extra-')+dk]=timeVal;
     }
     saveData(data);
     $('#addSessionOverlay').classList.remove('active');

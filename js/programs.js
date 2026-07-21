@@ -89,9 +89,16 @@ function injectExtras(sessions,data,startMon,progWeeks){
     var weekNum=Math.floor((d-startMon)/(7*86400000))+1;
     if(weekNum<1||weekNum>progWeeks)return;
     var dayKey=dayKeys[d.getDay()];
-    all.push({key:'extra-'+ex.date,date:d,day:DAY_LABELS[dayKey],week:weekNum,
-      blocks:ex.blocks,type:'interval',minutes:0,
-      defaultDay:dayKey,actualDay:dayKey,swapped:false,isExtra:true});
+    if(ex.type==='walk'){
+      /* walk-<date> key so timer completion and walk stats match this session */
+      all.push({key:'walk-'+ex.date,date:d,day:DAY_LABELS[dayKey],week:weekNum,
+        blocks:0,type:'walk',minutes:0,
+        defaultDay:dayKey,actualDay:dayKey,swapped:false,isExtra:true,planned:true});
+    } else {
+      all.push({key:'extra-'+ex.date,date:d,day:DAY_LABELS[dayKey],week:weekNum,
+        blocks:ex.blocks,type:'interval',minutes:0,
+        defaultDay:dayKey,actualDay:dayKey,swapped:false,isExtra:true});
+    }
   });
   all.sort(function(a,b){return a.date-b.date});
   return all;
@@ -100,7 +107,7 @@ function injectExtras(sessions,data,startMon,progWeeks){
 function injectWalks(sessions,data,startMon){
   const stats=data.sessionStats||{};
   const out=sessions.slice();
-  const seen=new Set();
+  const seen=new Set(sessions.map(s=>s.key)); /* extra walks are already injected */
   const prog=PROGRAMS[data.program];
   if(prog&&data.walkDays&&data.walkDays.length){
     const from=data.walkStart?parseDate(data.walkStart):new Date();
@@ -109,6 +116,7 @@ function injectWalks(sessions,data,startMon){
         const date=addDays(startMon,(w-1)*7+DAY_OFFSET[d]);
         if(date<from)return;
         const k='walk-'+dateStr(date);
+        if(seen.has(k))return;
         seen.add(k);
         const s=stats[k]||{};
         out.push({key:k,date:date,week:w,day:WEEKDAY_NAMES[date.getDay()],type:'walk',

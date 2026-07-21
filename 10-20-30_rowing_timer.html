@@ -463,7 +463,11 @@
       <button class="day-btn" data-day="sat">Sat</button>
       <button class="day-btn" data-day="sun">Sun</button>
     </div>
-    <p style="font-size:.85rem;color:var(--muted);margin:0">Blocks:</p>
+    <div class="btn-row" id="addSessionTypePicker" style="width:100%;max-width:260px">
+      <button data-stype="interval" class="selected">&#128675; Rowing</button>
+      <button data-stype="walk">&#128694; Walk</button>
+    </div>
+    <p style="font-size:.85rem;color:var(--muted);margin:0" id="addSessionBlocksLabel">Blocks:</p>
     <div class="block-picker" id="addSessionBlockPicker">
       <button class="block-btn" data-blocks="1">1</button>
       <button class="block-btn" data-blocks="2">2</button>
