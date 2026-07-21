@@ -34,10 +34,11 @@ body{font-family:'Dosis',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,s
   background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;display:flex;
   flex-direction:column;-webkit-tap-highlight-color:transparent;overflow-x:hidden;
   transition:background .3s}
-/* html is not zoomed, so 100dvh on it is the true screen height in every engine;
-   body{height:100%} then matches the screen even though zoom inflates dvh on body in WebKit */
-@media(max-width:768px){html{height:100vh;height:100dvh}
-  body{height:100%;min-height:0;overflow:hidden;zoom:1.25}}
+/* Mobile scale-up uses a 125% rem base, NOT CSS zoom: zoom renders differently in every
+   engine (iOS dvh inflation, Blink text mis-centering) while rem scaling is identical.
+   html carries 100dvh because it must resolve against the real viewport. */
+@media(max-width:768px){html{height:100vh;height:100dvh;font-size:20px}
+  body{height:100%;min-height:0;overflow:hidden}}
 body.phase-warmup{background:var(--bg-warmup)}body.phase-low{background:var(--bg-low)}
 body.phase-moderate{background:var(--bg-moderate)}body.phase-high{background:var(--bg-high)}
 body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}body.phase-done{background:var(--bg)}
