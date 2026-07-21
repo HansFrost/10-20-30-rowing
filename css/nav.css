@@ -37,7 +37,7 @@ body[data-screen="#settings"] #settings{padding-bottom:calc(76px + env(safe-area
 #settings{gap:14px}
 @media(max-width:768px){#settings{overflow-y:auto}}
 #settings .sched-header{justify-content:center}
-.set-group{background:var(--card);border-radius:14px;width:100%;max-width:420px;margin:0 auto;overflow:hidden}
+.set-group{background:var(--card);border-radius:14px;width:100%;margin:0 auto;overflow:hidden}
 .set-title{font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:12px 16px 6px}
 .set-row{display:block;width:100%;text-align:left;background:none;border:none;
   border-top:1px solid rgba(255,255,255,.05);color:var(--text);

@@ -56,7 +56,7 @@
 .timer-btn.stop{border-color:rgba(239,68,68,.4)}
 .timer-btn.skip{border-color:rgba(245,158,11,.4)}
 .timer-btn.finish{border-color:rgba(34,197,94,.4)}
-#doneContinueBtn{width:100%;max-width:360px;background:transparent;border:2px solid var(--accent);color:var(--accent)}
+#doneContinueBtn{width:100%;background:transparent;border:2px solid var(--accent);color:var(--accent)}
 
 /* PM5 LIVE DATA */
 #timer{position:relative}
@@ -104,7 +104,7 @@
 #done::before,#done::after{content:'';flex:1}
 #done h2{font-size:2.2rem;font-weight:800}
 #done .sub{font-size:1rem;color:var(--muted)}
-#summaryBox{background:var(--card);border-radius:16px;padding:20px;width:100%;max-width:360px;text-align:left}
+#summaryBox{background:var(--card);border-radius:16px;padding:20px;width:100%;text-align:left}
 .summary-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)}
 .summary-row:last-child{border-bottom:none}
 .summary-row .label{color:var(--muted)}

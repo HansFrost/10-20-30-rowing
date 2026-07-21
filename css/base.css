@@ -19,7 +19,7 @@ body.phase-warmup{background:var(--bg-warmup)}body.phase-low{background:var(--bg
 body.phase-moderate{background:var(--bg-moderate)}body.phase-high{background:var(--bg-high)}
 body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}body.phase-done{background:var(--bg)}
 
-.screen{display:none;flex:1;flex-direction:column;padding:20px 16px;max-width:680px;
+.screen{display:none;flex:1;flex-direction:column;padding:20px 16px;max-width:552px;
   width:100%;margin:0 auto}
 .screen.active{display:flex}
 .btn{padding:14px 24px;border:none;border-radius:14px;font-size:1rem;font-weight:700;
@@ -36,7 +36,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 #onboarding h1{font-size:1.8rem;font-weight:800;line-height:1.2}
 #onboarding h1 small{display:block;font-size:.9rem;font-weight:400;color:var(--muted);margin-top:6px}
 #onboarding p{color:var(--muted);font-size:.9rem;line-height:1.6;max-width:360px}
-.program-cards{display:flex;flex-direction:column;gap:10px;width:100%;max-width:380px}
+.program-cards{display:flex;flex-direction:column;gap:10px;width:100%}
 .program-card{background:var(--card);border:2px solid var(--border);border-radius:14px;
   padding:16px;cursor:pointer;transition:all .15s;text-align:left}
 .program-card:active{transform:scale(.98)}
