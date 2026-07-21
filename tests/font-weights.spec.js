@@ -32,8 +32,24 @@ test('every element uses a font weight the loaded Dosis faces provide', async ({
         );
       }
     }
+    // Also scan stylesheet rules directly: dynamically-injected UI (done-screen
+    // grade badge, milestones) is absent from the DOM here, but its CSS is not.
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try { rules = sheet.cssRules; } catch (e) { continue; } // cross-origin (Google Fonts)
+      const walk = (list) => {
+        for (const r of list) {
+          if (r.selectorText && r.style && r.style.fontWeight) {
+            const w = parseInt(r.style.fontWeight, 10);
+            if (w > maxLoaded) offenders.add(r.selectorText + ' wants ' + w);
+          }
+          if (r.cssRules) walk(r.cssRules);
+        }
+      };
+      walk(rules);
+    }
     return { maxLoaded, facesFound: weights.length, offenders: [...offenders].slice(0, 20) };
   });
   expect(result.facesFound, 'Dosis webfont faces should be loaded (network needed for fonts.googleapis.com)').toBeGreaterThan(0);
-  expect(result.offenders, `elements requesting weights heavier than the loaded max (${result.maxLoaded}) get synthesized faux bold on iOS`).toEqual([]);
+  expect(result.offenders, `rules or elements requesting weights heavier than the loaded max (${result.maxLoaded}) get synthesized faux bold on iOS`).toEqual([]);
 });
