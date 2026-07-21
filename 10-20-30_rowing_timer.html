@@ -313,6 +313,22 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .timer-btn.finish{border-color:rgba(34,197,94,.4)}
 #doneContinueBtn{width:100%;max-width:360px;background:transparent;border:2px solid var(--accent);color:var(--accent)}
 
+/* PM5 LIVE DATA */
+#timer{position:relative}
+#pm5Chip{position:absolute;top:10px;right:12px;font-size:.7rem;font-weight:700;letter-spacing:.5px;
+  padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);
+  cursor:pointer;display:flex;align-items:center;gap:6px;z-index:5}
+#pm5Chip .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);flex-shrink:0}
+#pm5Chip.on .dot{background:var(--green)}
+#pm5Chip.lost .dot{background:var(--red)}
+#pm5Strip{display:none;gap:8px;width:100%;max-width:400px;margin-top:clamp(4px,1vh,10px)}
+#pm5Strip.on{display:flex}
+.pm5-tile{flex:1;background:rgba(255,255,255,.06);border-radius:10px;padding:6px 2px;text-align:center;
+  transition:background .2s,box-shadow .2s;min-width:0}
+.pm5-tile .pv{font-size:clamp(1rem,min(5.5vw,3vh),1.5rem);font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+.pm5-tile .pl{font-size:.6rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px}
+.pm5-tile.inband{background:rgba(34,197,94,.25);box-shadow:0 0 0 1px rgba(34,197,94,.5)}
+
 /* DONE */
 #done{align-items:center;gap:16px;text-align:center;overflow-y:auto}
 #done::before,#done::after{content:'';flex:1}
@@ -516,6 +532,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
       <button class="btn btn-secondary btn-small" id="changeDaysBtn" style="font-size:.75rem;flex:1">Change Training Days</button>
       <button class="btn btn-secondary btn-small" id="defTimesBtn" style="font-size:.75rem;flex:1">Set Default Times</button>
     </div>
+    <button class="btn btn-secondary btn-small" id="pm5Btn" style="font-size:.75rem;width:100%">Connect Rower (PM5)</button>
     <div style="display:flex;gap:8px">
       <button class="btn btn-secondary btn-small" id="exportBtn" style="font-size:.75rem">Export Progress</button>
       <button class="btn btn-secondary btn-small" id="importBtn" style="font-size:.75rem">Import Progress</button>
@@ -528,12 +545,19 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 
 <!-- TIMER -->
 <div class="screen" id="timer">
+  <div id="pm5Chip"><span class="dot"></span><span id="pm5ChipText">PM5 &middot; tap to connect</span></div>
   <div id="phaseLabel">GET READY</div>
   <div id="phaseName">--</div>
   <div id="hrZone"></div>
   <div id="countdown">--</div>
   <div id="instruction"></div>
   <div id="encouragement"></div>
+  <div id="pm5Strip">
+    <div class="pm5-tile"><div class="pv" id="pmWatts">-</div><div class="pl">watts</div></div>
+    <div class="pm5-tile" id="pmRateTile"><div class="pv" id="pmRate">-</div><div class="pl">s/min</div></div>
+    <div class="pm5-tile"><div class="pv" id="pmDist">-</div><div class="pl">meters</div></div>
+    <div class="pm5-tile"><div class="pv" id="pmHr">-</div><div class="pl">bpm</div></div>
+  </div>
   <div id="timerProgress">
     <div id="timerProgressText"></div>
     <div id="timerProgressBar"><div id="timerProgressFill"></div></div>
@@ -2213,6 +2237,131 @@ function initAddSessionModal(){
 }
 
 /* ===== TIMER ===== */
+/* ===== PM5 BLUETOOTH (Concept2 rowing service) ===== */
+const PM5_SVC='ce060030-43e5-11e4-916c-0800200c9a66';
+const PM5_CH_STATUS='ce060031-43e5-11e4-916c-0800200c9a66';
+const PM5_CH_STATUS1='ce060032-43e5-11e4-916c-0800200c9a66';
+const PM5_CH_STROKE='ce060036-43e5-11e4-916c-0800200c9a66';
+const RATE_BANDS={low:[16,20],moderate:[22,26],high:[30,99],warmup:[18,20],cooldown:[18,20],steady:[20,24]};
+const pm5={device:null,connected:false,manualOff:false,watts:0,spm:0,hr:0,lastDist:null,lastStrokes:null};
+let pm5Stats=null;
+
+function pm5u24(dv,o){return dv.getUint8(o)|dv.getUint8(o+1)<<8|dv.getUint8(o+2)<<16}
+function pm5NewStats(){return{meters:0,strokes:0,wSum:0,wN:0,peakW:0,sprintPeaks:[],curSprint:0,hrSum:0,hrN:0,hrMax:0}}
+function pm5Sampling(){return pm5.connected&&pm5Stats&&timerInterval&&!paused}
+
+function pm5OnStatus(e){
+  const d=pm5u24(e.target.value,3)/10;
+  if(pm5.lastDist!==null&&pm5Sampling()){
+    const delta=d-pm5.lastDist;
+    pm5Stats.meters+=delta>=0?delta:d; /* monitor reset mid-session: count from 0 */
+  }
+  pm5.lastDist=d;
+  pm5UpdateStrip();
+}
+function pm5OnStatus1(e){
+  const dv=e.target.value,hr=dv.getUint8(6);
+  pm5.spm=dv.getUint8(5);
+  pm5.hr=(hr===0||hr===255)?0:hr;
+  if(pm5Sampling()&&pm5.hr){pm5Stats.hrSum+=pm5.hr;pm5Stats.hrN++;if(pm5.hr>pm5Stats.hrMax)pm5Stats.hrMax=pm5.hr}
+  pm5UpdateStrip();
+}
+function pm5OnStroke(e){
+  const dv=e.target.value,w=dv.getUint16(3,true),sc=dv.getUint16(7,true);
+  pm5.watts=w;
+  if(pm5.lastStrokes!==null&&pm5Sampling()){
+    const ds=sc-pm5.lastStrokes;
+    pm5Stats.strokes+=ds>=0?ds:sc;
+  }
+  pm5.lastStrokes=sc;
+  if(pm5Sampling()&&w>0){
+    pm5Stats.wSum+=w;pm5Stats.wN++;
+    if(w>pm5Stats.peakW)pm5Stats.peakW=w;
+    const t=sequence[stepIdx]&&sequence[stepIdx].type;
+    if(t==='high'&&w>pm5Stats.curSprint)pm5Stats.curSprint=w;
+  }
+  pm5UpdateStrip();
+}
+
+function pm5UpdateStrip(){
+  if(!pm5.connected)return;
+  $('#pmWatts').textContent=pm5.watts||'-';
+  $('#pmRate').textContent=pm5.spm||'-';
+  $('#pmDist').textContent=pm5Stats?String(Math.round(pm5Stats.meters)):'-';
+  $('#pmHr').textContent=pm5.hr||'-';
+  const s=sequence[stepIdx],band=s&&RATE_BANDS[s.type];
+  $('#pmRateTile').classList.toggle('inband',!!(band&&pm5.spm>=band[0]&&pm5.spm<=band[1]&&timerInterval&&!paused));
+}
+
+function pm5SetUi(){
+  const chip=$('#pm5Chip');
+  chip.classList.toggle('on',pm5.connected);
+  chip.classList.toggle('lost',!pm5.connected&&!!pm5.device&&!pm5.manualOff);
+  $('#pm5ChipText').textContent=pm5.connected?'PM5':'PM5 · tap to connect';
+  $('#pm5Strip').classList.toggle('on',pm5.connected);
+  $('#pm5Btn').textContent=pm5.connected?'✓ Rower Connected · tap to disconnect':'Connect Rower (PM5)';
+}
+
+async function pm5Connect(){
+  if(!navigator.bluetooth){
+    customAlert('Web Bluetooth is not available in this browser. On iPhone, open this page in the Bluefy app.');
+    return;
+  }
+  try{
+    pm5.manualOff=false;
+    const dev=await navigator.bluetooth.requestDevice({filters:[{namePrefix:'PM5'}],optionalServices:[PM5_SVC]});
+    pm5.device=dev;
+    dev.addEventListener('gattserverdisconnected',pm5OnDisconnect);
+    await pm5Subscribe();
+  }catch(err){
+    if(err.name!=='NotFoundError')customAlert('Rower connection failed: '+err.message);
+    pm5SetUi();
+  }
+}
+async function pm5Subscribe(){
+  const server=await pm5.device.gatt.connect();
+  const svc=await server.getPrimaryService(PM5_SVC);
+  const subs=[[PM5_CH_STATUS,pm5OnStatus],[PM5_CH_STATUS1,pm5OnStatus1],[PM5_CH_STROKE,pm5OnStroke]];
+  for(const [uuid,fn] of subs){
+    const ch=await svc.getCharacteristic(uuid);
+    ch.removeEventListener('characteristicvaluechanged',fn);
+    ch.addEventListener('characteristicvaluechanged',fn);
+    await ch.startNotifications();
+  }
+  pm5.connected=true;pm5.lastDist=null;pm5.lastStrokes=null;
+  pm5SetUi();
+}
+function pm5OnDisconnect(){
+  pm5.connected=false;pm5SetUi();
+  if(!pm5.manualOff)pm5Retry(0);
+}
+function pm5Retry(n){
+  if(n>=5||!pm5.device||pm5.manualOff)return;
+  setTimeout(async()=>{
+    if(pm5.connected||pm5.manualOff)return;
+    try{await pm5Subscribe()}catch(e){pm5Retry(n+1)}
+  },2000);
+}
+function pm5Disconnect(){
+  pm5.manualOff=true;
+  if(pm5.device&&pm5.device.gatt.connected)pm5.device.gatt.disconnect();
+  pm5.connected=false;pm5SetUi();
+}
+function pm5PhaseChange(oldIdx){
+  if(!pm5.connected||!pm5Stats)return;
+  const old=sequence[oldIdx];
+  if(old&&old.type==='high'&&pm5Stats.curSprint>0){
+    const w=pm5Stats.curSprint;
+    pm5Stats.sprintPeaks.push(w);
+    const d=loadData(),pb=(d&&d.pm5PB&&d.pm5PB.peakW)||0;
+    $('#encouragement').textContent=(pb>0&&w>pb)?'⚡ NEW POWER PB: '+w+' W!':'⚡ Sprint peak: '+w+' W';
+    pm5Stats.curSprint=0;
+  }
+  pm5UpdateStrip();
+}
+$('#pm5Btn').addEventListener('click',()=>pm5.connected?pm5Disconnect():pm5Connect());
+$('#pm5Chip').addEventListener('click',()=>{if(!pm5.connected)pm5Connect()});
+
 let timerConfig={blocks:3,restSec:120,warmup:true,cooldown:true,steady:false,steadyMinutes:0};
 let sequence=[],stepIdx=0,remaining=0,timerInterval=null,paused=false,startTime=null,totalSec=0,cheerTimer=null;
 let wkStart=0,wkBank=0;
@@ -2259,7 +2408,7 @@ function updateTimerUI(){
   $('#hrZone').textContent=hrText(s.type);
   $('#instruction').textContent=s.inst;
   scheduleCheer(s.type,s.dur);
-  updateCountdown();updateTimerProgress();
+  updateCountdown();updateTimerProgress();pm5UpdateStrip();
 }
 function updateCountdown(){
   if(remaining>=60) $('#countdown').textContent=Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0');
@@ -2284,13 +2433,14 @@ function tick(){
     cum+=sequence[i].dur;
   }
   if(newIdx<0){finish();return}
-  const changed=newIdx!==stepIdx;stepIdx=newIdx;
+  const changed=newIdx!==stepIdx,oldIdx=stepIdx;stepIdx=newIdx;
   remaining=Math.max(0,Math.ceil(sequence[stepIdx].dur-(totalEl-cum)));
   if(changed){
     const s=sequence[stepIdx];
     if(s.type==='high')soundSprint();else if(s.type==='rest')soundBlockEnd();
     else if(s.type==='low'||s.type==='moderate')soundPhase();
     updateTimerUI();
+    pm5PhaseChange(oldIdx);
   }else{
     if(remaining<=3&&remaining>0)soundTick();
     updateCountdown();updateTimerProgress();
@@ -2304,6 +2454,7 @@ function skipPhase(){
 function startTimer(){
   ensureAudio();sequence=buildSequence();stepIdx=0;remaining=sequence[0].dur;
   totalSec=sequence.reduce((a,x)=>a+x.dur,0);paused=false;finishedEarly=false;startTime=Date.now();wkStart=Date.now();wkBank=0;
+  pm5Stats=pm5NewStats();
   Object.keys(cheerSeen).forEach(k=>delete cheerSeen[k]);
   $('#pauseBtn').textContent='PAUSE';$('#encouragement').textContent='';
   showScreen('#timer');updateTimerUI();timerInterval=setInterval(tick,1000);requestWakeLock();
@@ -2329,7 +2480,27 @@ function resumeSession(){
 function finish(){
   clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);soundDone();
   const elapsed=Math.round((Date.now()-startTime)/1000);
-  if(currentSessionKey){const d=loadData();if(d){d.completed[currentSessionKey]=new Date().toISOString();saveData(d)}}
+
+  /* Finalize PM5 stats for this session */
+  let ps=null,newPowerPB=false;
+  if(pm5Stats&&(pm5Stats.wN>0||pm5Stats.meters>0)){
+    if(pm5Stats.curSprint>0){pm5Stats.sprintPeaks.push(pm5Stats.curSprint);pm5Stats.curSprint=0}
+    ps={m:Math.round(pm5Stats.meters),
+        avgW:pm5Stats.wN?Math.round(pm5Stats.wSum/pm5Stats.wN):0,
+        peakW:pm5Stats.peakW,strokes:pm5Stats.strokes,
+        bestSprint:pm5Stats.sprintPeaks.length?Math.max.apply(null,pm5Stats.sprintPeaks):0,
+        avgHr:pm5Stats.hrN?Math.round(pm5Stats.hrSum/pm5Stats.hrN):0,maxHr:pm5Stats.hrMax,
+        sprintPeaks:pm5Stats.sprintPeaks.slice()};
+  }
+
+  if(currentSessionKey){const d=loadData();if(d){
+    d.completed[currentSessionKey]=new Date().toISOString();
+    if(ps){
+      d.sessionStats=d.sessionStats||{};d.sessionStats[currentSessionKey]=ps;
+      d.pm5PB=d.pm5PB||{peakW:0};
+      if(ps.peakW>d.pm5PB.peakW){newPowerPB=d.pm5PB.peakW>0;d.pm5PB.peakW=ps.peakW}
+    }
+    saveData(d)}}
   document.body.className='phase-done';
   $('#doneContinueBtn').style.display=finishedEarly?'':'none';
   $('#doneSubtext').textContent=finishedEarly?'Session paused \u2014 you can continue or wrap up.':'Session marked complete!';
@@ -2341,6 +2512,14 @@ function finish(){
     h+=sRow('Blocks',timerConfig.blocks);
     h+=sRow('Total cycles',timerConfig.blocks*5);h+=sRow('Sprint time',fmtTime(sprintSec));
     h+=sRow('Sprints',timerConfig.blocks*5);
+  }
+  if(ps){
+    if(ps.m)h+=sRow('Distance rowed',ps.m.toLocaleString()+' m');
+    if(ps.avgW)h+=sRow('Avg power',ps.avgW+' W');
+    if(ps.peakW)h+=sRow('Peak power',ps.peakW+' W'+(newPowerPB?' \ud83c\udfc6':''));
+    if(ps.bestSprint&&!timerConfig.steady)h+=sRow('Best sprint',ps.bestSprint+' W');
+    if(ps.strokes)h+=sRow('Strokes',ps.strokes);
+    if(ps.avgHr)h+=sRow('Avg / max HR',ps.avgHr+' / '+ps.maxHr+' bpm');
   }
   $('#summaryBox').innerHTML=h;
 
@@ -2361,6 +2540,7 @@ function finish(){
 
     let sh='<div class="done-streak"><div class="done-streak-num">'+si.current+'</div><div class="done-streak-label">session streak</div></div>';
     if(isNewBest)sh+='<div class="done-pb">NEW PERSONAL BEST!</div>';
+    if(newPowerPB)sh+='<div class="done-pb">⚡ NEW POWER PB: '+ps.peakW+' W</div>';
     $('#doneStreakArea').innerHTML=sh;
 
     $('#doneHabitArea').innerHTML='<div class="done-habit">'+
