@@ -72,6 +72,14 @@ function cdBuildSteadyPicker(intervalDays){
   });
 }
 
+/* Rebuild an object keyed by session keys, remapping each key */
+function remapKeyedObject(obj,remapKey){
+  if(!obj)return obj;
+  const out={};
+  for(const k in obj)out[remapKey(k)]=obj[k];
+  return out;
+}
+
 function cdGetWalkDays(){
   const days=[];
   $$('#cdWalkPicker .day-btn.selected').forEach(b=>days.push(b.dataset.day));
@@ -190,24 +198,12 @@ $('#changeDaysSave').addEventListener('click',()=>{
     return key;
   }
 
-  /* Remap completed */
-  if(data.completed){
-    const nc={};
-    for(const k in data.completed)nc[remapKey(k)]=data.completed[k];
-    data.completed=nc;
-  }
-  /* Remap swaps */
-  if(data.swaps){
-    const ns={};
-    for(const k in data.swaps)ns[remapKey(k)]=data.swaps[k];
-    data.swaps=ns;
-  }
-  /* Remap sessionTimes */
-  if(data.sessionTimes){
-    const nt={};
-    for(const k in data.sessionTimes)nt[remapKey(k)]=data.sessionTimes[k];
-    data.sessionTimes=nt;
-  }
+  /* Remap all objects keyed by session keys */
+  data.completed=remapKeyedObject(data.completed,remapKey);
+  data.swaps=remapKeyedObject(data.swaps,remapKey);
+  data.sessionTimes=remapKeyedObject(data.sessionTimes,remapKey);
+  data.sessionStats=remapKeyedObject(data.sessionStats,remapKey);
+  data.bonusXP=remapKeyedObject(data.bonusXP,remapKey);
   /* Remap defaultTimes */
   if(data.defaultTimes){
     const nd={};

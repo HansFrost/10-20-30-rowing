@@ -1,6 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { gotoApp, expectNoHorizontalOverflow, expectReachable, completeOnboarding } = require('./helpers');
+const { gotoApp, expectNoHorizontalOverflow, expectReachable, completeOnboarding, STORAGE_KEY } = require('./helpers');
 
 test.describe('Onboarding', () => {
   test('step 1 (program choice): all controls fit the phone', async ({ page }) => {
@@ -238,6 +238,38 @@ test.describe('Schedule screen', () => {
     expect(luminance, 'time input background should be dark-themed, not native white').toBeLessThan(100);
     await expectNoHorizontalOverflow(page, 'change days modal');
     await page.locator('#changeDaysCancel').click();
+  });
+
+  test('changing training days remaps completed, sessionStats and bonusXP keys', async ({ page }) => {
+    // Force known days and seed per-session data keyed by them. The app reads
+    // localStorage fresh on every handler, so no reload is needed (a reload
+    // would re-run the seed init script and wipe this).
+    await page.evaluate((KEY) => {
+      const d = JSON.parse(localStorage.getItem(KEY));
+      d.days = ['mon', 'wed', 'fri'];
+      d.completed['2-fri'] = true;
+      d.sessionStats = { '2-fri': { m: 1234, w: 87 }, '1-mon': { m: 500, w: 90 } };
+      d.bonusXP = { '2-fri': 100 };
+      localStorage.setItem(KEY, JSON.stringify(d));
+    }, STORAGE_KEY);
+    await page.locator('.tab-btn[data-tab="#settings"]').click();
+    await page.locator('#changeDaysBtn').click();
+    await expect(page.locator('#changeDaysOverlay')).toHaveClass(/active/);
+    // Move Friday to Saturday
+    await page.locator('#cdDayPicker .day-btn[data-day="fri"]').click();
+    await page.locator('#cdDayPicker .day-btn[data-day="sat"]').click();
+    await expect(page.locator('#changeDaysSave')).toBeEnabled();
+    await page.locator('#changeDaysSave').click();
+    await expect(page.locator('#changeDaysOverlay')).not.toHaveClass(/active/);
+    const after = await page.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)), STORAGE_KEY);
+    expect(after.days).toEqual(['mon', 'wed', 'sat']);
+    expect(after.completed['2-sat'], 'completion should follow the moved day').toBe(true);
+    expect(after.completed['2-fri']).toBeUndefined();
+    expect(after.sessionStats['2-sat'], 'session stats should follow the moved day').toEqual({ m: 1234, w: 87 });
+    expect(after.sessionStats['2-fri']).toBeUndefined();
+    expect(after.sessionStats['1-mon'], 'stats on unmoved days must be untouched').toEqual({ m: 500, w: 90 });
+    expect(after.bonusXP['2-sat'], 'golden-session XP should follow the moved day').toBe(100);
+    expect(after.bonusXP['2-fri']).toBeUndefined();
   });
 
   test('default times modal fits', async ({ page }) => {
