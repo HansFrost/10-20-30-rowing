@@ -146,6 +146,17 @@ test.describe('Schedule screen', () => {
     await expect(page.locator('#defTimesOverlay')).toHaveClass(/active/);
     await expectReachable(page.locator('#defTimesList'), 'times list');
     await expectReachable(page.locator('#defTimesSave'), 'save button');
+    // Every time input in the modal (incl. the gradual-goal input) must be dark-themed
+    const badInputs = await page.locator('#defTimesOverlay').evaluate((overlay) => {
+      const bad = [];
+      for (const inp of overlay.querySelectorAll('input[type="time"]')) {
+        const rgb = getComputedStyle(inp).backgroundColor.match(/\d+/g).map(Number);
+        const luminance = rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114;
+        if (luminance >= 100) bad.push((inp.id || inp.className) + ' luminance ' + Math.round(luminance));
+      }
+      return bad;
+    });
+    expect(badInputs, 'time inputs rendering with a light/native background').toEqual([]);
     await expectNoHorizontalOverflow(page, 'default times modal');
     await page.locator('#defTimesCancel').click();
   });
