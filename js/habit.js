@@ -1,5 +1,5 @@
 import{$,customAlertHtml}from'./dom.js';
-import{PROGRAMS,totalAllSessions}from'./programs.js';
+import{countRowingSessions,PROGRAMS,totalAllSessions}from'./programs.js';
 import{loadData,saveData}from'./store.js';
 import{lifetimeMeters}from'./xp.js';
 const MILESTONES={
@@ -23,7 +23,8 @@ const MILESTONES={
 
 function calcStreak(data,sessions){
   const completed=data.completed||{};
-  const sorted=[...sessions].sort((a,b)=>a.date-b.date);
+  /* Walks neither break nor extend the rowing streak, and never gate shields */
+  const sorted=sessions.filter(s=>s.type!=='walk').sort((a,b)=>a.date-b.date);
   if(!sorted.length)return{current:0,best:0,shields:0};
   /* Shields: one earned per fully completed week */
   const weeks={};
@@ -64,14 +65,14 @@ function checkFullWeek(sessions){
   const completed=data.completed||{};
   const prog=PROGRAMS[data.program];
   for(let w=1;w<=prog.weeks;w++){
-    const ws=sessions.filter(s=>s.week===w);
+    const ws=sessions.filter(s=>s.week===w&&s.type!=='walk');
     if(ws.length>0&&ws.every(s=>!!completed[s.key]))return true;
   }
   return false;
 }
 
 function checkMilestones(data,sessions,streakInfo){
-  const doneCount=Object.keys(data.completed||{}).length;
+  const doneCount=countRowingSessions(data.completed);
   const total=totalAllSessions(data.program,data.days.length,(data.extraSessions||[]).length);
   const meters=lifetimeMeters(data);
   const shown=data.milestones||[];
@@ -99,7 +100,7 @@ async function showMilestones(milestones,data){
 function renderHabitStrip(data,sessions){
   const el=$('#habitStrip');
   const completed=data.completed||{};
-  const doneCount=Object.keys(completed).length;
+  const doneCount=countRowingSessions(completed);
   if(doneCount===0){el.innerHTML='';return}
   const si=calcStreak(data,sessions);
   const stage=getHabitStage(doneCount);
