@@ -76,6 +76,16 @@
 .pm5-tile .pl{font-size:.6rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px}
 .pm5-tile.inband{background:rgba(34,197,94,.25);box-shadow:0 0 0 1px rgba(34,197,94,.5)}
 #ghostLine{display:none;font-size:clamp(.7rem,min(3.5vw,2vh),1rem);font-weight:700;margin-top:2px}
+
+/* MID-SESSION CHALLENGE BANNER */
+#challengeBanner{display:none;width:100%;max-width:400px;margin-top:clamp(2px,1vh,8px);
+  padding:8px 12px;border-radius:12px;background:rgba(245,158,11,.12);
+  border:1px solid rgba(245,158,11,.5);color:var(--gold);
+  font-size:clamp(.72rem,3.4vw,.95rem);font-weight:700;letter-spacing:.3px;
+  line-height:1.35;overflow-wrap:anywhere}
+#challengeBanner.on{display:block}
+#challengeBanner.success{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.6);color:var(--green)}
+#challengeBanner.miss{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.25);color:var(--muted)}
 #ghostLine.on{display:block}
 #ghostLine.ahead{color:var(--green)}
 #ghostLine.behind{color:var(--gold)}

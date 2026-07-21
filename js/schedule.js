@@ -1,3 +1,4 @@
+import{evalSessionBonuses}from'./challenges.js';
 import{DAILY_TIPS,STAGE_IDENTITY}from'./content.js';
 import{$,$$,customAlert,showScreen}from'./dom.js';
 import{calcStreak,checkMilestones,getHabitStage,renderHabitStrip,showMilestones}from'./habit.js';
@@ -354,7 +355,7 @@ function toggleDone(key){
     return;
   }
   if(data.completed[key]) delete data.completed[key];
-  else data.completed[key]=new Date().toISOString();
+  else{data.completed[key]=new Date().toISOString();evalSessionBonuses(null,data,key)}
   const si=calcStreak(data,sessions);
   data.bestStreak=si.best;
   saveData(data);

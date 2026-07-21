@@ -1,5 +1,6 @@
 import{walkStart,walkStop,walkTick,walkDistance}from'./walk.js';
 import{beep,ensureAudio,soundBlockEnd,soundDone,soundPhase,soundSprint,soundTick}from'./audio.js';
+import{challengeTick,challengesBegin,challengesClear,evalSessionBonuses}from'./challenges.js';
 import{cheerSeen,pickCheer}from'./cheers.js';
 import{getEquipped}from'./cosmetics.js';
 import{DONE_PRAISE,DONE_TIPS}from'./content.js';
@@ -152,6 +153,7 @@ function tick(){
   }
   pm5TickHook(totalEl);
   if(timerConfig.walk)walkTick(totalEl);
+  challengeTick(totalEl);
 }
 function pm5TickHook(totalEl){
   if(!pm5.connected||!pm5Stats)return;
@@ -173,13 +175,13 @@ function startTimer(){
   if(!timerConfig.walk)ensureAudio(); /* WebAudio would pause background podcasts */
   sequence=buildSequence();stepIdx=0;remaining=sequence[0].dur;
   totalSec=sequence.reduce((a,x)=>a+x.dur,0);paused=false;finishedEarly=false;startTime=Date.now();wkStart=Date.now();wkBank=0;
-  pm5ResetStats();
+  pm5ResetStats();challengesBegin();
   Object.keys(cheerSeen).forEach(k=>delete cheerSeen[k]);
   $('#pauseBtn').textContent='PAUSE';$('#encouragement').textContent='';
   pickGhost();$('#ghostLine').classList.remove('on');
   showScreen('#timer');updateTimerUI();timerInterval=setInterval(tick,1000);requestWakeLock();tryFullscreen();setScreenDim(false);
 }
-function stopTimer(){clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);walkStop();
+function stopTimer(){clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);walkStop();challengesClear();
   setScreenDim(true);showScreen('#schedule');renderSchedule()}
 
 function finishEarly(){
@@ -198,7 +200,7 @@ function resumeSession(){
   updateTimerUI();requestWakeLock();setScreenDim(false);
 }
 function finish(){
-  clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);if(!timerConfig.walk)soundDone();setScreenDim(true);
+  clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);challengesClear();if(!timerConfig.walk)soundDone();setScreenDim(true);
   const elapsed=Math.round((Date.now()-startTime)/1000);
 
   let ps=null;
@@ -221,6 +223,7 @@ function finish(){
     d.bonusXP=d.bonusXP||{};
     if(d.bonusXP[currentSessionKey]===undefined&&Math.random()<0.15)d.bonusXP[currentSessionKey]=100;
     golden=d.bonusXP[currentSessionKey]||0;
+    evalSessionBonuses(ps,d,currentSessionKey); /* coin bonuses; needs the pre-update pm5PB */
     if(ps){
       d.sessionStats=d.sessionStats||{};d.sessionStats[currentSessionKey]=ps;
       d.pm5PB=d.pm5PB||{peakW:0};
