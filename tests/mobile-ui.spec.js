@@ -169,11 +169,11 @@ test.describe('Schedule screen', () => {
     await page.evaluate((STORAGE_KEY) => {
       const d = JSON.parse(localStorage.getItem(STORAGE_KEY));
       d.completed['1-' + d.days[0]] = new Date().toISOString();
-      d.sessionStats = { ['1-' + d.days[0]]: { m: 5000, blocks: 3 } }; // 100 base + 50 meters XP
+      d.sessionStats = { ['1-' + d.days[0]]: { m: 5000, blocks: 3 } }; // 100 base + 50 meters + 45 block XP
       localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
     }, STORAGE_KEY);
     await page.locator('.tab-btn[data-tab="#progress"]').click();
-    await expect(page.locator('#xpStrip .xp-nums')).toHaveText('150 XP · 150 / 300 to LVL 2');
+    await expect(page.locator('#xpStrip .xp-nums')).toHaveText('195 XP · 195 / 300 to LVL 2');
   });
 
   test('walk screen shows keep-screen-on hint and flags tracking interruptions', async ({ page }) => {
@@ -712,5 +712,35 @@ test.describe('Session log', () => {
 
     await expectReachable(rows.nth(0).locator('.log-head'), 'first session log row');
     await expectNoHorizontalOverflow(page, 'progress screen with session log');
+  });
+});
+
+test.describe('XP rebalance and guide', () => {
+  /** One session of each type with known stats, so the graded totals are predictable. */
+  const seedXpSessions = async (page) => {
+    await page.evaluate((KEY) => {
+      const d = JSON.parse(localStorage.getItem(KEY));
+      const iso = new Date().toISOString();
+      const walkKey = 'walk-2026-01-05';
+      d.completed = { ['1-' + d.days[0]]: iso, ['1-' + d.days[1]]: iso, [walkKey]: iso };
+      d.sessionStats = {
+        // Interval: 100 base + 50 meters + 45 blocks + 10 rate hits = 205
+        ['1-' + d.days[0]]: { m: 5000, blocks: 3, rateHits: 2 },
+        // Steady: 100 base + 80 meters + 60 minutes = 240
+        ['1-' + d.days[1]]: { m: 8000, blocks: 0, steady: true, min: 30 },
+        // Walk: 100 base + 9 km XP (no meters-per-100m XP) = 109
+        [walkKey]: { walk: true, m: 3500, min: 40 },
+      };
+      d.bonusXP = { ['1-' + d.days[0]]: 100 }; // golden session +100
+      localStorage.setItem(KEY, JSON.stringify(d));
+    }, STORAGE_KEY);
+    await page.locator('.tab-btn[data-tab="#progress"]').click();
+  };
+
+  test('calcXP grades sessions by type: blocks, steady minutes, walk kilometers', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    await seedXpSessions(page);
+    // 205 + 100 golden + 240 + 109 = 654 total -> level 2, 354 into the 450 needed
+    await expect(page.locator('#xpStrip .xp-nums')).toHaveText('654 XP · 354 / 450 to LVL 3');
   });
 });

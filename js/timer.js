@@ -208,6 +208,8 @@ function finish(){
         maxHr:pm5Stats?pm5Stats.hrMax:0};
   }else{
     ps=pm5FinalizeSession();
+    /* steady sessions earn XP per minute, so store the duration */
+    if(ps&&timerConfig.steady)ps.min=Math.max(1,Math.round(elapsed/60));
   }
   let newPowerPB=false;
 
