@@ -113,7 +113,9 @@ test.describe('Schedule screen', () => {
     // Re-render without reload (reload would re-run the seeding init script)
     await page.locator('.tab-btn[data-tab="#progress"]').click();
     await page.locator('.tab-btn[data-tab="#schedule"]').click();
-    const recorded = page.locator('.session-card.completed').first();
+    const days = await page.evaluate((k) => JSON.parse(localStorage.getItem(k)).days, STORAGE_KEY);
+    const recorded = page.locator(`.session-card[data-key="1-${days[0]}"]`);
+    await expect(recorded).toHaveClass(/completed/);
     await recorded.locator('.s-check').click();
     await expect(page.locator('#confirmOverlay'), 'locked check should explain itself').toHaveClass(/active/);
     await expect(page.locator('#confirmMsg')).toContainText('locked');
@@ -123,7 +125,7 @@ test.describe('Schedule screen', () => {
       return Object.keys(d.completed).length;
     }, STORAGE_KEY), 'recorded session must stay completed').toBe(2);
     // The manual one (no stats) still toggles off
-    const manual = page.locator('.session-card.completed').nth(1);
+    const manual = page.locator(`.session-card[data-key="1-${days[1]}"]`);
     await manual.locator('.s-check').click();
     expect(await page.evaluate((k) => Object.keys(JSON.parse(localStorage.getItem(k)).completed).length, STORAGE_KEY),
       'manual check-off should uncheck').toBe(1);
