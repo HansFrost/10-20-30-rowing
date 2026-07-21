@@ -328,6 +328,65 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .pm5-tile .pv{font-size:clamp(1rem,min(5.5vw,3vh),1.5rem);font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
 .pm5-tile .pl{font-size:.6rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px}
 .pm5-tile.inband{background:rgba(34,197,94,.25);box-shadow:0 0 0 1px rgba(34,197,94,.5)}
+#ghostLine{display:none;font-size:clamp(.7rem,min(3.5vw,2vh),1rem);font-weight:700;margin-top:2px}
+#ghostLine.on{display:block}
+#ghostLine.ahead{color:var(--green)}
+#ghostLine.behind{color:var(--gold)}
+
+/* XP / LEVEL STRIP */
+.xp-strip{background:var(--card);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.xp-level{width:44px;height:44px;border-radius:50%;background:rgba(183,191,16,.15);border:2px solid var(--accent);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;line-height:1}
+.xp-level .lvl-num{font-size:1.1rem;font-weight:800;color:var(--accent)}
+.xp-level .lvl-word{font-size:.45rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.xp-body{flex:1;min-width:0}
+.xp-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.xp-rank{font-size:.9rem;font-weight:700}
+.xp-nums{font-size:.7rem;color:var(--muted)}
+.xp-bar{height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.xp-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .4s}
+.xp-lifetime{font-size:.7rem;color:var(--muted);margin-top:6px}
+
+/* WEEKLY REPORT CARD */
+.weekly-card{background:var(--card);border-radius:12px;padding:12px 16px}
+.weekly-head{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.weekly-stats{display:flex;gap:8px;text-align:center}
+.weekly-stat{flex:1;background:rgba(255,255,255,.04);border-radius:8px;padding:8px 4px}
+.weekly-stat .wv{font-size:1.05rem;font-weight:800;line-height:1.2}
+.weekly-stat .wl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+
+/* DONE SCREEN GRADE + XP */
+.done-grade{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);
+  border-radius:10px;padding:6px 14px;margin:6px 0}
+.done-grade .g-letter{font-size:1.5rem;font-weight:900}
+.done-grade .g-detail{font-size:.7rem;color:var(--muted);text-align:left;line-height:1.3}
+.done-grade.g-S .g-letter{color:var(--gold)}
+.done-grade.g-A .g-letter{color:var(--green)}
+.done-grade.g-B .g-letter{color:var(--accent)}
+.done-grade.g-C .g-letter{color:var(--muted)}
+.done-xp{font-size:.85rem;font-weight:700;color:var(--accent);margin-top:4px}
+.done-levelup{font-size:.8rem;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+/* PROGRESS SCREEN */
+#progress{gap:16px;padding-bottom:60px}
+@media(max-width:768px){#progress{overflow-y:auto}}
+.prog-chart-card{background:var(--card);border-radius:14px;padding:16px}
+.prog-chart-title{font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px}
+.prog-chart-card svg{width:100%;height:auto;display:block}
+.prog-legend{display:flex;gap:14px;justify-content:center;margin-top:8px;font-size:.7rem;color:var(--muted)}
+.prog-legend span{display:flex;align-items:center;gap:5px}
+.prog-legend i{width:10px;height:3px;border-radius:2px;display:inline-block}
+.prog-empty{color:var(--muted);font-size:.85rem;text-align:center;line-height:1.6;padding:20px}
+
+/* CONFETTI */
+#confettiBox{position:fixed;inset:0;pointer-events:none;z-index:500;overflow:hidden}
+.confetti-bit{position:absolute;top:-12px;width:8px;height:12px;border-radius:2px;
+  animation:confetti-fall linear forwards}
+@keyframes confetti-fall{
+  0%{transform:translateY(-10px) rotate(0deg)}
+  100%{transform:translateY(110vh) rotate(720deg)}
+}
 
 /* DONE */
 #done{align-items:center;gap:16px;text-align:center;overflow-y:auto}
@@ -517,6 +576,8 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
     <div class="sched-progress-bar"><div class="sched-progress-fill" id="progFill"></div></div>
   </div>
   <div id="habitStrip"></div>
+  <div id="xpStrip"></div>
+  <div id="weeklyCard"></div>
   <div id="dailyTip"></div>
   <div id="todayBanner"></div>
   <div id="precommitBanner"></div>
@@ -533,6 +594,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
       <button class="btn btn-secondary btn-small" id="defTimesBtn" style="font-size:.75rem;flex:1">Set Default Times</button>
     </div>
     <button class="btn btn-secondary btn-small" id="pm5Btn" style="font-size:.75rem;width:100%">Connect Rower (PM5)</button>
+    <button class="btn btn-secondary btn-small" id="progressBtn" style="font-size:.75rem;width:100%">📈 Progress &amp; Stats</button>
     <div style="display:flex;gap:8px">
       <button class="btn btn-secondary btn-small" id="exportBtn" style="font-size:.75rem">Export Progress</button>
       <button class="btn btn-secondary btn-small" id="importBtn" style="font-size:.75rem">Import Progress</button>
@@ -558,6 +620,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
     <div class="pm5-tile"><div class="pv" id="pmDist">-</div><div class="pl">meters</div></div>
     <div class="pm5-tile"><div class="pv" id="pmHr">-</div><div class="pl">bpm</div></div>
   </div>
+  <div id="ghostLine"></div>
   <div id="timerProgress">
     <div id="timerProgressText"></div>
     <div id="timerProgressBar"><div id="timerProgressFill"></div></div>
@@ -581,6 +644,15 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
   <div id="doneQuoteArea"></div>
   <button class="btn btn-primary" id="doneContinueBtn" style="display:none;width:100%;max-width:360px">Continue Session</button>
   <button class="btn btn-primary" id="doneBackBtn" style="width:100%;max-width:360px">Back to Schedule</button>
+</div>
+
+<!-- PROGRESS & STATS -->
+<div class="screen" id="progress">
+  <div class="sched-header">
+    <h1 style="cursor:default">Progress &amp; Stats</h1>
+    <button class="btn btn-secondary btn-small" id="progressBackBtn">&larr; Back</button>
+  </div>
+  <div id="progressBody"></div>
 </div>
 
 <!-- HELP -->
@@ -1576,6 +1648,8 @@ function renderSchedule(){
 
   /* Habit strip (streak + stage badge) */
   renderHabitStrip(data,sessions);
+  renderXpStrip(data);
+  renderWeeklyCard(data,sessions,today,completed,startMon);
 
   /* Daily tip */
   const tipEl=$('#dailyTip');
@@ -2247,7 +2321,9 @@ const pm5={device:null,connected:false,manualOff:false,watts:0,spm:0,hr:0,lastDi
 let pm5Stats=null;
 
 function pm5u24(dv,o){return dv.getUint8(o)|dv.getUint8(o+1)<<8|dv.getUint8(o+2)<<16}
-function pm5NewStats(){return{meters:0,strokes:0,wSum:0,wN:0,peakW:0,sprintPeaks:[],curSprint:0,hrSum:0,hrN:0,hrMax:0}}
+function pm5NewStats(){return{meters:0,strokes:0,wSum:0,wN:0,peakW:0,sprintPeaks:[],curSprint:0,
+  curSprintSpm:0,sprintRates:[],rateHits:0,hrSum:0,hrN:0,hrMax:0,timeline:[],lastSample:-5}}
+let ghost=null; /* {timeline:[[sec,m],...], m, idx} best comparable previous session */
 function pm5Sampling(){return pm5.connected&&pm5Stats&&timerInterval&&!paused}
 
 function pm5OnStatus(e){
@@ -2263,7 +2339,11 @@ function pm5OnStatus1(e){
   const dv=e.target.value,hr=dv.getUint8(6);
   pm5.spm=dv.getUint8(5);
   pm5.hr=(hr===0||hr===255)?0:hr;
-  if(pm5Sampling()&&pm5.hr){pm5Stats.hrSum+=pm5.hr;pm5Stats.hrN++;if(pm5.hr>pm5Stats.hrMax)pm5Stats.hrMax=pm5.hr}
+  if(pm5Sampling()){
+    if(pm5.hr){pm5Stats.hrSum+=pm5.hr;pm5Stats.hrN++;if(pm5.hr>pm5Stats.hrMax)pm5Stats.hrMax=pm5.hr}
+    const t=sequence[stepIdx]&&sequence[stepIdx].type;
+    if(t==='high'&&pm5.spm>pm5Stats.curSprintSpm)pm5Stats.curSprintSpm=pm5.spm;
+  }
   pm5UpdateStrip();
 }
 function pm5OnStroke(e){
@@ -2353,14 +2433,54 @@ function pm5PhaseChange(oldIdx){
   if(old&&old.type==='high'&&pm5Stats.curSprint>0){
     const w=pm5Stats.curSprint;
     pm5Stats.sprintPeaks.push(w);
+    pm5Stats.sprintRates.push(pm5Stats.curSprintSpm);
+    if(pm5Stats.curSprintSpm>=30)pm5Stats.rateHits++;
     const d=loadData(),pb=(d&&d.pm5PB&&d.pm5PB.peakW)||0;
     $('#encouragement').textContent=(pb>0&&w>pb)?'⚡ NEW POWER PB: '+w+' W!':'⚡ Sprint peak: '+w+' W';
-    pm5Stats.curSprint=0;
+    pm5Stats.curSprint=0;pm5Stats.curSprintSpm=0;
   }
   pm5UpdateStrip();
 }
+
+/* Ghost race: compare live meters against your best comparable previous session */
+function pickGhost(){
+  ghost=null;
+  if(!pm5.connected)return;
+  const d=loadData();if(!d||!d.sessionStats)return;
+  let best=null;
+  for(const k of Object.keys(d.sessionStats)){
+    const s=d.sessionStats[k];
+    if(!s||!s.timeline||s.timeline.length<2)continue;
+    if(!!s.steady!==!!timerConfig.steady)continue;
+    if(!s.steady&&s.blocks!==timerConfig.blocks)continue;
+    if(!best||s.m>best.m)best=s;
+  }
+  if(best)ghost={timeline:best.timeline,m:best.m,idx:0};
+}
+function ghostMetersAt(sec){
+  const tl=ghost.timeline;
+  while(ghost.idx<tl.length-1&&tl[ghost.idx+1][0]<=sec)ghost.idx++;
+  if(ghost.idx>0&&tl[ghost.idx][0]>sec)ghost.idx=0; /* time went backward (skip); rescan */
+  while(ghost.idx<tl.length-1&&tl[ghost.idx+1][0]<=sec)ghost.idx++;
+  const a=tl[ghost.idx],b=tl[Math.min(ghost.idx+1,tl.length-1)];
+  if(b[0]===a[0])return a[1];
+  const f=Math.min(1,Math.max(0,(sec-a[0])/(b[0]-a[0])));
+  return a[1]+(b[1]-a[1])*f;
+}
+function updateGhost(totalEl){
+  const el=$('#ghostLine');
+  if(!ghost||!pm5.connected||!pm5Stats){el.classList.remove('on');return}
+  const gm=ghostMetersAt(totalEl);
+  const delta=Math.round(pm5Stats.meters-gm);
+  el.classList.add('on');
+  el.classList.toggle('ahead',delta>=0);
+  el.classList.toggle('behind',delta<0);
+  el.textContent=delta>=0?'▲ '+delta+' m ahead of your best':'▼ '+(-delta)+' m behind your best';
+}
 $('#pm5Btn').addEventListener('click',()=>pm5.connected?pm5Disconnect():pm5Connect());
 $('#pm5Chip').addEventListener('click',()=>{if(!pm5.connected)pm5Connect()});
+$('#progressBtn').addEventListener('click',()=>{renderProgress();showScreen('#progress')});
+$('#progressBackBtn').addEventListener('click',()=>showScreen('#schedule'));
 
 let timerConfig={blocks:3,restSec:120,warmup:true,cooldown:true,steady:false,steadyMinutes:0};
 let sequence=[],stepIdx=0,remaining=0,timerInterval=null,paused=false,startTime=null,totalSec=0,cheerTimer=null;
@@ -2445,6 +2565,18 @@ function tick(){
     if(remaining<=3&&remaining>0)soundTick();
     updateCountdown();updateTimerProgress();
   }
+  pm5TickHook(totalEl);
+}
+function pm5TickHook(totalEl){
+  if(!pm5.connected||!pm5Stats)return;
+  if(totalEl-pm5Stats.lastSample>=5){
+    pm5Stats.timeline.push([Math.round(totalEl),Math.round(pm5Stats.meters)]);
+    pm5Stats.lastSample=totalEl;
+  }
+  updateGhost(totalEl);
+  /* Rate coach: halfway through a sprint, one low buzz if stroke rate is under target */
+  const s=sequence[stepIdx];
+  if(s&&s.type==='high'&&remaining===5&&pm5.spm>0&&pm5.spm<30)beep(220,.3,.5);
 }
 function skipPhase(){
   if(stepIdx>=sequence.length-1){finish();return}
@@ -2457,6 +2589,7 @@ function startTimer(){
   pm5Stats=pm5NewStats();
   Object.keys(cheerSeen).forEach(k=>delete cheerSeen[k]);
   $('#pauseBtn').textContent='PAUSE';$('#encouragement').textContent='';
+  pickGhost();$('#ghostLine').classList.remove('on');
   showScreen('#timer');updateTimerUI();timerInterval=setInterval(tick,1000);requestWakeLock();tryFullscreen();
 }
 function stopTimer(){clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);
@@ -2484,23 +2617,33 @@ function finish(){
   /* Finalize PM5 stats for this session */
   let ps=null,newPowerPB=false;
   if(pm5Stats&&(pm5Stats.wN>0||pm5Stats.meters>0)){
-    if(pm5Stats.curSprint>0){pm5Stats.sprintPeaks.push(pm5Stats.curSprint);pm5Stats.curSprint=0}
+    if(pm5Stats.curSprint>0){
+      pm5Stats.sprintPeaks.push(pm5Stats.curSprint);
+      pm5Stats.sprintRates.push(pm5Stats.curSprintSpm);
+      if(pm5Stats.curSprintSpm>=30)pm5Stats.rateHits++;
+      pm5Stats.curSprint=0;pm5Stats.curSprintSpm=0;
+    }
     ps={m:Math.round(pm5Stats.meters),
         avgW:pm5Stats.wN?Math.round(pm5Stats.wSum/pm5Stats.wN):0,
         peakW:pm5Stats.peakW,strokes:pm5Stats.strokes,
         bestSprint:pm5Stats.sprintPeaks.length?Math.max.apply(null,pm5Stats.sprintPeaks):0,
         avgHr:pm5Stats.hrN?Math.round(pm5Stats.hrSum/pm5Stats.hrN):0,maxHr:pm5Stats.hrMax,
-        sprintPeaks:pm5Stats.sprintPeaks.slice()};
+        sprintPeaks:pm5Stats.sprintPeaks.slice(),sprintRates:pm5Stats.sprintRates.slice(),
+        rateHits:pm5Stats.rateHits,timeline:pm5Stats.timeline.slice(),
+        blocks:timerConfig.steady?0:timerConfig.blocks,steady:!!timerConfig.steady};
   }
 
+  let xpBefore=0,xpAfter=0;
   if(currentSessionKey){const d=loadData();if(d){
+    xpBefore=calcXP(d);
     d.completed[currentSessionKey]=new Date().toISOString();
     if(ps){
       d.sessionStats=d.sessionStats||{};d.sessionStats[currentSessionKey]=ps;
       d.pm5PB=d.pm5PB||{peakW:0};
       if(ps.peakW>d.pm5PB.peakW){newPowerPB=d.pm5PB.peakW>0;d.pm5PB.peakW=ps.peakW}
     }
-    saveData(d)}}
+    saveData(d);
+    xpAfter=calcXP(d)}}
   document.body.className='phase-done';
   $('#doneContinueBtn').style.display=finishedEarly?'':'none';
   $('#doneSubtext').textContent=finishedEarly?'Session paused \u2014 you can continue or wrap up.':'Session marked complete!';
@@ -2541,6 +2684,24 @@ function finish(){
     let sh='<div class="done-streak"><div class="done-streak-num">'+si.current+'</div><div class="done-streak-label">session streak</div></div>';
     if(isNewBest)sh+='<div class="done-pb">NEW PERSONAL BEST!</div>';
     if(newPowerPB)sh+='<div class="done-pb">⚡ NEW POWER PB: '+ps.peakW+' W</div>';
+
+    /* Session grade from sprint stroke-rate compliance (needs rower data) */
+    if(ps&&!timerConfig.steady&&ps.sprintRates.length){
+      const totalSprints=timerConfig.blocks*5;
+      const pct=ps.rateHits/totalSprints;
+      const g=pct>=.9&&!finishedEarly?'S':pct>=.7?'A':pct>=.5?'B':'C';
+      const gLabel={S:'Flawless',A:'Strong',B:'Solid',C:'Keep pushing'}[g];
+      sh+='<div class="done-grade g-'+g+'"><span class="g-letter">'+g+'</span>'+
+        '<span class="g-detail">'+gLabel+'<br>'+ps.rateHits+' / '+totalSprints+' sprints at 30+ spm</span></div>';
+    }
+
+    /* XP earned + level-up */
+    if(xpAfter>xpBefore){
+      const li0=levelInfo(xpBefore),li1=levelInfo(xpAfter);
+      sh+='<div class="done-xp">+'+(xpAfter-xpBefore)+' XP</div>';
+      if(li1.lvl>li0.lvl)sh+='<div class="done-levelup">Level up! LVL '+li1.lvl+' · '+li1.rank+'</div>';
+      if(li1.lvl>li0.lvl||newPowerPB||isNewBest)setTimeout(confettiBurst,400);
+    }
     $('#doneStreakArea').innerHTML=sh;
 
     $('#doneHabitArea').innerHTML='<div class="done-habit">'+
@@ -2577,6 +2738,152 @@ function finish(){
 }
 function sRow(l,v){return '<div class="summary-row"><span class="label">'+l+'</span><span class="value">'+v+'</span></div>'}
 
+/* ===== XP / LEVELS ===== */
+const RANKS=['Deckhand','Paddler','Rower','Oarsman','Bowman','Stroke Seat','Coxswain','Captain','Sea Wolf','Viking','Poseidon'];
+function calcXP(data){
+  const completed=data.completed||{},stats=data.sessionStats||{};
+  let xp=0;
+  for(const k of Object.keys(completed)){
+    xp+=100;
+    const s=stats[k];
+    if(s){xp+=Math.floor((s.m||0)/100)+(s.rateHits||0)*5}
+  }
+  return xp;
+}
+function levelInfo(xp){
+  let lvl=1,need=300,rem=xp;
+  while(rem>=need){rem-=need;lvl++;need=300+150*(lvl-1)}
+  return{lvl,into:rem,need,rank:RANKS[Math.min(RANKS.length-1,Math.floor((lvl-1)/2))]};
+}
+function lifetimeMeters(data){
+  const stats=data.sessionStats||{};
+  return Object.keys(stats).reduce((s,k)=>s+(stats[k].m||0),0);
+}
+function renderXpStrip(data){
+  const el=$('#xpStrip');
+  const doneCount=Object.keys(data.completed||{}).length;
+  if(!doneCount){el.innerHTML='';return}
+  const xp=calcXP(data),li=levelInfo(xp),lm=lifetimeMeters(data);
+  const pct=Math.round(li.into/li.need*100);
+  el.innerHTML='<div class="xp-strip">'+
+    '<div class="xp-level"><span class="lvl-num">'+li.lvl+'</span><span class="lvl-word">LVL</span></div>'+
+    '<div class="xp-body">'+
+      '<div class="xp-title"><span class="xp-rank">'+li.rank+'</span><span class="xp-nums">'+li.into+' / '+li.need+' XP</span></div>'+
+      '<div class="xp-bar"><div class="xp-fill" style="width:'+pct+'%"></div></div>'+
+      (lm>0?'<div class="xp-lifetime">🚣 '+lm.toLocaleString()+' m rowed lifetime</div>':'')+
+    '</div></div>';
+}
+
+/* ===== WEEKLY REPORT CARD ===== */
+function renderWeeklyCard(data,sessions,today,completed,startMon){
+  const el=$('#weeklyCard');
+  const wk=Math.floor((today-startMon)/(7*86400000))+1;
+  const ws=sessions.filter(s=>s.week===wk);
+  if(wk<1||!ws.length){el.innerHTML='';return}
+  const done=ws.filter(s=>completed[s.key]).length;
+  const stats=data.sessionStats||{};
+  const meters=ws.reduce((sum,s)=>sum+((stats[s.key]&&stats[s.key].m)||0),0);
+  const sprints=ws.reduce((sum,s)=>sum+((completed[s.key]&&s.type==='interval')?s.blocks*5:0),0);
+  el.innerHTML='<div class="weekly-card">'+
+    '<div class="weekly-head"><span>This week</span><span>Week '+wk+'</span></div>'+
+    '<div class="weekly-stats">'+
+      '<div class="weekly-stat"><div class="wv">'+done+'/'+ws.length+'</div><div class="wl">Sessions</div></div>'+
+      '<div class="weekly-stat"><div class="wv">'+sprints+'</div><div class="wl">Sprints</div></div>'+
+      '<div class="weekly-stat"><div class="wv">'+(meters?meters.toLocaleString():'-')+'</div><div class="wl">Meters</div></div>'+
+    '</div></div>';
+}
+
+/* ===== PROGRESS SCREEN ===== */
+function progStat(v,l){return '<div class="finish-stat"><div class="finish-stat-num">'+v+'</div><div class="finish-stat-label">'+l+'</div></div>'}
+function chartSvg(series,colors){
+  const W=320,H=150,P=28;
+  let max=0;series.forEach(s=>s.forEach(v=>{if(v>max)max=v}));
+  if(max<=0)return '';
+  max=Math.max(50,Math.ceil(max/50)*50);
+  const n=series[0].length;
+  const x=i=>n===1?(P+(W-P-6)/2):P+i*(W-P-6)/(n-1);
+  const y=v=>H-16-(v/max)*(H-28);
+  let out='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">';
+  [0,max/2,max].forEach(v=>{
+    out+='<line x1="'+P+'" y1="'+y(v)+'" x2="'+(W-6)+'" y2="'+y(v)+'" stroke="rgba(255,255,255,'+(v===0?'.15':'.07')+')"/>'+
+      '<text x="'+(P-4)+'" y="'+(y(v)+3)+'" font-size="8" fill="#7a8fa0" text-anchor="end">'+v+'</text>';
+  });
+  series.forEach((s,si)=>{
+    const pts=s.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ');
+    if(s.length>1)out+='<polyline points="'+pts+'" fill="none" stroke="'+colors[si]+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    s.forEach((v,i)=>{out+='<circle cx="'+x(i).toFixed(1)+'" cy="'+y(v).toFixed(1)+'" r="2.5" fill="'+colors[si]+'"/>'});
+  });
+  return out+'</svg>';
+}
+function barsSvg(vals,color){
+  const W=320,H=120,P=28;
+  const max=Math.max.apply(null,vals);
+  if(!(max>0))return '';
+  const n=vals.length,slot=(W-P-6)/n,bw=Math.min(22,slot*.7);
+  let out='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">';
+  out+='<line x1="'+P+'" y1="'+(H-16)+'" x2="'+(W-6)+'" y2="'+(H-16)+'" stroke="rgba(255,255,255,.15)"/>'+
+    '<text x="'+(P-4)+'" y="'+(H-13)+'" font-size="8" fill="#7a8fa0" text-anchor="end">0</text>'+
+    '<text x="'+(P-4)+'" y="15" font-size="8" fill="#7a8fa0" text-anchor="end">'+max.toLocaleString()+'</text>';
+  vals.forEach((v,i)=>{
+    const bh=(v/max)*(H-32);
+    out+='<rect x="'+(P+i*slot+(slot-bw)/2).toFixed(1)+'" y="'+(H-16-bh).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="3" fill="'+color+'"/>';
+  });
+  return out+'</svg>';
+}
+function renderProgress(){
+  const body=$('#progressBody');
+  const data=loadData();
+  if(!data){body.innerHTML='<div class="prog-empty">No program yet.</div>';return}
+  const stats=data.sessionStats||{},completed=data.completed||{};
+  const keys=Object.keys(stats).filter(k=>completed[k])
+    .sort((a,b)=>new Date(completed[a])-new Date(completed[b]));
+  const doneCount=Object.keys(completed).length;
+  const xp=calcXP(data),li=levelInfo(xp),lm=lifetimeMeters(data);
+  const totStrokes=keys.reduce((s,k)=>s+(stats[k].strokes||0),0);
+  const pb=(data.pm5PB&&data.pm5PB.peakW)||0;
+  let h='<div class="finish-stats">'+
+    progStat(lm?lm.toLocaleString():'0','Lifetime meters')+
+    progStat(doneCount,'Sessions done')+
+    progStat(pb?pb+' W':'–','Peak power PB')+
+    progStat(totStrokes?totStrokes.toLocaleString():'–','Total strokes')+
+    progStat('LVL '+li.lvl,li.rank)+
+    progStat(data.bestStreak||0,'Best streak')+
+  '</div>';
+  const chartKeys=keys.filter(k=>!stats[k].steady&&stats[k].avgW);
+  if(chartKeys.length>=2){
+    h+='<div class="prog-chart-card"><div class="prog-chart-title">Power per session</div>'+
+      chartSvg([chartKeys.map(k=>stats[k].bestSprint||0),chartKeys.map(k=>stats[k].avgW||0)],['#B7BF10','#60a5fa'])+
+      '<div class="prog-legend"><span><i style="background:#B7BF10"></i>Best sprint (W)</span>'+
+      '<span><i style="background:#60a5fa"></i>Avg power (W)</span></div></div>';
+  }
+  if(keys.length>=2){
+    h+='<div class="prog-chart-card"><div class="prog-chart-title">Meters per session</div>'+
+      barsSvg(keys.map(k=>stats[k].m||0),'#22c55e')+'</div>';
+  }
+  if(keys.length<2){
+    h+='<div class="prog-empty">Row at least two sessions with the PM5 connected to unlock power and distance charts.</div>';
+  }
+  body.innerHTML=h;
+}
+
+/* ===== CONFETTI ===== */
+function confettiBurst(){
+  const colors=['#B7BF10','#f59e0b','#22c55e','#ef4444','#60a5fa','#e879f9'];
+  let box=document.getElementById('confettiBox');
+  if(box)box.remove();
+  box=document.createElement('div');box.id='confettiBox';document.body.appendChild(box);
+  for(let i=0;i<70;i++){
+    const b=document.createElement('div');
+    b.className='confetti-bit';
+    b.style.left=(Math.random()*100)+'vw';
+    b.style.background=colors[i%colors.length];
+    b.style.animationDuration=(1.8+Math.random()*1.6)+'s';
+    b.style.animationDelay=(Math.random()*.6)+'s';
+    box.appendChild(b);
+  }
+  setTimeout(()=>box.remove(),4200);
+}
+
 /* ===== HABIT SYSTEM ===== */
 const STAGE_QUOTES={
   0:'Every journey starts with a single stroke.',
@@ -2594,7 +2901,14 @@ const MILESTONES={
   streak10:{test:(d,s,st)=>st.current>=10,icon:'\uD83D\uDC99',title:'10 Session Streak!',msg:'This is becoming second nature. This is who you are.'},
   pct50:{test:(d,s,st,t)=>t>0&&d>=Math.ceil(t*.5),icon:'\u2B50',title:'Halfway There!',msg:'50% of the program complete. The momentum is undeniable.'},
   pct75:{test:(d,s,st,t)=>t>0&&d>=Math.ceil(t*.75),icon:'\uD83C\uDFC6',title:'75% Complete!',msg:'Three quarters done. You can see the finish line from here.'},
-  pct100:{test:(d,s,st,t)=>t>0&&d>=t,icon:'\uD83C\uDF1E',title:'Program Complete!',msg:'You finished the entire program. You are a different person than when you started.'}
+  pct100:{test:(d,s,st,t)=>t>0&&d>=t,icon:'\uD83C\uDF1E',title:'Program Complete!',msg:'You finished the entire program. You are a different person than when you started.'},
+  dist10k:{test:(d,s,st,t,m)=>m>=10000,icon:'\uD83D\uDEA3',title:'10 km Rowed!',msg:'Ten kilometers of real, measured meters. The flywheel knows the truth, and the truth is: you earned every one.'},
+  dist25k:{test:(d,s,st,t,m)=>m>=25000,icon:'\uD83C\uDF0A',title:'25 km Rowed!',msg:'25 kilometers. That is further than swimming the English Channel would be. Keep pulling.'},
+  dist42k:{test:(d,s,st,t,m)=>m>=42195,icon:'\uD83C\uDFC5',title:'Marathon Rowed!',msg:'42.2 km. You have rowed a full marathon, one stroke at a time.'},
+  dist100k:{test:(d,s,st,t,m)=>m>=100000,icon:'\u26F5',title:'100 km Club!',msg:'Six figures of meters. This is the kind of volume that transforms a body.'},
+  dist250k:{test:(d,s,st,t,m)=>m>=250000,icon:'\uD83D\uDC0B',title:'250 km Rowed!',msg:'A quarter of a thousand kilometers. Sea creatures are starting to recognize you.'},
+  dist500k:{test:(d,s,st,t,m)=>m>=500000,icon:'\uD83C\uDF0D',title:'500 km Rowed!',msg:'Halfway to a million meters. Almost nobody gets here. You did.'},
+  dist1000k:{test:(d,s,st,t,m)=>m>=1000000,icon:'\uD83D\uDD31',title:'ONE MILLION METERS!',msg:'1,000 km. The million meter club is real, and you are in it. Poseidon salutes you.'}
 };
 
 const DONE_PRAISE=[
@@ -2700,11 +3014,12 @@ function checkFullWeek(sessions){
 function checkMilestones(data,sessions,streakInfo){
   const doneCount=Object.keys(data.completed||{}).length;
   const total=totalAllSessions(data.program,data.days.length,(data.extraSessions||[]).length);
+  const meters=lifetimeMeters(data);
   const shown=data.milestones||[];
   const found=[];
   for(const[id,m]of Object.entries(MILESTONES)){
     if(shown.includes(id))continue;
-    if(m.test(doneCount,sessions,streakInfo,total))found.push({id,icon:m.icon,title:m.title,msg:m.msg});
+    if(m.test(doneCount,sessions,streakInfo,total,meters))found.push({id,icon:m.icon,title:m.title,msg:m.msg});
   }
   return found;
 }
