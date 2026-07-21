@@ -181,6 +181,30 @@ test.describe('Timer and done screens', () => {
     await expectNoHorizontalOverflow(page, 'timer screen');
   });
 
+  test('timer button labels are horizontally centered in their buttons', async ({ page }) => {
+    // A label wider than the button's content box overflows to the RIGHT in
+    // LTR (centered lines become start-aligned on overflow), so the text hugs
+    // the left padding and crowds the right border. Guard: the label must fit
+    // and sit symmetrically.
+    const rows = await page.evaluate(() => {
+      const out = [];
+      for (const btn of document.querySelectorAll('.timer-btn')) {
+        const b = btn.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(btn);
+        const t = range.getBoundingClientRect();
+        out.push({ label: btn.textContent, leftGap: t.left - b.left, rightGap: b.right - t.right });
+      }
+      return out;
+    });
+    for (const r of rows) {
+      expect(Math.abs(r.leftGap - r.rightGap),
+        `${r.label} label off-center: ${r.leftGap.toFixed(1)}px left vs ${r.rightGap.toFixed(1)}px right`).toBeLessThanOrEqual(2.5);
+      expect(r.leftGap, `${r.label} label overflows its button`).toBeGreaterThan(0);
+      expect(r.rightGap, `${r.label} label overflows its button`).toBeGreaterThan(0);
+    }
+  });
+
   test('pause and resume work on tap', async ({ page }) => {
     await page.locator('#pauseBtn').click();
     await expect(page.locator('#pauseBtn')).toHaveText('RESUME');
