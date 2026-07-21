@@ -70,18 +70,27 @@ test.describe('Schedule screen', () => {
     await expectReachable(page.locator('#helpBtn'), 'help button');
     await expectReachable(page.locator('.sched-progress'), 'progress bar');
     await expectReachable(page.locator('#todayStartBtn'), "START TODAY'S SESSION button");
+    await expectReachable(page.locator('#walkBtn'), 'Start a Walk button');
+    // Walk button sits above the week grid, not below it
+    const walkY = (await page.locator('#walkBtn').boundingBox()).y;
+    const gridY = (await page.locator('#weekGrid').boundingBox()).y;
+    expect(walkY, 'walk button should be above the week grid').toBeLessThan(gridY);
     await expectNoHorizontalOverflow(page, 'schedule top');
   });
 
-  test('tab bar: all tabs visible, switch screens, hidden during workout', async ({ page }) => {
+  test('tab bar: all four tabs visible, switch screens, hidden during workout', async ({ page }) => {
     await expect(page.locator('#tabBar')).toBeVisible();
-    for (const tab of ['#schedule', '#progress', '#settings']) {
+    for (const tab of ['#schedule', '#progress', '#connect', '#settings']) {
       await expectReachable(page.locator(`.tab-btn[data-tab="${tab}"]`), `${tab} tab`);
     }
     await page.locator('.tab-btn[data-tab="#progress"]').click();
     await expect(page.locator('#progress')).toHaveClass(/active/);
     await expectReachable(page.locator('#progress h1'), 'progress heading');
     await expectReachable(page.locator('#progress .finish-stats'), 'lifetime stats block');
+    await page.locator('.tab-btn[data-tab="#connect"]').click();
+    await expect(page.locator('#connect')).toHaveClass(/active/);
+    await expectReachable(page.locator('#pm5Btn'), 'PM5 connect button');
+    await expectReachable(page.locator('#hrBtn'), 'HR strap button');
     await page.locator('.tab-btn[data-tab="#settings"]').click();
     await expect(page.locator('#settings')).toHaveClass(/active/);
     await page.locator('.tab-btn[data-tab="#schedule"]').click();
@@ -92,10 +101,31 @@ test.describe('Schedule screen', () => {
     await expect(page.locator('#tabBar')).not.toBeVisible();
   });
 
-  test('every week and session card is reachable and fits', async ({ page }) => {
+  test('week accordion: current week open, others collapse and expand on tap', async ({ page }) => {
     const weekGroups = page.locator('.week-group');
     const count = await weekGroups.count();
     expect(count, 'schedule should render all program weeks').toBeGreaterThanOrEqual(7);
+    // Exactly one week (the current one) starts expanded
+    expect(await page.locator('.week-group:not(.collapsed)').count(), 'only the current week should start expanded').toBe(1);
+    await expect(page.locator('.week-group:not(.collapsed) .session-card').first()).toBeVisible();
+    // Collapsed weeks show their label row and expand on tap
+    const wk = await page.locator('.week-group.collapsed').first().getAttribute('data-week');
+    const group = page.locator(`.week-group[data-week="${wk}"]`);
+    await expectReachable(group.locator('.week-label'), 'collapsed week label');
+    await group.locator('.week-label').click();
+    await expect(group).not.toHaveClass(/collapsed/);
+    await expectReachable(group.locator('.session-card').first(), 'card in expanded week');
+    await expectNoHorizontalOverflow(page, 'schedule week grid');
+  });
+
+  test('every week and session card is reachable and fits', async ({ page }) => {
+    // Expand all weeks first (accordion collapses non-current weeks)
+    const collapsedLabels = page.locator('.week-group.collapsed .week-label');
+    while (await collapsedLabels.count()) {
+      await collapsedLabels.first().click();
+    }
+    const weekGroups = page.locator('.week-group');
+    const count = await weekGroups.count();
     for (let i = 0; i < count; i++) {
       await expectReachable(weekGroups.nth(i).locator('.week-label'), `week ${i + 1} label`);
     }
@@ -118,8 +148,6 @@ test.describe('Schedule screen', () => {
       ['#defTimesBtn', 'Set Default Times button'],
       ['#maxHrEdit', 'max HR input'],
       ['#maxHrSaveBtn', 'max HR save button'],
-      ['#pm5Btn', 'PM5 connect button'],
-      ['#hrBtn', 'HR strap button'],
       ['#remindersBtn', 'reminders button'],
       ['#cloudBtn', 'cloud sync button'],
       ['#exportBtn', 'Export button'],
