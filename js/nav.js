@@ -1,4 +1,4 @@
-import{$$,showScreen}from'./dom.js';
+import{$$,registerScreenRenderer,showScreen}from'./dom.js';
 import{renderProgress}from'./progress.js';
 import{renderSchedule}from'./schedule.js';
 
@@ -12,6 +12,8 @@ const TAB_RENDER={
   '#settings':()=>{},
 };
 function initNav(){
+  /* popstate re-renders restored screens with the same renderers the tabs use */
+  Object.keys(TAB_RENDER).forEach(id=>registerScreenRenderer(id,TAB_RENDER[id]));
   $$('#tabBar .tab-btn').forEach(btn=>btn.addEventListener('click',()=>{
     const tab=btn.dataset.tab;
     if(document.body.dataset.screen===tab)return;

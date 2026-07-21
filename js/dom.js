@@ -36,7 +36,7 @@ window.addEventListener('popstate',function(e){
   navAbortHook();
   $$('.screen').forEach(s=>s.classList.remove('active'));$(st.screen).classList.add('active');document.body.className='';
   document.body.dataset.screen=st.screen;
-  if(st.screen==='#schedule')navRenderHook();
+  if(screenRenderers[st.screen])screenRenderers[st.screen]();
   if(st.step)showOnboardStep(st.step);
   _skipHist=false;
 });
@@ -52,8 +52,10 @@ function customAlertHtml(html){
 
 $('#confirmOk').addEventListener('click',()=>closeConfirm(true));
 $('#confirmCancel').addEventListener('click',()=>closeConfirm(false));
-let navAbortHook=()=>{},navRenderHook=()=>{};
+let navAbortHook=()=>{};
+const screenRenderers={};
 function setNavAbortHook(fn){navAbortHook=fn}
-function setNavRenderHook(fn){navRenderHook=fn}
+/* Feature modules register how to re-render a screen when popstate restores it */
+function registerScreenRenderer(id,fn){screenRenderers[id]=fn}
 function setSkipHist(v){_skipHist=v}
-export{$,$$,customAlert,customAlertHtml,customConfirm,setNavAbortHook,setNavRenderHook,setSkipHist,showOnboardStep,showScreen};
+export{$,$$,customAlert,customAlertHtml,customConfirm,registerScreenRenderer,setNavAbortHook,setSkipHist,showOnboardStep,showScreen};

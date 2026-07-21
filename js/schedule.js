@@ -1,5 +1,5 @@
 import{DAILY_TIPS,STAGE_IDENTITY}from'./content.js';
-import{$,$$,setNavRenderHook,showScreen}from'./dom.js';
+import{$,$$,showScreen}from'./dom.js';
 import{calcStreak,checkMilestones,getHabitStage,renderHabitStrip,showMilestones}from'./habit.js';
 import{DEFAULT_MAX_HR,renderHrTable}from'./hr.js';
 import{DAY_LABELS,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions,goalTime,injectWalks}from'./programs.js';
@@ -376,5 +376,4 @@ function renderWeeklyCard(data,sessions,today,completed,startMon){
     '</div></div>';
 }
 
-setNavRenderHook(renderSchedule);
 export{renderSchedule};
