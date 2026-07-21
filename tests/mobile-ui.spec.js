@@ -278,17 +278,30 @@ test.describe('Schedule screen', () => {
     await expect(page.locator('#defTimesOverlay')).toHaveClass(/active/);
     await expectReachable(page.locator('#defTimesList'), 'times list');
     await expectReachable(page.locator('#defTimesSave'), 'save button');
-    // Every time input in the modal (incl. the gradual-goal input) must be dark-themed
+    // Every time field in the modal (incl. the gradual-goal input) must be dark-themed
     const badInputs = await page.locator('#defTimesOverlay').evaluate((overlay) => {
       const bad = [];
-      for (const inp of overlay.querySelectorAll('input[type="time"]')) {
+      for (const inp of overlay.querySelectorAll('time-field, input[type="time"]')) {
         const rgb = getComputedStyle(inp).backgroundColor.match(/\d+/g).map(Number);
         const luminance = rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114;
         if (luminance >= 100) bad.push((inp.id || inp.className) + ' luminance ' + Math.round(luminance));
       }
       return bad;
     });
-    expect(badInputs, 'time inputs rendering with a light/native background').toEqual([]);
+    expect(badInputs, 'time fields rendering with a light/native background').toEqual([]);
+    // Time fields are custom 24h selectors: value round-trips as HH:MM, no native AM/PM control
+    const tf = await page.locator('#defTimesOverlay').evaluate((overlay) => {
+      const el = overlay.querySelector('.te-input');
+      el.value = '18:30';
+      return {
+        value: el.value,
+        hour: el.querySelector('.tf-h').value,
+        nativeTimeInputs: overlay.querySelectorAll('input[type="time"]').length,
+      };
+    });
+    expect(tf.value, 'time-field should round-trip 24h values').toBe('18:30');
+    expect(tf.hour, 'hour select should hold the 24h hour').toBe('18');
+    expect(tf.nativeTimeInputs, 'no locale-dependent native time inputs should remain').toBe(0);
     await expectNoHorizontalOverflow(page, 'default times modal');
     await page.locator('#defTimesCancel').click();
   });
