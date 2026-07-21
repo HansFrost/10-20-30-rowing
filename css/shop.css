@@ -1,0 +1,55 @@
+/* SHOP & AVATARS MODAL */
+/* z-index 190: below the confirm dialog (200) so Buy confirmation stacks on top */
+#shopOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:190;
+  align-items:center;justify-content:center;padding:20px}
+#shopOverlay.active{display:flex}
+#shopBox{background:var(--card);border-radius:20px;padding:24px 20px;max-width:380px;
+  width:100%;display:flex;flex-direction:column;gap:12px;
+  max-height:88vh;max-height:88dvh;overflow-y:auto}
+#shopBox .dt-title{font-size:1rem;font-weight:700;text-align:center}
+#shopCoins{text-align:center;font-size:.95rem;font-weight:800;color:var(--gold)}
+
+/* Coin history */
+.shop-log-title{font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);
+  font-weight:700}
+#shopLog{display:flex;flex-direction:column;gap:2px}
+.shop-log-empty{font-size:.75rem;color:var(--muted);text-align:center;line-height:1.5;padding:2px 0}
+.shop-log-row{display:flex;align-items:baseline;gap:8px;font-size:.7rem;line-height:1.5;min-width:0}
+.shop-log-amt{font-weight:800;flex-shrink:0;min-width:34px;text-align:right}
+.shop-log-amt.plus{color:var(--accent)}
+.shop-log-amt.minus{color:var(--red)}
+.shop-log-reason{flex:1;min-width:0;color:var(--text);overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.shop-log-ts{flex-shrink:0;color:var(--muted);font-size:.65rem}
+.shop-log-more{font-size:.65rem;color:var(--muted);text-align:center;padding-top:2px}
+
+/* Item grid */
+#shopGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.shop-head{grid-column:1/-1;font-size:.7rem;text-transform:uppercase;letter-spacing:1px;
+  color:var(--muted);font-weight:700;margin-top:4px}
+.shop-item{background:var(--bg);border:2px solid var(--border);border-radius:12px;
+  padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;
+  cursor:pointer;color:var(--text);font-family:inherit;min-width:0;transition:all .15s}
+.shop-item:active{transform:scale(.96)}
+.shop-item .shop-emoji{font-size:1.6rem;line-height:1.2}
+.shop-item .shop-name{font-size:.7rem;font-weight:700;text-align:center;line-height:1.2}
+.shop-item .shop-state{font-size:.6rem;color:var(--muted);text-align:center;line-height:1.3}
+.shop-item.equipped{border-color:var(--accent);background:rgba(183,191,16,.12)}
+.shop-item.equipped .shop-state{color:var(--accent);font-weight:700}
+.shop-item.owned .shop-state{color:var(--green)}
+.shop-item.buy .shop-state{color:var(--gold)}
+.shop-item.locked{opacity:.45;cursor:default}
+.shop-item.locked:active{transform:none}
+
+/* Card on the Progress screen */
+.shop-card{width:100%;display:flex;align-items:center;gap:12px;background:var(--card);
+  border:1px solid var(--border);border-radius:12px;padding:12px 16px;cursor:pointer;
+  color:var(--text);font-family:inherit;text-align:left;font-size:1rem}
+.shop-card:active{transform:scale(.98)}
+.shop-card-avatar{font-size:1.5rem;line-height:1.2;flex-shrink:0;display:inline-flex;
+  align-items:flex-end}
+.shop-card-flair{font-size:.9rem;margin-left:-2px}
+.shop-card-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.shop-card-mid b{font-size:.9rem;font-weight:700}
+.shop-card-mid span{font-size:.7rem;color:var(--muted)}
+.shop-card-coins{flex-shrink:0;font-size:.85rem;font-weight:800;color:var(--gold)}

@@ -27,6 +27,7 @@
 <link rel="stylesheet" href="css/modals.css">
 <link rel="stylesheet" href="css/nav.css">
 <link rel="stylesheet" href="css/log.css">
+<link rel="stylesheet" href="css/shop.css">
 </head>
 <body>
 
@@ -171,6 +172,10 @@
     </div>
   </div>
   <div class="set-group">
+    <div class="set-title">Rewards</div>
+    <button class="set-row" id="shopBtn">&#128675; Shop &amp; Avatars</button>
+  </div>
+  <div class="set-group">
     <div class="set-title">Sync &amp; Reminders</div>
     <button class="set-row" id="remindersBtn">🔔 Add Reminders to Calendar</button>
     <button class="set-row" id="cloudBtn">☁ Cloud Sync</button>
@@ -239,6 +244,7 @@
     <h1 style="cursor:default">Progress &amp; Stats</h1>
   </div>
   <div id="xpStrip"></div>
+  <div id="shopCard"></div>
   <div id="weeklyCard"></div>
   <div id="dailyTip"></div>
   <div id="progressBody"></div>
@@ -574,6 +580,17 @@
       <button class="btn btn-secondary btn-small" id="changeDaysCancel" style="flex:1">Cancel</button>
       <button class="btn btn-primary btn-small" id="changeDaysSave" style="flex:1" disabled>Save</button>
     </div>
+  </div>
+</div>
+
+<div id="shopOverlay">
+  <div id="shopBox">
+    <p class="dt-title">Shop &amp; Avatars</p>
+    <div id="shopCoins"></div>
+    <div class="shop-log-title">Coin history</div>
+    <div id="shopLog"></div>
+    <div id="shopGrid"></div>
+    <button class="btn btn-secondary btn-small" id="shopClose" style="width:100%">Close</button>
   </div>
 </div>
 

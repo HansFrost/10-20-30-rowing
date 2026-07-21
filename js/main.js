@@ -30,6 +30,7 @@ import{initNav}from'./nav.js';
 import{initOnboarding}from'./onboarding.js';
 import{PROGRAMS,migrateData}from'./programs.js';
 import{renderSchedule}from'./schedule.js';
+import{initShop}from'./shop.js';
 import{initAddSessionModal,initSwapModal}from'./session-modals.js';
 import{clearData,loadData,saveData}from'./store.js';
 import{initTimeModal}from'./time-modals.js';
@@ -75,7 +76,7 @@ $('#resetBtn').addEventListener('click',async()=>{
 
 /* ===== INIT ===== */
 $('#walkBtn').addEventListener('click',()=>launchWalkSession());
-initOnboarding();initNav();initSwapModal();initTimeModal();initAddSessionModal();initHistory();initXpGuide();
+initOnboarding();initNav();initSwapModal();initTimeModal();initAddSessionModal();initHistory();initXpGuide();initShop();
 const saved=loadData();
 setSkipHist(true);
 if(saved&&saved.program){
