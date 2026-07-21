@@ -59,6 +59,7 @@ function pm5UpdateStrip(){
   $('#pmRate').textContent=pm5.spm||'-';
   $('#pmDist').textContent=pm5Stats?String(Math.round(pm5Stats.meters)):'-';
   $('#pmHr').textContent=pm5.hr||'-';
+  $('#pm5Live').textContent=pm5.watts?(pm5.watts+' W · '+(pm5.spm||0)+' spm'):'connected';
   const s=sequence[stepIdx],band=s&&RATE_BANDS[s.type];
   $('#pmRateTile').classList.toggle('inband',!!(band&&pm5.spm>=band[0]&&pm5.spm<=band[1]&&timerInterval&&!paused));
 }
@@ -69,7 +70,8 @@ function pm5SetUi(){
   chip.classList.toggle('lost',!pm5.connected&&!!pm5.device&&!pm5.manualOff);
   $('#pm5ChipText').textContent=pm5.connected?'PM5':'PM5 · tap to connect';
   $('#pm5Strip').classList.toggle('on',pm5.connected);
-  $('#pm5Btn').textContent=pm5.connected?'✓ Rower Connected · tap to disconnect':'Connect Rower (PM5)';
+  $('#pm5Btn .dev-label').textContent=pm5.connected?'✓ Rower · tap to disconnect':'🚣 Connect Rower (PM5)';
+  $('#pm5Live').textContent=pm5.connected?'connected':'';
 }
 
 async function pm5Connect(){

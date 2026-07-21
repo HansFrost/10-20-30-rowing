@@ -19,11 +19,12 @@ function onHrNotif(e){
   strapSetUi();
 }
 function strapSetUi(){
-  const chip=$('#hrChip'),btn=$('#hrBtn');
+  const chip=$('#hrChip');
   chip.classList.toggle('on',strap.connected);
   chip.classList.toggle('lost',!strap.connected&&!!strap.device&&!strap.manualOff);
   $('#hrChipText').textContent=strap.connected?('❤ '+(pm5.hr||'--')):'❤ strap';
-  btn.textContent=strap.connected?'✓ HR Strap Connected · tap to disconnect':'❤ Connect HR Strap';
+  $('#hrBtn .dev-label').textContent=strap.connected?'✓ HR Strap · tap to disconnect':'❤ Connect HR Strap';
+  $('#hrLive').textContent=strap.connected?('❤ '+(pm5.hr||'--')+' bpm'):'';
 }
 async function strapConnect(){
   if(!navigator.bluetooth){
