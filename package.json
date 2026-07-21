@@ -1,0 +1,26 @@
+{
+  "name": "godform",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HansFrost/10-20-30-rowing.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/HansFrost/10-20-30-rowing/issues"
+  },
+  "homepage": "https://github.com/HansFrost/10-20-30-rowing#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "http-server": "^14.1.1"
+  }
+}

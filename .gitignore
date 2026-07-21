@@ -1,3 +1,6 @@
 articles/*.pdf
 articles/*.txt
 articles/*_tts/
+node_modules/
+test-results/
+playwright-report/

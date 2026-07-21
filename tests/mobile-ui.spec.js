@@ -1,0 +1,229 @@
+// @ts-check
+const { test, expect } = require('@playwright/test');
+const { gotoApp, expectNoHorizontalOverflow, expectReachable, completeOnboarding } = require('./helpers');
+
+test.describe('Onboarding', () => {
+  test('step 1 (program choice): all controls fit the phone', async ({ page }) => {
+    await gotoApp(page);
+    await expect(page.locator('#onboarding')).toHaveClass(/active/);
+    await expectReachable(page.locator('#onboarding h1'), 'App title');
+    for (const prog of ['beginner', 'intermediate', 'advanced']) {
+      await expectReachable(page.locator(`.program-card[data-prog="${prog}"]`), `${prog} program card`);
+    }
+    await expectReachable(page.locator('#progNextBtn'), 'NEXT button');
+    await expectReachable(page.locator('#onboardImportBtn'), 'Import Progress button');
+    await expectNoHorizontalOverflow(page, 'onboarding step 1');
+  });
+
+  test('step 2 (training days): day picker fits and is tappable', async ({ page }) => {
+    await gotoApp(page);
+    await page.locator('#progNextBtn').click();
+    await expect(page.locator('#stepDays')).toHaveClass(/active/);
+    for (const day of ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']) {
+      await expectReachable(page.locator(`#dayPicker .day-btn[data-day="${day}"]`), `${day} button`);
+    }
+    await expectReachable(page.locator('#numDaysBtns'), 'sessions-per-week buttons');
+    await expectReachable(page.locator('#daysNextBtn'), 'NEXT button');
+    await expectReachable(page.locator('#daysBackBtn'), 'Back button');
+    await expectNoHorizontalOverflow(page, 'onboarding step 2');
+  });
+
+  test('step 3 (date + max HR): inputs fit and accept values', async ({ page }) => {
+    await gotoApp(page);
+    await page.locator('#progNextBtn').click();
+    await page.locator('#daysNextBtn').click();
+    await expect(page.locator('#stepDate')).toHaveClass(/active/);
+    await expectReachable(page.locator('#dateInput'), 'date input');
+    await expectReachable(page.locator('#maxHrInput'), 'max HR input');
+    await expectReachable(page.locator('#onboardBtn'), 'START PROGRAM button');
+    await expectNoHorizontalOverflow(page, 'onboarding step 3');
+  });
+
+  test('full onboarding flow reaches the schedule', async ({ page }) => {
+    await gotoApp(page);
+    await completeOnboarding(page);
+    await expect(page.locator('#weekGrid .week-group').first()).toBeVisible();
+    await expectNoHorizontalOverflow(page, 'schedule after onboarding');
+  });
+});
+
+test.describe('Schedule screen', () => {
+  test.beforeEach(async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    await expect(page.locator('#schedule')).toHaveClass(/active/);
+  });
+
+  test('header, progress and today-banner fit the phone', async ({ page }) => {
+    await expectReachable(page.locator('#progName'), 'program name');
+    await expectReachable(page.locator('#helpBtn'), 'help button');
+    await expectReachable(page.locator('#changProgBtn'), 'Change Program button');
+    await expectReachable(page.locator('.sched-progress'), 'progress bar');
+    await expectReachable(page.locator('#todayStartBtn'), "START TODAY'S SESSION button");
+    await expectNoHorizontalOverflow(page, 'schedule top');
+  });
+
+  test('every week and session card is reachable and fits', async ({ page }) => {
+    const weekGroups = page.locator('.week-group');
+    const count = await weekGroups.count();
+    expect(count, 'schedule should render all program weeks').toBeGreaterThanOrEqual(7);
+    for (let i = 0; i < count; i++) {
+      await expectReachable(weekGroups.nth(i).locator('.week-label'), `week ${i + 1} label`);
+    }
+    // Session cards: check the first, one mid-program and the last
+    const cards = page.locator('.session-card');
+    const cardCount = await cards.count();
+    expect(cardCount).toBeGreaterThanOrEqual(20);
+    for (const idx of [0, Math.floor(cardCount / 2), cardCount - 1]) {
+      await expectReachable(cards.nth(idx), `session card ${idx}`);
+    }
+    await expectNoHorizontalOverflow(page, 'schedule week grid');
+  });
+
+  test('settings controls at the bottom are reachable', async ({ page }) => {
+    for (const [sel, label] of [
+      ['#maxHrEdit', 'max HR input'],
+      ['#maxHrSaveBtn', 'max HR save button'],
+      ['#changeDaysBtn', 'Change Training Days button'],
+      ['#defTimesBtn', 'Set Default Times button'],
+      ['#exportBtn', 'Export button'],
+      ['#importBtn', 'Import button'],
+      ['#resetBtn', 'Reset button'],
+    ]) {
+      await expectReachable(page.locator(sel), label);
+    }
+    await expectNoHorizontalOverflow(page, 'schedule bottom');
+  });
+
+  test('help overlay opens, fits, and closes', async ({ page }) => {
+    await page.locator('#helpBtn').click();
+    await expect(page.locator('#helpOverlay')).toHaveClass(/active/);
+    await expectReachable(page.locator('#helpBox h2'), 'help title');
+    await expectReachable(page.locator('#helpClose'), 'help close button');
+    // Open every collapsible section and confirm content fits
+    const sections = page.locator('#helpBox details');
+    const n = await sections.count();
+    for (let i = 0; i < n; i++) {
+      const details = sections.nth(i);
+      if (!(await details.getAttribute('open'))) await details.locator('summary').click();
+    }
+    await expectNoHorizontalOverflow(page, 'help overlay expanded');
+    await page.locator('#helpClose').click();
+    await expect(page.locator('#helpOverlay')).not.toHaveClass(/active/);
+  });
+
+  test('change training days modal fits', async ({ page }) => {
+    await page.locator('#changeDaysBtn').click();
+    await expect(page.locator('#changeDaysOverlay')).toHaveClass(/active/);
+    await expectReachable(page.locator('#cdDayPicker'), 'day picker in modal');
+    await expectReachable(page.locator('#changeDaysSave'), 'save button');
+    await expectReachable(page.locator('#changeDaysCancel'), 'cancel button');
+    await expectNoHorizontalOverflow(page, 'change days modal');
+    await page.locator('#changeDaysCancel').click();
+  });
+
+  test('default times modal fits', async ({ page }) => {
+    await page.locator('#defTimesBtn').click();
+    await expect(page.locator('#defTimesOverlay')).toHaveClass(/active/);
+    await expectReachable(page.locator('#defTimesList'), 'times list');
+    await expectReachable(page.locator('#defTimesSave'), 'save button');
+    await expectNoHorizontalOverflow(page, 'default times modal');
+    await page.locator('#defTimesCancel').click();
+  });
+
+  test('session swap modal fits', async ({ page }) => {
+    const swap = page.locator('.session-card .s-swap').first();
+    await swap.scrollIntoViewIfNeeded();
+    await swap.click();
+    await expect(page.locator('#swapOverlay')).toHaveClass(/active/);
+    await expectNoHorizontalOverflow(page, 'swap modal');
+  });
+
+  test('reset confirmation dialog fits', async ({ page }) => {
+    await page.locator('#resetBtn').scrollIntoViewIfNeeded();
+    await page.locator('#resetBtn').click();
+    await expect(page.locator('#confirmOverlay')).toHaveClass(/active/);
+    await expectReachable(page.locator('#confirmMsg'), 'confirm message');
+    await expectReachable(page.locator('#confirmOk'), 'OK button');
+    await expectReachable(page.locator('#confirmCancel'), 'Cancel button');
+    await expectNoHorizontalOverflow(page, 'confirm dialog');
+    await page.locator('#confirmCancel').click();
+  });
+});
+
+test.describe('Timer and done screens', () => {
+  test.beforeEach(async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    await page.locator('#todayStartBtn').click();
+    await expect(page.locator('#timer')).toHaveClass(/active/);
+  });
+
+  test('timer: countdown and all controls visible WITHOUT scrolling', async ({ page }) => {
+    // During a workout nothing may require scrolling - hands are busy
+    const vh = await page.evaluate(() => document.documentElement.clientHeight);
+    const vw = await page.evaluate(() => document.documentElement.clientWidth);
+    for (const [sel, label] of [
+      ['#phaseLabel', 'phase label'],
+      ['#countdown', 'countdown'],
+      ['#pauseBtn', 'PAUSE button'],
+      ['#skipBtn', 'SKIP button'],
+      ['#finishBtn', 'FINISH button'],
+      ['#stopBtn', 'STOP button'],
+    ]) {
+      const el = page.locator(sel);
+      await expect(el, `${label} should be visible`).toBeVisible();
+      const box = await el.boundingBox();
+      expect(box, `${label} bounding box`).toBeTruthy();
+      expect(box.y, `${label} above viewport`).toBeGreaterThanOrEqual(-2);
+      expect(box.y + box.height, `${label} extends below the fold (ends at ${Math.round(box.y + box.height)}, viewport height ${vh})`).toBeLessThanOrEqual(vh + 2);
+      expect(box.x, `${label} clipped left`).toBeGreaterThanOrEqual(-2);
+      expect(box.x + box.width, `${label} clipped right`).toBeLessThanOrEqual(vw + 2);
+    }
+    await expectNoHorizontalOverflow(page, 'timer screen');
+  });
+
+  test('pause and resume work on tap', async ({ page }) => {
+    await page.locator('#pauseBtn').click();
+    await expect(page.locator('#pauseBtn')).toHaveText('RESUME');
+    await page.locator('#pauseBtn').click();
+    await expect(page.locator('#pauseBtn')).toHaveText('PAUSE');
+  });
+
+  test('done screen after FINISH: summary and buttons fit', async ({ page }) => {
+    await page.locator('#finishBtn').click();
+    // FINISH may ask for confirmation via the custom dialog
+    const confirm = page.locator('#confirmOverlay.active #confirmOk');
+    if (await confirm.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await confirm.click();
+    }
+    await expect(page.locator('#done')).toHaveClass(/active/);
+    await expectReachable(page.locator('#done h2'), 'WORKOUT COMPLETE heading');
+    await expectReachable(page.locator('#summaryBox'), 'summary box');
+    await expectReachable(page.locator('#doneBackBtn'), 'Back to Schedule button');
+    await expectNoHorizontalOverflow(page, 'done screen');
+    // And back-navigation must land on the schedule
+    await page.locator('#doneBackBtn').click();
+    await expect(page.locator('#schedule')).toHaveClass(/active/);
+  });
+});
+
+test.describe('Install guide', () => {
+  test('first-visit install guide fits and can be dismissed', async ({ page }) => {
+    await gotoApp(page, { showInstallGuide: true });
+    await expect(page.locator('#installGuide')).toHaveClass(/active/);
+    await expectReachable(page.locator('#installDismiss'), 'dismiss button');
+    await expectNoHorizontalOverflow(page, 'install guide');
+    await page.locator('#installDismiss').click();
+    await expect(page.locator('#installGuide')).not.toHaveClass(/active/);
+  });
+});
+
+test.describe('Advanced program', () => {
+  test('steady-state sessions render and fit', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true, program: 'advanced' });
+    await expect(page.locator('#schedule')).toHaveClass(/active/);
+    const steadyCards = page.locator('.session-card.steady');
+    expect(await steadyCards.count(), 'advanced program should show steady-state cards').toBeGreaterThanOrEqual(7);
+    await expectReachable(steadyCards.first(), 'first steady-state card');
+    await expectNoHorizontalOverflow(page, 'advanced schedule');
+  });
+});
