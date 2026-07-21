@@ -183,7 +183,7 @@
 
 /* MAX HR INPUT */
 .maxhr-row{display:flex;align-items:center;justify-content:center;gap:8px;font-size:.9rem;color:var(--muted)}
-.maxhr-input{padding:10px 8px;border-radius:10px;border:2px solid var(--border);
+.maxhr-input{color-scheme:dark;padding:10px 8px;border-radius:10px;border:2px solid var(--border);
   background:var(--card);color:var(--text);font-size:1rem;font-weight:600;
   width:72px;text-align:center}
 .maxhr-input:focus{outline:none;border-color:var(--accent)}

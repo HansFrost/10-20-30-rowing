@@ -77,6 +77,10 @@
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">Which day is your <strong>steady-state</strong> session?</p>
       <div class="day-picker" id="steadyPicker"></div>
     </div>
+    <div id="timesSection" style="display:none">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">Set <strong>default training times</strong> (optional)</p>
+      <div id="timesPickerList"></div>
+    </div>
     <div id="obWalkSection">
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">&#128694; <strong>Walking days</strong> (optional, can overlap)</p>
       <div class="day-picker" id="obWalkPicker">
@@ -92,10 +96,6 @@
         <p style="font-size:.8rem;color:var(--muted);margin-bottom:6px">Walk times (independent of rowing)</p>
         <div id="obWalkTimesList"></div>
       </div>
-    </div>
-    <div id="timesSection" style="display:none">
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">Set <strong>default training times</strong> (optional)</p>
-      <div id="timesPickerList"></div>
     </div>
     <button class="btn btn-primary" id="daysNextBtn" style="width:100%;max-width:380px" disabled>NEXT</button>
     <button class="btn btn-secondary btn-small" id="daysBackBtn">Back</button>
@@ -476,7 +476,7 @@
       <button class="block-btn" data-blocks="5">5</button>
     </div>
     <p style="font-size:.85rem;color:var(--muted);margin:0">Time (optional):</p>
-    <input type="time" id="addSessionTime" style="padding:10px 16px;border-radius:12px;border:2px solid var(--border);
+    <input type="time" id="addSessionTime" style="color-scheme:dark;padding:10px 16px;border-radius:12px;border:2px solid var(--border);
       background:var(--card);color:var(--text);font-size:1.1rem;font-weight:700;text-align:center;width:140px">
     <div style="display:flex;gap:8px;width:100%">
       <button class="btn btn-secondary btn-small" id="addSessionCancel" style="flex:1">Cancel</button>
@@ -534,6 +534,10 @@
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">Which day is your <strong>steady-state</strong> session?</p>
       <div class="day-picker" id="cdSteadyPicker"></div>
     </div>
+    <div id="cdTimesSection" style="display:none;width:100%">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">Default training <strong>times</strong> (optional)</p>
+      <div id="cdTimesList"></div>
+    </div>
     <div id="cdWalkSection" style="width:100%">
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">&#128694; <strong>Walking days</strong> (optional, can overlap)</p>
       <div class="day-picker" id="cdWalkPicker">
@@ -549,10 +553,6 @@
         <p style="font-size:.8rem;color:var(--muted);margin-bottom:6px">Walk times (independent of rowing)</p>
         <div id="cdWalkTimesList"></div>
       </div>
-    </div>
-    <div id="cdTimesSection" style="display:none;width:100%">
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">Default training <strong>times</strong> (optional)</p>
-      <div id="cdTimesList"></div>
     </div>
     <div style="display:flex;gap:8px;width:100%">
       <button class="btn btn-secondary btn-small" id="changeDaysCancel" style="flex:1">Cancel</button>
