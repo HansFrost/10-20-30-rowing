@@ -477,8 +477,7 @@
       <button class="block-btn" data-blocks="5">5</button>
     </div>
     <p style="font-size:.85rem;color:var(--muted);margin:0">Time (optional):</p>
-    <input type="time" id="addSessionTime" style="color-scheme:dark;padding:10px 16px;border-radius:12px;border:2px solid var(--border);
-      background:var(--card);color:var(--text);font-size:1.1rem;font-weight:700;text-align:center;width:140px">
+    <time-field id="addSessionTime" class="te-input"></time-field>
     <div style="display:flex;gap:8px;width:100%">
       <button class="btn btn-secondary btn-small" id="addSessionCancel" style="flex:1">Cancel</button>
       <button class="btn btn-primary btn-small" id="addSessionSave" style="flex:1">Add</button>
@@ -497,7 +496,7 @@
     </div>
     <div id="goalSection" style="width:100%;border-top:1px solid rgba(255,255,255,.08);padding-top:12px">
       <p class="dt-desc" style="margin-bottom:6px">🎯 <strong>Gradual goal</strong> (optional): shift all times weekly toward a target, e.g. 05:30</p>
-      <div class="time-pick-row"><span class="time-pick-day">Goal</span><input type="time" id="goalTimeInput" class="te-input"></div>
+      <div class="time-pick-row"><span class="time-pick-day">Goal</span><time-field id="goalTimeInput" class="te-input"></time-field></div>
       <div class="time-pick-row"><span class="time-pick-day">Shift</span>
         <select id="goalStepSel" class="time-pick-input" style="max-width:140px">
           <option value="5">5 min/week</option><option value="10">10 min/week</option>
@@ -573,7 +572,7 @@
 <div id="timeOverlay">
   <div id="timeBox">
     <p id="timeTitle">Set time</p>
-    <input type="time" id="timeModalInput" value="07:00">
+    <time-field id="timeModalInput" value="07:00"></time-field>
     <div style="display:flex;gap:8px;width:100%">
       <button class="btn btn-secondary btn-small" id="timeClear" style="flex:1;font-size:.75rem">Clear time</button>
       <button class="btn btn-primary btn-small" id="timeSave" style="flex:1">Save</button>

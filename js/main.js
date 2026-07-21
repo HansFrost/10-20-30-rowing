@@ -18,6 +18,7 @@ import'./schedule.js';
 import'./session-modals.js';
 import'./store.js';
 import'./time-modals.js';
+import'./timefield.js';
 import'./timer.js';
 import'./util.js';
 import'./xp.js';

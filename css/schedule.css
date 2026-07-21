@@ -126,6 +126,12 @@
   background:var(--card);color:var(--text);font-size:1rem;font-weight:600;text-align:center;
   min-width:0;max-width:180px;flex:0 1 auto;color-scheme:dark}
 .time-pick-input:focus,.te-input:focus{outline:none;border-color:var(--accent)}
+time-field{display:inline-flex;align-items:center;justify-content:center;gap:1px}
+time-field select{background:none;border:none;color:var(--text);font:inherit;font-weight:600;
+  appearance:none;-webkit-appearance:none;text-align:center;color-scheme:dark;padding:2px;cursor:pointer}
+time-field select:focus{outline:none}
+time-field .tf-c{color:var(--muted);font-weight:600}
+time-field:focus-within{border-color:var(--accent)}
 
 /* HABIT STRIP (one compact row: stage ring + progress + streak) */
 .sched-habit{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:12px;
