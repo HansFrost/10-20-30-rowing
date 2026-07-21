@@ -1,0 +1,43 @@
+/* BOTTOM TAB BAR */
+#tabBar{position:fixed;left:0;right:0;bottom:0;z-index:90;display:none;justify-content:space-around;
+  background:rgba(0,26,49,.94);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);
+  padding:8px max(8px,env(safe-area-inset-left)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-right))}
+body[data-screen="#schedule"] #tabBar,
+body[data-screen="#progress"] #tabBar,
+body[data-screen="#settings"] #tabBar{display:flex}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;position:relative;
+  background:none;border:none;padding:5px 0 2px;cursor:pointer;
+  color:var(--muted);font-size:.62rem;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+.tab-btn .tab-ic{font-size:1.25rem;line-height:1;filter:grayscale(1);opacity:.55;transition:opacity .15s}
+.tab-btn::before{content:'';position:absolute;top:-9px;left:50%;transform:translateX(-50%) scaleX(0);
+  width:28px;height:3px;border-radius:2px;background:var(--accent);transition:transform .2s}
+body[data-screen="#schedule"] .tab-btn[data-tab="#schedule"],
+body[data-screen="#progress"] .tab-btn[data-tab="#progress"],
+body[data-screen="#settings"] .tab-btn[data-tab="#settings"]{color:var(--accent)}
+body[data-screen="#schedule"] .tab-btn[data-tab="#schedule"] .tab-ic,
+body[data-screen="#progress"] .tab-btn[data-tab="#progress"] .tab-ic,
+body[data-screen="#settings"] .tab-btn[data-tab="#settings"] .tab-ic{filter:none;opacity:1}
+body[data-screen="#schedule"] .tab-btn[data-tab="#schedule"]::before,
+body[data-screen="#progress"] .tab-btn[data-tab="#progress"]::before,
+body[data-screen="#settings"] .tab-btn[data-tab="#settings"]::before{transform:translateX(-50%) scaleX(1)}
+@media(prefers-reduced-motion:reduce){.tab-btn::before,.tab-btn .tab-ic{transition:none}}
+
+/* Clear the fixed bar on tabbed screens */
+body[data-screen="#schedule"] #schedule,
+body[data-screen="#progress"] #progress,
+body[data-screen="#settings"] #settings{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+
+/* SETTINGS SCREEN */
+#settings{gap:14px}
+@media(max-width:768px){#settings{overflow-y:auto}}
+#settings .sched-header{justify-content:center}
+.set-group{background:var(--card);border-radius:14px;width:100%;max-width:420px;margin:0 auto;overflow:hidden}
+.set-title{font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:12px 16px 6px}
+.set-row{display:block;width:100%;text-align:left;background:none;border:none;
+  border-top:1px solid rgba(255,255,255,.05);color:var(--text);
+  font-size:.95rem;font-weight:600;padding:13px 16px;cursor:pointer;transition:background .15s}
+.set-row:active{background:rgba(255,255,255,.06)}
+.set-row-static{display:flex;cursor:default}
+.set-row-static:active{background:none}
+.set-row-danger{color:var(--red);opacity:.85}

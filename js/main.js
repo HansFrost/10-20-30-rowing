@@ -24,6 +24,7 @@ import'./xp.js';
 import{cloudConfigured,cloudOpenModal,cloudReset,cloudSession,cloudSyncNow,cloudUiRefresh}from'./cloud.js';
 import{$,customAlert,customConfirm,setSkipHist,showOnboardStep,showScreen}from'./dom.js';
 import{DEFAULT_MAX_HR}from'./hr.js';
+import{initNav}from'./nav.js';
 import{initOnboarding}from'./onboarding.js';
 import{PROGRAMS,migrateData}from'./programs.js';
 import{renderSchedule}from'./schedule.js';
@@ -71,7 +72,7 @@ $('#resetBtn').addEventListener('click',async()=>{
 
 /* ===== INIT ===== */
 $('#walkBtn').addEventListener('click',()=>launchWalkSession());
-initOnboarding();initSwapModal();initTimeModal();initAddSessionModal();
+initOnboarding();initNav();initSwapModal();initTimeModal();initAddSessionModal();
 const saved=loadData();
 setSkipHist(true);
 if(saved&&saved.program){

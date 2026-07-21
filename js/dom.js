@@ -23,6 +23,7 @@ function closeConfirm(result){
 let _skipHist=false;
 function showScreen(id){
   $$('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active');document.body.className='';
+  document.body.dataset.screen=id;
   if(!_skipHist)history.pushState({screen:id},'');
 }
 function showOnboardStep(id){
@@ -34,6 +35,7 @@ window.addEventListener('popstate',function(e){
   _skipHist=true;
   navAbortHook();
   $$('.screen').forEach(s=>s.classList.remove('active'));$(st.screen).classList.add('active');document.body.className='';
+  document.body.dataset.screen=st.screen;
   if(st.screen==='#schedule')navRenderHook();
   if(st.step)showOnboardStep(st.step);
   _skipHist=false;

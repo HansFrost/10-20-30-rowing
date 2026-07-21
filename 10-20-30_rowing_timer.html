@@ -25,6 +25,7 @@
 <link rel="stylesheet" href="css/schedule.css">
 <link rel="stylesheet" href="css/timer.css">
 <link rel="stylesheet" href="css/modals.css">
+<link rel="stylesheet" href="css/nav.css">
 </head>
 <body>
 
@@ -128,7 +129,6 @@
     </div>
     <div class="sched-header-btns">
       <button class="btn btn-secondary btn-small" id="helpBtn">?</button>
-      <button class="btn btn-secondary btn-small" id="changProgBtn">Change Program</button>
     </div>
   </div>
   <div class="sched-progress">
@@ -136,35 +136,40 @@
     <div class="sched-progress-bar"><div class="sched-progress-fill" id="progFill"></div></div>
   </div>
   <div id="habitStrip"></div>
-  <div id="xpStrip"></div>
-  <div id="weeklyCard"></div>
-  <div id="dailyTip"></div>
   <div id="todayBanner"></div>
   <div id="precommitBanner"></div>
   <div id="weekGrid"></div>
-  <div style="margin-top:20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px">
-    <div class="maxhr-row">
+  <button class="btn btn-secondary btn-small" id="walkBtn" style="margin:16px auto 0">&#128694; Start a Walk</button>
+</div>
+
+<!-- SETTINGS -->
+<div class="screen" id="settings">
+  <div class="sched-header"><h1 style="cursor:default">Settings</h1></div>
+  <div class="set-group">
+    <div class="set-title">Program</div>
+    <button class="set-row" id="changProgBtn">Change Program</button>
+    <button class="set-row" id="changeDaysBtn">Change Training Days</button>
+    <button class="set-row" id="defTimesBtn">Set Default Times</button>
+    <div class="set-row set-row-static maxhr-row">
       <span>Max HR:</span>
       <input type="number" class="maxhr-input" id="maxHrEdit" min="100" max="230">
       <span>bpm</span>
       <button class="btn btn-secondary btn-small" id="maxHrSaveBtn" style="font-size:.7rem;padding:6px 10px">Save</button>
     </div>
-    <div style="display:flex;gap:8px;width:100%">
-      <button class="btn btn-secondary btn-small" id="changeDaysBtn" style="font-size:.75rem;flex:1">Change Training Days</button>
-      <button class="btn btn-secondary btn-small" id="defTimesBtn" style="font-size:.75rem;flex:1">Set Default Times</button>
-    </div>
-    <button class="btn btn-secondary btn-small" id="pm5Btn" style="font-size:.75rem;width:100%">Connect Rower (PM5)</button>
-    <button class="btn btn-secondary btn-small" id="progressBtn" style="font-size:.75rem;width:100%">📈 Progress &amp; Stats</button>
-    <button class="btn btn-secondary btn-small" id="walkBtn" style="font-size:.75rem;width:100%">&#128694; Start a Walk</button>
-    <button class="btn btn-secondary btn-small" id="hrBtn" style="font-size:.75rem;width:100%">&#10084; Connect HR Strap</button>
-    <button class="btn btn-secondary btn-small" id="remindersBtn" style="font-size:.75rem;width:100%">🔔 Add Reminders to Calendar</button>
-    <button class="btn btn-secondary btn-small" id="cloudBtn" style="font-size:.75rem;width:100%">☁ Cloud Sync</button>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-secondary btn-small" id="exportBtn" style="font-size:.75rem">Export Progress</button>
-      <button class="btn btn-secondary btn-small" id="importBtn" style="font-size:.75rem">Import Progress</button>
-    </div>
+  </div>
+  <div class="set-group">
+    <div class="set-title">Connections</div>
+    <button class="set-row" id="pm5Btn">Connect Rower (PM5)</button>
+    <button class="set-row" id="hrBtn">&#10084; Connect HR Strap</button>
+    <button class="set-row" id="remindersBtn">🔔 Add Reminders to Calendar</button>
+    <button class="set-row" id="cloudBtn">☁ Cloud Sync</button>
+  </div>
+  <div class="set-group">
+    <div class="set-title">Data</div>
+    <button class="set-row" id="exportBtn">Export Progress</button>
+    <button class="set-row" id="importBtn">Import Progress</button>
     <input type="file" id="importFile" accept=".json" style="display:none">
-    <button class="btn btn-secondary btn-small" id="resetBtn" style="opacity:.5;font-size:.75rem">Reset Program</button>
+    <button class="set-row set-row-danger" id="resetBtn">Reset Program</button>
   </div>
 </div>
 
@@ -220,8 +225,10 @@
 <div class="screen" id="progress">
   <div class="sched-header">
     <h1 style="cursor:default">Progress &amp; Stats</h1>
-    <button class="btn btn-secondary btn-small" id="progressBackBtn">&larr; Back</button>
   </div>
+  <div id="xpStrip"></div>
+  <div id="weeklyCard"></div>
+  <div id="dailyTip"></div>
   <div id="progressBody"></div>
 </div>
 
@@ -250,6 +257,13 @@
     <button class="btn btn-secondary btn-small" id="cloudCloseBtn" style="width:100%">Close</button>
   </div>
 </div>
+
+<!-- TAB BAR -->
+<nav id="tabBar" aria-label="Main">
+  <button class="tab-btn" data-tab="#schedule"><span class="tab-ic">&#128197;</span><span>Schedule</span></button>
+  <button class="tab-btn" data-tab="#progress"><span class="tab-ic">&#128200;</span><span>Progress</span></button>
+  <button class="tab-btn" data-tab="#settings"><span class="tab-ic">&#9881;&#65039;</span><span>Settings</span></button>
+</nav>
 
 <!-- HELP -->
 <div id="helpOverlay">
