@@ -11,8 +11,8 @@ const STORAGE_KEY = 'rowing-102030-schedule';
  * the schedule screen, with today as a training day.
  */
 async function gotoApp(page, opts = {}) {
-  const { seedProgram = false, showInstallGuide = false, program = 'intermediate' } = opts;
-  await page.addInitScript(({ seedProgram, showInstallGuide, program, STORAGE_KEY }) => {
+  const { seedProgram = false, showInstallGuide = false, program = 'intermediate', restToday = false, customName = '' } = opts;
+  await page.addInitScript(({ seedProgram, showInstallGuide, program, restToday, customName, STORAGE_KEY }) => {
     if (!showInstallGuide) localStorage.setItem('install_guide_seen', '1');
     if (seedProgram) {
       const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -22,8 +22,10 @@ async function gotoApp(page, opts = {}) {
       monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
       const pad = (n) => String(n).padStart(2, '0');
       const dateStr = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
-      // Ensure today is always a training day
-      const days = [...new Set([dayKeys[dow], 'mon', 'wed', 'fri'])].slice(0, 3);
+      // Today is a training day by default; restToday makes it a rest day
+      const days = restToday
+        ? dayKeys.filter((d) => d !== dayKeys[dow]).slice(0, 3)
+        : [...new Set([dayKeys[dow], 'mon', 'wed', 'fri'])].slice(0, 3);
       const data = {
         startDate: dateStr(monday),
         program,
@@ -35,9 +37,10 @@ async function gotoApp(page, opts = {}) {
         sessionTimes: {},
       };
       if (program === 'advanced') data.steadyDay = days.find((d) => d !== dayKeys[dow]) || 'sun';
+      if (customName) data.programName = customName;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
-  }, { seedProgram, showInstallGuide, program, STORAGE_KEY });
+  }, { seedProgram, showInstallGuide, program, restToday, customName, STORAGE_KEY });
   await page.goto(APP_PATH);
 }
 

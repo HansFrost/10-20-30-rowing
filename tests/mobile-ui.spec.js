@@ -78,6 +78,22 @@ test.describe('Schedule screen', () => {
     await expectNoHorizontalOverflow(page, 'schedule top');
   });
 
+  test('rest day: compact banner with a single walk button', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true, restToday: true });
+    await expect(page.locator('.sched-rest-banner')).toBeVisible();
+    await expectReachable(page.locator('#restWalkBtn'), 'walk button in rest banner');
+    await expect(page.locator('#walkBtn'), 'standalone walk button should hide when the banner offers a walk').toBeHidden();
+    await expectNoHorizontalOverflow(page, 'rest day schedule');
+  });
+
+  test('long program name truncates instead of wrapping the header', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true, customName: 'FitterHappierMoreProductive' });
+    const nameBox = await page.locator('#progName').boundingBox();
+    const helpBox = await page.locator('#helpBtn').boundingBox();
+    expect(helpBox.y, 'help button should stay on the title row, not wrap below').toBeLessThan(nameBox.y + nameBox.height);
+    await expectNoHorizontalOverflow(page, 'header with long name');
+  });
+
   test('tab bar: all four tabs visible, switch screens, hidden during workout', async ({ page }) => {
     await expect(page.locator('#tabBar')).toBeVisible();
     for (const tab of ['#schedule', '#progress', '#connect', '#settings']) {
