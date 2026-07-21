@@ -360,7 +360,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 /* DONE SCREEN GRADE + XP */
 .done-grade{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);
   border-radius:10px;padding:6px 14px;margin:6px 0}
-.done-grade .g-letter{font-size:1.5rem;font-weight:900}
+.done-grade .g-letter{font-size:1.5rem;font-weight:800}
 .done-grade .g-detail{font-size:.7rem;color:var(--muted);text-align:left;line-height:1.3}
 .done-grade.g-S .g-letter{color:var(--gold)}
 .done-grade.g-A .g-letter{color:var(--green)}
@@ -2636,10 +2636,10 @@ function startTimer(){
   Object.keys(cheerSeen).forEach(k=>delete cheerSeen[k]);
   $('#pauseBtn').textContent='PAUSE';$('#encouragement').textContent='';
   pickGhost();$('#ghostLine').classList.remove('on');
-  showScreen('#timer');updateTimerUI();timerInterval=setInterval(tick,1000);requestWakeLock();tryFullscreen();
+  showScreen('#timer');updateTimerUI();timerInterval=setInterval(tick,1000);requestWakeLock();tryFullscreen();setScreenDim(false);
 }
 function stopTimer(){clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);
-  showScreen('#schedule');renderSchedule()}
+  setScreenDim(true);showScreen('#schedule');renderSchedule()}
 
 function finishEarly(){
   finishedEarly=true;
@@ -2654,10 +2654,10 @@ function resumeSession(){
   showScreen('#timer');
   timerInterval=setInterval(tick,1000);
   $('#pauseBtn').textContent='PAUSE';
-  updateTimerUI();requestWakeLock();
+  updateTimerUI();requestWakeLock();setScreenDim(false);
 }
 function finish(){
-  clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);soundDone();
+  clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);soundDone();setScreenDim(true);
   const elapsed=Math.round((Date.now()-startTime)/1000);
 
   /* Finalize PM5 stats for this session */
@@ -3275,6 +3275,13 @@ function renderHabitStrip(data,sessions){
 
 
 async function requestWakeLock(){try{if('wakeLock' in navigator)await navigator.wakeLock.request('screen')}catch(e){}}
+/* Bluefy proprietary API: control iOS screen auto-dim/sleep. allowDim=false keeps the screen on. */
+function setScreenDim(allowDim){
+  try{
+    if(navigator.bluetooth&&typeof navigator.bluetooth.setScreenDimEnabled==='function')
+      navigator.bluetooth.setScreenDimEnabled(allowDim);
+  }catch(e){}
+}
 function tryFullscreen(){
   try{
     if(document.fullscreenElement||document.webkitFullscreenElement)return;
