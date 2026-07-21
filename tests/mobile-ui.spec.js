@@ -164,6 +164,18 @@ test.describe('Schedule screen', () => {
     expect(box.height, 'delete tap target height').toBeGreaterThanOrEqual(28);
   });
 
+  test('XP strip shows total XP alongside progress to the next level', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    await page.evaluate((STORAGE_KEY) => {
+      const d = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      d.completed['1-' + d.days[0]] = new Date().toISOString();
+      d.sessionStats = { ['1-' + d.days[0]]: { m: 5000, blocks: 3 } }; // 100 base + 50 meters XP
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+    }, STORAGE_KEY);
+    await page.locator('.tab-btn[data-tab="#progress"]').click();
+    await expect(page.locator('#xpStrip .xp-nums')).toHaveText('150 XP · 150 / 300 to LVL 2');
+  });
+
   test('walk screen shows keep-screen-on hint and flags tracking interruptions', async ({ page }) => {
     await gotoApp(page, { seedProgram: true, restToday: true });
     await page.locator('#restWalkBtn').click();
