@@ -4,9 +4,9 @@ function calcXP(data){
   const completed=data.completed||{},stats=data.sessionStats||{};
   let xp=0;
   for(const k of Object.keys(completed)){
-    xp+=100;
+    xp+=100; /* rule: walks earn the flat 100 XP for showing up, but no meters/rate XP (meters are rowing-only) */
     const s=stats[k];
-    if(s){xp+=Math.floor((s.m||0)/100)+(s.rateHits||0)*5}
+    if(s&&!s.walk){xp+=Math.floor((s.m||0)/100)+(s.rateHits||0)*5}
     xp+=(data.bonusXP&&data.bonusXP[k])||0;
   }
   return xp;
