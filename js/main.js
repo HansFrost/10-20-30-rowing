@@ -18,7 +18,7 @@ import'./time-modals.js';
 import'./timer.js';
 import'./util.js';
 import'./xp.js';
-import{cloudConfigured,cloudReset,cloudSession,cloudSyncNow,cloudUiRefresh}from'./cloud.js';
+import{cloudConfigured,cloudOpenModal,cloudReset,cloudSession,cloudSyncNow,cloudUiRefresh}from'./cloud.js';
 import{$,customAlert,customConfirm,setSkipHist,showOnboardStep,showScreen}from'./dom.js';
 import{DEFAULT_MAX_HR}from'./hr.js';
 import{initOnboarding}from'./onboarding.js';
@@ -48,6 +48,8 @@ $('#exportBtn').addEventListener('click',()=>{
   a.download='rowing-102030-progress.json';a.click();URL.revokeObjectURL(a.href)});
 $('#importBtn').addEventListener('click',()=>$('#importFile').click());
 $('#onboardImportBtn').addEventListener('click',()=>$('#importFile').click());
+$('#onboardCloudBtn').addEventListener('click',cloudOpenModal);
+if(!cloudConfigured())$('#onboardCloudBtn').style.display='none';
 $('#importFile').addEventListener('change',e=>{
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();

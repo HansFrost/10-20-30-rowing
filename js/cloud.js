@@ -122,7 +122,8 @@ function cloudUiRefresh(){
     cloudShowStep('cloudStepIn');
   }else cloudShowStep('cloudStepEmail');
 }
-$('#cloudBtn').addEventListener('click',()=>{cloudUiRefresh();cloudStatus('');$('#cloudOverlay').classList.add('active')});
+function cloudOpenModal(){cloudUiRefresh();cloudStatus('');$('#cloudOverlay').classList.add('active')}
+$('#cloudBtn').addEventListener('click',cloudOpenModal);
 $('#cloudCloseBtn').addEventListener('click',()=>$('#cloudOverlay').classList.remove('active'));
 $('#cloudSendBtn').addEventListener('click',async()=>{
   const email=$('#cloudEmail').value.trim();
@@ -161,4 +162,4 @@ $('#cloudSignOutBtn').addEventListener('click',()=>{
 });
 window.addEventListener('pagehide',()=>{if(cloudTimer){clearTimeout(cloudTimer);cloudTimer=null;cloudPush(true)}});
 onSave(scheduleCloudPush);
-export{cloudConfigured,cloudReset,cloudSession,cloudSyncNow,cloudUiRefresh};
+export{cloudConfigured,cloudOpenModal,cloudReset,cloudSession,cloudSyncNow,cloudUiRefresh};
