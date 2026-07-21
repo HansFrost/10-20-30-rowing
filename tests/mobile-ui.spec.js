@@ -40,12 +40,25 @@ test.describe('Onboarding', () => {
     await expectNoHorizontalOverflow(page, 'onboarding step 2');
   });
 
+  test('walk day buttons still work after revisiting step 2', async ({ page }) => {
+    await gotoApp(page);
+    await page.locator('#progNextBtn').click();
+    await page.locator('#daysBackBtn').click();
+    await expect(page.locator('#stepProgram')).toHaveClass(/active/);
+    await page.locator('#progNextBtn').click();
+    const wed = page.locator('#obWalkPicker .day-btn[data-day="wed"]');
+    await wed.click();
+    await expect(wed, 'walk day should select with a single tap after re-entering step 2').toHaveClass(/selected/);
+  });
+
   test('step 3 (date + max HR): inputs fit and accept values', async ({ page }) => {
     await gotoApp(page);
     await page.locator('#progNextBtn').click();
     await page.locator('#daysNextBtn').click();
     await expect(page.locator('#stepDate')).toHaveClass(/active/);
     await expectReachable(page.locator('#dateInput'), 'date input');
+    expect(await page.locator('#dateInput').evaluate((el) => getComputedStyle(el).colorScheme),
+      'date input should render dark native UI').toContain('dark');
     await expectReachable(page.locator('#maxHrInput'), 'max HR input');
     await expectReachable(page.locator('#onboardBtn'), 'START PROGRAM button');
     await expectNoHorizontalOverflow(page, 'onboarding step 3');
