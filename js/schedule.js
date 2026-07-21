@@ -248,7 +248,7 @@ function renderSchedule(){
       const noBtns=s.type==='walk';
       const swapBtn=noBtns?'':'<div class="s-swap" data-swap-key="'+s.key+'" data-swap-week="'+s.week+'" data-swap-default="'+s.defaultDay+'" data-swap-current="'+s.actualDay+'"'+(s.isExtra?' data-swap-extra="1"':'')+'>&#8652;</div>';
       const deleteBtn=s.isExtra?'<div class="s-delete" data-delete-extra="'+s.key+'">&times;</div>':'';
-      const timeBtn=noBtns?'':'<div class="'+timeCls+'" data-time-key="'+s.key+'" data-time-day="'+s.actualDay+'">'+timeContent+'</div>';
+      const timeBtn='<div class="'+timeCls+'" data-time-key="'+s.key+'" data-time-day="'+s.actualDay+'">'+timeContent+'</div>';
       html+='<div class="'+cls+'" data-key="'+s.key+'" data-blocks="'+s.blocks+'" data-type="'+s.type+'">'+
         '<div class="s-check" data-toggle="'+s.key+'">'+(isDone?'&#10003;':'')+'</div>'+
         deleteBtn+

@@ -155,6 +155,9 @@ function goalTime(data,date){
 }
 function getEffectiveTime(data,key,day,date){
   if(data.sessionTimes&&data.sessionTimes[key])return data.sessionTimes[key];
+  if(key&&key.indexOf('walk-')===0){ /* walk timings are independent of rowing */
+    return(data.walkTimes&&data.walkTimes[day])||null;
+  }
   const g=goalTime(data,date||new Date());
   if(g)return g;
   if(data.defaultTimes&&data.defaultTimes[day])return data.defaultTimes[day];

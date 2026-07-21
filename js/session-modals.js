@@ -49,7 +49,6 @@ function cdUpdateTimesSection(data,selected){
   if(!ok)return;
   const allDays=selected.slice();
   if(cdSteady&&!allDays.includes(cdSteady))allDays.push(cdSteady);
-  cdGetWalkDays().forEach(d=>{if(!allDays.includes(d))allDays.push(d)});
   allDays.sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
   const prev=Object.assign({},data.defaultTimes||{},collectTimeEditor('#cdTimesList'));
   buildTimeEditor('#cdTimesList',allDays,prev);
@@ -104,6 +103,8 @@ function openChangeDaysModal(){
   $$('#cdWalkPicker .day-btn').forEach(b=>{
     b.classList.toggle('selected',walkDays.includes(b.dataset.day));
   });
+  $('#cdWalkTimesList').innerHTML='';
+  cdUpdateWalkTimes(data);
 
   cdUpdateState();
   $('#changeDaysOverlay').classList.add('active');
@@ -146,10 +147,19 @@ $$('#cdDayPicker .day-btn').forEach(b=>{
 });
 
 /* Save */
+function cdUpdateWalkTimes(data){
+  const wd=cdGetWalkDays().sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
+  $('#cdWalkTimesWrap').style.display=wd.length?'':'none';
+  if(wd.length){
+    const prev=Object.assign({},(data||loadData()||{}).walkTimes||{},collectTimeEditor('#cdWalkTimesList'));
+    buildTimeEditor('#cdWalkTimesList',wd,prev);
+  }
+}
 $$('#cdWalkPicker .day-btn').forEach(b=>{
   b.addEventListener('click',()=>{
     b.classList.toggle('selected');
     cdUpdateState();
+    cdUpdateWalkTimes();
   });
 });
 $('#changeDaysSave').addEventListener('click',()=>{
@@ -220,9 +230,10 @@ $('#changeDaysSave').addEventListener('click',()=>{
   const walkSel=cdGetWalkDays();
   if(walkSel.length){
     data.walkDays=walkSel;
+    data.walkTimes=collectTimeEditor('#cdWalkTimesList');
     if(!data.walkStart)data.walkStart=dateStr(new Date());
   }else{
-    delete data.walkDays;delete data.walkStart;
+    delete data.walkDays;delete data.walkStart;delete data.walkTimes;
   }
   data.defaultTimes=collectTimeEditor('#cdTimesList');
   saveData(data);

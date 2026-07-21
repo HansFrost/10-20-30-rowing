@@ -49,6 +49,9 @@ function openDefTimesModal(){
   if(data.steadyDay&&!days.includes(data.steadyDay))days.push(data.steadyDay);
   days.sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
   buildTimeEditor('#defTimesList',days,data.defaultTimes||{});
+  const wd=(data.walkDays||[]).slice().sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
+  $('#defWalkTimesWrap').style.display=wd.length?'':'none';
+  if(wd.length)buildTimeEditor('#defWalkTimesList',wd,data.walkTimes||{});
   const g=data.timeGoal||{};
   $('#goalTimeInput').value=g.target||'';
   $('#goalStepSel').value=String(g.step||15);
@@ -64,6 +67,7 @@ $('#defTimesBtn').addEventListener('click',openDefTimesModal);
 $('#defTimesSave').addEventListener('click',()=>{
   const data=loadData();if(!data)return;
   data.defaultTimes=collectTimeEditor('#defTimesList');
+  if(data.walkDays&&data.walkDays.length)data.walkTimes=collectTimeEditor('#defWalkTimesList');
   const target=$('#goalTimeInput').value;
   if(target){
     const times=Object.values(data.defaultTimes);

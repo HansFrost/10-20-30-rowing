@@ -76,6 +76,22 @@
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">Which day is your <strong>steady-state</strong> session?</p>
       <div class="day-picker" id="steadyPicker"></div>
     </div>
+    <div id="obWalkSection">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">&#128694; <strong>Walking days</strong> (optional, can overlap)</p>
+      <div class="day-picker" id="obWalkPicker">
+        <button class="day-btn" data-day="mon">Mon</button>
+        <button class="day-btn" data-day="tue">Tue</button>
+        <button class="day-btn" data-day="wed">Wed</button>
+        <button class="day-btn" data-day="thu">Thu</button>
+        <button class="day-btn" data-day="fri">Fri</button>
+        <button class="day-btn" data-day="sat">Sat</button>
+        <button class="day-btn" data-day="sun">Sun</button>
+      </div>
+      <div id="obWalkTimesWrap" style="display:none;margin-top:8px">
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:6px">Walk times (independent of rowing)</p>
+        <div id="obWalkTimesList"></div>
+      </div>
+    </div>
     <div id="timesSection" style="display:none">
       <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">Set <strong>default training times</strong> (optional)</p>
       <div id="timesPickerList"></div>
@@ -446,6 +462,10 @@
     <p class="dt-title">Default Training Times</p>
     <p class="dt-desc">Set a default time for each training day. Individual sessions can still be overridden.</p>
     <div id="defTimesList"></div>
+    <div id="defWalkTimesWrap" style="display:none;width:100%;border-top:1px solid rgba(255,255,255,.08);padding-top:12px">
+      <p class="dt-desc" style="margin-bottom:6px">&#128694; <strong>Walk times</strong> (independent of rowing)</p>
+      <div id="defWalkTimesList"></div>
+    </div>
     <div id="goalSection" style="width:100%;border-top:1px solid rgba(255,255,255,.08);padding-top:12px">
       <p class="dt-desc" style="margin-bottom:6px">🎯 <strong>Gradual goal</strong> (optional): shift all times weekly toward a target, e.g. 05:30</p>
       <div class="time-pick-row"><span class="time-pick-day">Goal</span><input type="time" id="goalTimeInput" class="te-input"></div>
@@ -496,6 +516,10 @@
         <button class="day-btn" data-day="fri">Fri</button>
         <button class="day-btn" data-day="sat">Sat</button>
         <button class="day-btn" data-day="sun">Sun</button>
+      </div>
+      <div id="cdWalkTimesWrap" style="display:none;margin-top:8px">
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:6px">Walk times (independent of rowing)</p>
+        <div id="cdWalkTimesList"></div>
       </div>
     </div>
     <div id="cdTimesSection" style="display:none;width:100%">

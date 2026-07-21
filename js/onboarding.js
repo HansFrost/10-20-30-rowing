@@ -87,6 +87,7 @@ function initOnboarding(){
     const mhr=parseInt($('#maxHrInput').value)||DEFAULT_MAX_HR;
     const defaultTimes=collectTimeEditor('#timesPickerList');
     const anchor=($('#anchorInput').value||'').trim();
+    const walkSel=obGetWalkDays();
     const saveObj={
       anchor:anchor||undefined,
       startDate:dateStr(d),program:selectedProg,
@@ -96,12 +97,29 @@ function initOnboarding(){
       defaultTimes,sessionTimes:{}
     };
     if(selectedProg==='advanced')saveObj.steadyDay=selectedSteady;
+    if(walkSel.length){
+      saveObj.walkDays=walkSel;saveObj.walkStart=dateStr(d);
+      saveObj.walkTimes=collectTimeEditor('#obWalkTimesList');
+    }
     saveData(saveObj);
     renderSchedule();showScreen('#schedule');
   });
 }
 
+function obGetWalkDays(){
+  const days=[];
+  $$('#obWalkPicker .day-btn.selected').forEach(b=>days.push(b.dataset.day));
+  return days;
+}
+function obUpdateWalkTimes(){
+  const wd=obGetWalkDays().sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
+  $('#obWalkTimesWrap').style.display=wd.length?'':'none';
+  if(wd.length)buildTimeEditor('#obWalkTimesList',wd,collectTimeEditor('#obWalkTimesList'));
+}
 function initDayPicker(){
+  $$('#obWalkPicker .day-btn').forEach(b=>{
+    b.addEventListener('click',()=>{b.classList.toggle('selected');obUpdateWalkTimes()});
+  });
   const prog=PROGRAMS[selectedProg];
   const defaults=prog.defaultDays;
   const isAdv=!!prog.defaultSteady;
