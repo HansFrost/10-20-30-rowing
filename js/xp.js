@@ -29,7 +29,7 @@ function renderXpStrip(data){
   el.innerHTML='<div class="xp-strip">'+
     '<div class="xp-level"><span class="lvl-num">'+li.lvl+'</span><span class="lvl-word">LVL</span></div>'+
     '<div class="xp-body">'+
-      '<div class="xp-title"><span class="xp-rank">'+li.rank+'</span><span class="xp-nums">'+li.into+' / '+li.need+' XP</span></div>'+
+      '<div class="xp-title"><span class="xp-rank">'+li.rank+'</span><span class="xp-nums">'+xp+' XP · '+li.into+' / '+li.need+' to LVL '+(li.lvl+1)+'</span></div>'+
       '<div class="xp-bar"><div class="xp-fill" style="width:'+pct+'%"></div></div>'+
       (lm>0?'<div class="xp-lifetime">🚣 '+lm.toLocaleString()+' m rowed lifetime</div>':'')+
     '</div></div>';
