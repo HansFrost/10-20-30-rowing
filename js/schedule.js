@@ -2,7 +2,7 @@ import{DAILY_TIPS,STAGE_IDENTITY}from'./content.js';
 import{$,$$,showScreen}from'./dom.js';
 import{calcStreak,checkMilestones,getHabitStage,renderHabitStrip,showMilestones}from'./habit.js';
 import{DEFAULT_MAX_HR,renderHrTable}from'./hr.js';
-import{DAY_LABELS,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions,goalTime,injectWalks}from'./programs.js';
+import{countRowingSessions,DAY_LABELS,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions,goalTime,injectWalks}from'./programs.js';
 import{deleteExtraSession,openAddSessionModal,openSwapModal}from'./session-modals.js';
 import{loadData,saveData}from'./store.js';
 import{openTimeModal}from'./time-modals.js';
@@ -53,8 +53,8 @@ function renderSchedule(){
   $('#helpProgDetails').innerHTML='<p>'+prog.desc+'</p>';
   $('#maxHrEdit').value=mhr;
 
-  /* Progress */
-  const doneCount=Object.keys(completed).length;
+  /* Progress: walks are tracked separately and never count toward the program */
+  const doneCount=countRowingSessions(completed);
   const lastSession=sessions[sessions.length-1];
   const programOver=lastSession&&lastSession.date<today;
   const pct=Math.round(doneCount/total*100);
@@ -83,7 +83,7 @@ function renderSchedule(){
   const todayWalk=todaySessions.find(s=>s.type==='walk'&&!completed[s.key]);
   const todaySteady=todaySessions.find(s=>s.type==='steady'&&!completed[s.key]);
   const bannerEl=$('#todayBanner');
-  const bDoneCount=Object.keys(completed).length;
+  const bDoneCount=countRowingSessions(completed);
   const bStage=getHabitStage(bDoneCount);
   const bTagline=STAGE_IDENTITY[bStage.id].tagline;
   const bTagHtml=bTagline?'<div class="today-tagline">'+bTagline+'</div>':'';
@@ -157,7 +157,7 @@ function renderSchedule(){
     wireAnchor();
   } else if(programOver){
     /* Compute encouraging stats from actual data */
-    const doneSessions=sessions.filter(s=>!!completed[s.key]);
+    const doneSessions=sessions.filter(s=>!!completed[s.key]&&s.type!=='walk');
     const totalBlocks=doneSessions.reduce((sum,s)=>sum+(s.type==='interval'?s.blocks:0),0);
     const totalSprints=totalBlocks*5;
     const totalCycles=totalBlocks*5;

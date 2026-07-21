@@ -135,6 +135,10 @@ function injectWalks(sessions,data,startMon){
   out.sort((a,b)=>a.date-b.date);
   return out;
 }
+/* Walks are a supplementary habit: only rowing keys count toward program progression */
+function countRowingSessions(completed){
+  return Object.keys(completed||{}).filter(k=>k.indexOf('walk-')!==0).length;
+}
 function totalAllSessions(progKey,numDays,extraCount){
   const prog=PROGRAMS[progKey];
   let n=prog.weeks*numDays;
@@ -185,4 +189,4 @@ function migrateData(data){
   saveData(data);
   return data;
 }
-export{injectWalks,goalTime,ALL_DAYS,DAY_LABELS,DAY_OFFSET,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions};
+export{injectWalks,goalTime,ALL_DAYS,countRowingSessions,DAY_LABELS,DAY_OFFSET,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions};
