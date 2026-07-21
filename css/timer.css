@@ -10,6 +10,8 @@
 .done-pb{font-size:.75rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;text-align:center}
 .done-habit{display:flex;align-items:center;gap:8px;justify-content:center;margin:8px 0}
 .done-habit .habit-ring{position:static;margin-right:0}
+.done-avatar{font-size:1.4rem;line-height:1.2;display:inline-flex;align-items:flex-end}
+.done-flair{font-size:.9rem;margin-left:-2px}
 .done-next{font-size:.8rem;color:var(--muted);margin-top:8px;font-style:italic;text-align:center}
 .done-quote{font-size:.85rem;color:var(--muted);font-style:italic;text-align:center;max-width:320px;
   margin:4px auto 0;line-height:1.5}

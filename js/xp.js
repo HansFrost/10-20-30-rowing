@@ -1,3 +1,4 @@
+import{getEquipped}from'./cosmetics.js';
 import{$}from'./dom.js';
 const RANKS=['Deckhand','Paddler','Rower','Oarsman','Bowman','Stroke Seat','Coxswain','Captain','Sea Wolf','Viking','Poseidon'];
 /* XP for one completed session, graded by type. Derives everything from the
@@ -50,8 +51,9 @@ function renderXpStrip(data){
   if(!doneCount){el.innerHTML='';return}
   const xp=calcXP(data),li=levelInfo(xp),lm=lifetimeMeters(data);
   const pct=Math.round(li.into/li.need*100);
+  const av=getEquipped(data).avatar;
   el.innerHTML='<div class="xp-strip">'+
-    '<div class="xp-level"><span class="lvl-num">'+li.lvl+'</span><span class="lvl-word">LVL</span></div>'+
+    '<div class="xp-level"><span class="xp-avatar">'+av.emoji+'</span><span class="lvl-badge">'+li.lvl+'</span></div>'+
     '<div class="xp-body">'+
       '<div class="xp-title"><span class="xp-rank">'+li.rank+'</span><span class="xp-nums">'+xp+' XP · '+li.into+' / '+li.need+' to LVL '+(li.lvl+1)+'</span></div>'+
       '<div class="xp-bar"><div class="xp-fill" style="width:'+pct+'%"></div></div>'+

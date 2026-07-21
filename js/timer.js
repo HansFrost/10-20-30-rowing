@@ -1,6 +1,7 @@
 import{walkStart,walkStop,walkTick,walkDistance}from'./walk.js';
 import{beep,ensureAudio,soundBlockEnd,soundDone,soundPhase,soundSprint,soundTick}from'./audio.js';
 import{cheerSeen,pickCheer}from'./cheers.js';
+import{getEquipped}from'./cosmetics.js';
 import{DONE_PRAISE,DONE_TIPS}from'./content.js';
 import{$,customConfirm,setNavAbortHook,showScreen}from'./dom.js';
 import{confettiBurst}from'./fx.js';
@@ -296,9 +297,12 @@ function finish(){
     setTimeout(()=>confettiBurst(big?90:25),400);
     $('#doneStreakArea').innerHTML=sh;
 
+    const eq=getEquipped(data);
     $('#doneHabitArea').innerHTML='<div class="done-habit">'+
       '<div class="habit-ring '+stage.cls+'">'+stage.ring+'</div>'+
-      '<span class="habit-stage '+stage.colorCls+'">'+stage.name+'</span></div>';
+      '<span class="habit-stage '+stage.colorCls+'">'+stage.name+'</span>'+
+      '<span class="done-avatar">'+eq.avatar.emoji+
+        (eq.flair?'<span class="done-flair">'+eq.flair.emoji+'</span>':'')+'</span></div>';
 
     $('#doneNextArea').innerHTML='<div class="done-next">Next: '+getNext(sessions,today,completed)+'</div>';
 
