@@ -173,6 +173,7 @@ test.describe('Schedule screen', () => {
     await expect(page.locator('#settings')).toHaveClass(/active/);
     for (const [sel, label] of [
       ['#changProgBtn', 'Change Program button'],
+      ['#historyBtn', 'Program History button'],
       ['#changeDaysBtn', 'Change Training Days button'],
       ['#defTimesBtn', 'Set Default Times button'],
       ['#maxHrEdit', 'max HR input'],
@@ -266,6 +267,37 @@ test.describe('Schedule screen', () => {
     await swap.click();
     await expect(page.locator('#swapOverlay')).toHaveClass(/active/);
     await expectNoHorizontalOverflow(page, 'swap modal');
+  });
+
+  test('program history modal opens, fits, and shows the empty state', async ({ page }) => {
+    await page.locator('.tab-btn[data-tab="#settings"]').click();
+    await page.locator('#historyBtn').click();
+    await expect(page.locator('#historyOverlay')).toHaveClass(/active/);
+    await expectReachable(page.locator('#historyBox .dt-title'), 'history modal title');
+    await expectReachable(page.locator('#historyClose'), 'history close button');
+    await expect(page.locator('#historyList .history-empty'))
+      .toHaveText('Programs you finish or replace will appear here.');
+    await expectNoHorizontalOverflow(page, 'program history modal');
+    await page.locator('#historyClose').click();
+    await expect(page.locator('#historyOverlay')).not.toHaveClass(/active/);
+  });
+
+  test('future start date shows a starts banner instead of a rest day', async ({ page }) => {
+    // Init scripts run in the order added: this one runs after the seed
+    // script from beforeEach's gotoApp, so it can push the start date out.
+    await page.addInitScript(() => {
+      const d = JSON.parse(localStorage.getItem('rowing-102030-schedule'));
+      const start = new Date();
+      const dow = start.getDay();
+      start.setDate(start.getDate() + ((1 - dow + 7) % 7 || 7)); // next Monday, strictly in the future
+      const pad = (n) => String(n).padStart(2, '0');
+      d.startDate = start.getFullYear() + '-' + pad(start.getMonth() + 1) + '-' + pad(start.getDate());
+      localStorage.setItem('rowing-102030-schedule', JSON.stringify(d));
+    });
+    await page.reload();
+    await expect(page.locator('.sched-rest-banner')).toContainText('Starts Mon');
+    await expect(page.locator('.sched-rest-banner')).toContainText('First session:');
+    await expectNoHorizontalOverflow(page, 'pre-start schedule');
   });
 
   test('reset confirmation dialog fits', async ({ page }) => {
@@ -365,6 +397,60 @@ test.describe('Timer and done screens', () => {
     // And back-navigation must land on the schedule
     await page.locator('#doneBackBtn').click();
     await expect(page.locator('#schedule')).toHaveClass(/active/);
+  });
+});
+
+test.describe('Program history', () => {
+  test('replacing a program archives it and Resume swaps it back', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true, customName: 'Program A' });
+    await expect(page.locator('#progName')).toHaveText('Program A');
+    // Mark one week-1 session done so the history entry shows a real count.
+    // The archive snapshot is taken from localStorage at replace time, so no
+    // reload is needed (a reload would re-run the seeding init script).
+    await page.evaluate(() => {
+      const d = JSON.parse(localStorage.getItem('rowing-102030-schedule'));
+      d.completed['1-' + d.days[0]] = new Date().toISOString();
+      localStorage.setItem('rowing-102030-schedule', JSON.stringify(d));
+    });
+
+    // Start program B through the change-program onboarding flow
+    await page.locator('.tab-btn[data-tab="#settings"]').click();
+    await page.locator('#changProgBtn').click();
+    await expect(page.locator('#onboarding')).toHaveClass(/active/);
+    await page.locator('.program-card[data-prog="beginner"]').click();
+    await page.locator('#progNextBtn').click();
+    await expect(page.locator('#daysNextBtn')).toBeEnabled();
+    await page.locator('#daysNextBtn').click();
+    await page.locator('#onboardBtn').click();
+    await expect(page.locator('#confirmOverlay')).toHaveClass(/active/);
+    await expect(page.locator('#confirmMsg')).toContainText('Program History');
+    await page.locator('#confirmOk').click();
+    await expect(page.locator('#schedule')).toHaveClass(/active/);
+    await expect(page.locator('#progBadge')).toContainText('Beginner');
+
+    // Program A is archived with its completion count (intermediate: 7w x 3d = 21)
+    await page.locator('.tab-btn[data-tab="#settings"]').click();
+    await page.locator('#historyBtn').click();
+    await expect(page.locator('#historyOverlay')).toHaveClass(/active/);
+    const entry = page.locator('.history-entry');
+    await expect(entry).toHaveCount(1);
+    await expect(entry).toContainText('Program A');
+    await expect(entry).toContainText('Intermediate');
+    await expect(entry).toContainText('1 / 21 sessions');
+    await expectReachable(entry.locator('.history-resume'), 'Resume button');
+    await expectNoHorizontalOverflow(page, 'history modal with an entry');
+
+    // Resume swaps: A becomes active again, B goes into history
+    await entry.locator('.history-resume').click();
+    await expect(page.locator('#confirmOverlay')).toHaveClass(/active/);
+    await page.locator('#confirmOk').click();
+    await expect(page.locator('#schedule')).toHaveClass(/active/);
+    await expect(page.locator('#progBadge')).toContainText('Intermediate');
+    await expect(page.locator('#progName')).toHaveText('Program A');
+    await page.locator('.tab-btn[data-tab="#settings"]').click();
+    await page.locator('#historyBtn').click();
+    await expect(page.locator('.history-entry')).toHaveCount(1);
+    await expect(page.locator('.history-entry')).toContainText('Beginner');
   });
 });
 
