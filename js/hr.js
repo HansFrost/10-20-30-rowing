@@ -10,6 +10,7 @@ function calcZones(mhr){
     rest:{lo:0,hi:Math.round(mhr*.70),label:'< 70%'},
     steady:{lo:Math.round(mhr*.65),hi:Math.round(mhr*.80),label:'65\u201380%'},
     cooldown:{lo:Math.round(mhr*.50),hi:Math.round(mhr*.65),label:'50\u201365%'},
+    walk:{lo:Math.round(mhr*.50),hi:Math.round(mhr*.70),label:'50\u201370%'},
     countdown:{lo:0,hi:0,label:''}
   };
 }

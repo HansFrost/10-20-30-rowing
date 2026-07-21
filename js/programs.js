@@ -1,5 +1,5 @@
 import{saveData}from'./store.js';
-import{addDays,dateStr,fmtDate,parseDate}from'./util.js';
+import{addDays,dateStr,fmtDate,parseDate,WEEKDAY_NAMES}from'./util.js';
 const ALL_DAYS=['mon','tue','wed','thu','fri','sat','sun'];
 const DAY_OFFSET={mon:0,tue:1,wed:2,thu:3,fri:4,sat:5,sun:6};
 const DAY_LABELS={mon:'Mon',tue:'Tue',wed:'Wed',thu:'Thu',fri:'Fri',sat:'Sat',sun:'Sun'};
@@ -97,6 +97,20 @@ function injectExtras(sessions,data,startMon,progWeeks){
   return all;
 }
 
+function injectWalks(sessions,data,startMon){
+  const stats=data.sessionStats||{};
+  const out=sessions.slice();
+  for(const k of Object.keys(data.completed||{})){
+    if(k.indexOf('walk-')!==0)continue;
+    const date=parseDate(k.slice(5));
+    const s=stats[k]||{};
+    out.push({key:k,date:date,week:Math.floor((date-startMon)/(7*86400000))+1,
+      day:WEEKDAY_NAMES[date.getDay()],type:'walk',minutes:s.min||0,blocks:0,
+      actualDay:ALL_DAYS[(date.getDay()+6)%7],defaultDay:'',swapped:false,isExtra:false});
+  }
+  out.sort((a,b)=>a.date-b.date);
+  return out;
+}
 function totalAllSessions(progKey,numDays,extraCount){
   const prog=PROGRAMS[progKey];
   let n=prog.weeks*numDays;
@@ -144,4 +158,4 @@ function migrateData(data){
   saveData(data);
   return data;
 }
-export{goalTime,ALL_DAYS,DAY_LABELS,DAY_OFFSET,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions};
+export{injectWalks,goalTime,ALL_DAYS,DAY_LABELS,DAY_OFFSET,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions};

@@ -2,11 +2,11 @@ import{DAILY_TIPS,STAGE_IDENTITY}from'./content.js';
 import{$,$$,setNavRenderHook,showScreen}from'./dom.js';
 import{calcStreak,checkMilestones,getHabitStage,renderHabitStrip,showMilestones}from'./habit.js';
 import{DEFAULT_MAX_HR,renderHrTable}from'./hr.js';
-import{DAY_LABELS,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions,goalTime}from'./programs.js';
+import{DAY_LABELS,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions,goalTime,injectWalks}from'./programs.js';
 import{deleteExtraSession,openAddSessionModal,openSwapModal}from'./session-modals.js';
 import{loadData,saveData}from'./store.js';
 import{openTimeModal}from'./time-modals.js';
-import{launchSession,launchSteadySession}from'./timer.js';
+import{launchSession,launchSteadySession,launchWalkSession}from'./timer.js';
 import{WEEKDAY_NAMES,addDays,fmtDate,parseDate,sameDay}from'./util.js';
 import{renderXpStrip}from'./xp.js';
 function renderSchedule(){
@@ -16,7 +16,7 @@ function renderSchedule(){
   const progKey=data.program||'intermediate';
   const prog=PROGRAMS[progKey];
   const startMon=parseDate(data.startDate);
-  const sessions=injectExtras(buildSchedule(startMon,progKey,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks);
+  const sessions=injectWalks(injectExtras(buildSchedule(startMon,progKey,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks),data,startMon);
   const today=new Date();today.setHours(0,0,0,0);
   const completed=data.completed||{};
   const total=totalAllSessions(progKey,data.days.length,(data.extraSessions||[]).length);
@@ -181,7 +181,10 @@ function renderSchedule(){
     bannerEl.innerHTML='<div class="sched-rest-banner">'+
       '<p style="font-weight:700;margin-bottom:4px">Rest Day ('+WEEKDAY_NAMES[today.getDay()]+')</p>'+
       bTagHtml+
-      '<p>Next: '+getNext(sessions,today,completed)+'</p></div>';
+      '<p>Next: '+getNext(sessions,today,completed)+'</p>'+
+      '<button class="quick-session-btn" id="restWalkBtn" style="margin-top:10px">\uD83D\uDEB6 GO FOR A WALK</button></div>';
+    const rwBtn=$('#restWalkBtn');
+    if(rwBtn)rwBtn.addEventListener('click',()=>launchWalkSession());
   }
 
   /* Precommit banner — upcoming sessions without times (next 7 days) */
@@ -220,23 +223,25 @@ function renderSchedule(){
       const isFuture=s.date>today,isPast=s.date<today;
       let cls='session-card';
       if(s.isExtra) cls+=' extra';
-      if(s.type==='steady') cls+=' steady';
+      if(s.type==='steady'||s.type==='walk') cls+=' steady';
       if(s.swapped) cls+=' swapped';
       if(isDone) cls+=' completed';
       if(isToday) cls+=' today';
       else if(isFuture) cls+=' future';
       else if(isPast&&!isDone) cls+=' past';
 
-      const label=s.type==='steady'?'Steady '+s.minutes+'m':s.blocks+' blocks';
+      const label=s.type==='walk'?('\uD83D\uDEB6 '+(s.minutes?s.minutes+' min walk':'Walk')):s.type==='steady'?'Steady '+s.minutes+'m':s.blocks+' blocks';
       const sTime=getEffectiveTime(data,s.key,s.actualDay,s.date);
       const timeCls=sTime?'s-time has-time':'s-time';
       const timeContent=sTime?sTime:'\uD83D\uDD50';
-      const swapBtn='<div class="s-swap" data-swap-key="'+s.key+'" data-swap-week="'+s.week+'" data-swap-default="'+s.defaultDay+'" data-swap-current="'+s.actualDay+'"'+(s.isExtra?' data-swap-extra="1"':'')+'>&#8652;</div>';
+      const noBtns=s.type==='walk';
+      const swapBtn=noBtns?'':'<div class="s-swap" data-swap-key="'+s.key+'" data-swap-week="'+s.week+'" data-swap-default="'+s.defaultDay+'" data-swap-current="'+s.actualDay+'"'+(s.isExtra?' data-swap-extra="1"':'')+'>&#8652;</div>';
       const deleteBtn=s.isExtra?'<div class="s-delete" data-delete-extra="'+s.key+'">&times;</div>':'';
+      const timeBtn=noBtns?'':'<div class="'+timeCls+'" data-time-key="'+s.key+'" data-time-day="'+s.actualDay+'">'+timeContent+'</div>';
       html+='<div class="'+cls+'" data-key="'+s.key+'" data-blocks="'+s.blocks+'" data-type="'+s.type+'">'+
         '<div class="s-check" data-toggle="'+s.key+'">'+(isDone?'&#10003;':'')+'</div>'+
         deleteBtn+
-        '<div class="'+timeCls+'" data-time-key="'+s.key+'" data-time-day="'+s.actualDay+'">'+timeContent+'</div>'+
+        timeBtn+
         swapBtn+
         '<div class="s-day">'+s.day+(s.swapped?' *':'')+'</div>'+
         '<div class="s-date">'+fmtDate(s.date)+'</div>'+
@@ -277,6 +282,7 @@ function renderSchedule(){
       if(!s)return;
       const now=new Date();now.setHours(0,0,0,0);
       if(s.date>now)return;
+      if(s.type==='walk') return;
       if(s.type==='interval') launchSession(s,prog);
       else if(s.type==='steady') launchSteadySession(s);
     });
@@ -312,7 +318,8 @@ function toggleDone(key){
 function renderWeeklyCard(data,sessions,today,completed,startMon){
   const el=$('#weeklyCard');
   const wk=Math.floor((today-startMon)/(7*86400000))+1;
-  const ws=sessions.filter(s=>s.week===wk);
+  const ws=sessions.filter(s=>s.week===wk&&s.type!=='walk');
+  const walks=sessions.filter(s=>s.week===wk&&s.type==='walk').length;
   if(wk<1||!ws.length){el.innerHTML='';return}
   const done=ws.filter(s=>completed[s.key]).length;
   const stats=data.sessionStats||{};
@@ -323,7 +330,7 @@ function renderWeeklyCard(data,sessions,today,completed,startMon){
     (data.timeGoal&&goalTime(data,today)?'<div class="weekly-goal">\u23F0 '+goalTime(data,today)+' this week \u2192 goal '+data.timeGoal.target+'</div>':'')+
     '<div class="weekly-stats">'+
       '<div class="weekly-stat"><div class="wv">'+done+'/'+ws.length+'</div><div class="wl">Sessions</div></div>'+
-      '<div class="weekly-stat"><div class="wv">'+sprints+'</div><div class="wl">Sprints</div></div>'+
+      '<div class="weekly-stat"><div class="wv">'+(walks||sprints)+'</div><div class="wl">'+(walks?'Walks':'Sprints')+'</div></div>'+
       '<div class="weekly-stat"><div class="wv">'+(meters?meters.toLocaleString():'-')+'</div><div class="wl">Meters</div></div>'+
     '</div></div>';
 }

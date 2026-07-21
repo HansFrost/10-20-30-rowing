@@ -43,8 +43,10 @@ function calcStreak(data,sessions){
   }
   if(lastDone===-1)return{current:0,best,shields:earned};
   let current=0,shields=earned;
+  const today=new Date();today.setHours(0,0,0,0);
   for(let i=lastDone;i>=0;i--){
     if(completed[sorted[i].key])current++;
+    else if(sorted[i].date>=today); /* today's pending session is not a miss yet */
     else if(shields>0)shields--; /* a shield bridges the gap, streak survives */
     else break;
   }

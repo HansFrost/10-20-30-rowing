@@ -110,3 +110,14 @@
 .summary-row .label{color:var(--muted)}
 .summary-row .value{font-weight:700}
 
+
+/* WALK MODE + HR STRAP CHIP */
+body.phase-walk{background:#0c3020}
+#hrChip{position:absolute;top:10px;left:12px;font-size:.7rem;font-weight:700;letter-spacing:.5px;
+  padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);
+  cursor:pointer;display:flex;align-items:center;gap:6px;z-index:5}
+#hrChip .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);flex-shrink:0}
+#hrChip.on .dot{background:var(--green)}
+#hrChip.lost .dot{background:var(--red)}
+#walkStrip{display:none;gap:8px;width:100%;max-width:400px;margin-top:clamp(4px,1vh,10px)}
+#walkStrip.on{display:flex}

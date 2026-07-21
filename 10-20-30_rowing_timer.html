@@ -139,6 +139,8 @@
     </div>
     <button class="btn btn-secondary btn-small" id="pm5Btn" style="font-size:.75rem;width:100%">Connect Rower (PM5)</button>
     <button class="btn btn-secondary btn-small" id="progressBtn" style="font-size:.75rem;width:100%">📈 Progress &amp; Stats</button>
+    <button class="btn btn-secondary btn-small" id="walkBtn" style="font-size:.75rem;width:100%">&#128694; Start a Walk</button>
+    <button class="btn btn-secondary btn-small" id="hrBtn" style="font-size:.75rem;width:100%">&#10084; Connect HR Strap</button>
     <button class="btn btn-secondary btn-small" id="remindersBtn" style="font-size:.75rem;width:100%">🔔 Add Reminders to Calendar</button>
     <button class="btn btn-secondary btn-small" id="cloudBtn" style="font-size:.75rem;width:100%">☁ Cloud Sync</button>
     <div style="display:flex;gap:8px">
@@ -154,6 +156,7 @@
 <!-- TIMER -->
 <div class="screen" id="timer">
   <div id="pm5Chip"><span class="dot"></span><span id="pm5ChipText">PM5 &middot; tap to connect</span></div>
+  <div id="hrChip"><span class="dot"></span><span id="hrChipText">&#10084; strap</span></div>
   <div id="phaseLabel">GET READY</div>
   <div id="phaseName">--</div>
   <div id="hrZone"></div>
@@ -167,6 +170,11 @@
     <div class="pm5-tile"><div class="pv" id="pmHr">-</div><div class="pl">bpm</div></div>
   </div>
   <div id="ghostLine"></div>
+  <div id="walkStrip">
+    <div class="pm5-tile"><div class="pv" id="pmWalkDist">-</div><div class="pl">km</div></div>
+    <div class="pm5-tile"><div class="pv" id="pmWalkPace">-</div><div class="pl">min/km</div></div>
+    <div class="pm5-tile"><div class="pv" id="pmWalkHr">-</div><div class="pl">bpm</div></div>
+  </div>
   <div id="timerProgress">
     <div id="timerProgressText"></div>
     <div id="timerProgressBar"><div id="timerProgressFill"></div></div>

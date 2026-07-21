@@ -1,3 +1,4 @@
+import{walkStart,walkStop,walkTick,walkDistance}from'./walk.js';
 import{beep,ensureAudio,soundBlockEnd,soundDone,soundPhase,soundSprint,soundTick}from'./audio.js';
 import{cheerSeen,pickCheer}from'./cheers.js';
 import{DONE_PRAISE,DONE_TIPS}from'./content.js';
@@ -6,15 +7,23 @@ import{confettiBurst}from'./fx.js';
 import{calcStreak,checkMilestones,getHabitStage,showMilestones}from'./habit.js';
 import{hrText}from'./hr.js';
 import{pickGhost,pm5,pm5FinalizeSession,pm5PhaseChange,pm5ResetStats,pm5Stats,pm5UpdateStrip,updateGhost}from'./pm5.js';
-import{PROGRAMS,buildSchedule,getNext,injectExtras}from'./programs.js';
+import{PROGRAMS,buildSchedule,getNext,injectExtras,injectWalks}from'./programs.js';
 import{renderSchedule}from'./schedule.js';
 import{loadData,saveData}from'./store.js';
 import{fmtTime,parseDate}from'./util.js';
 import{calcXP,levelInfo}from'./xp.js';
 let currentSessionKey=null;
+function launchWalkSession(){
+  const now=new Date();
+  currentSessionKey='walk-'+now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  timerConfig.walk=true;timerConfig.steady=false;timerConfig.warmup=false;timerConfig.cooldown=false;
+  startTimer();
+  walkStart();
+}
 function launchSession(sess,prog,opts){
   const bare=!!(opts&&opts.bare);
   currentSessionKey=sess.key;
+  timerConfig.walk=false;
   timerConfig.blocks=sess.blocks;
   timerConfig.restSec=prog.restSec;
   timerConfig.warmup=!bare;timerConfig.cooldown=!bare;timerConfig.steady=false;
@@ -23,18 +32,23 @@ function launchSession(sess,prog,opts){
 
 function launchSteadySession(sess){
   currentSessionKey=sess.key;
+  timerConfig.walk=false;
   timerConfig.steady=true;timerConfig.steadyMinutes=sess.minutes;
   timerConfig.warmup=true;timerConfig.cooldown=true;
   startTimer();
 }
 
-let timerConfig={blocks:3,restSec:120,warmup:true,cooldown:true,steady:false,steadyMinutes:0};
+let timerConfig={blocks:3,restSec:120,warmup:true,cooldown:true,steady:false,steadyMinutes:0,walk:false};
 let sequence=[],stepIdx=0,remaining=0,timerInterval=null,paused=false,startTime=null,totalSec=0,cheerTimer=null;
 let wkStart=0,wkBank=0;
 let finishedEarly=false;
 
 function buildSequence(){
   const c=timerConfig,seq=[];
+  if(c.walk){
+    seq.push({type:'walk',name:'WALK',dur:4*3600,inst:'Head out \u2022 tap FINISH when done',blk:0,cyc:0});
+    return seq;
+  }
   if(c.steady){
     if(c.warmup) seq.push({type:'warmup',name:'WARM-UP',dur:240,inst:'Build gradually \u2022 18\u201320 spm',blk:0,cyc:0});
     seq.push({type:'steady',name:'STEADY STATE',dur:c.steadyMinutes*60,inst:'Comfortable pace \u2022 20\u201324 spm',blk:0,cyc:0});
@@ -77,6 +91,11 @@ function updateTimerUI(){
   updateCountdown();updateTimerProgress();pm5UpdateStrip();
 }
 function updateCountdown(){
+  if(timerConfig.walk){ /* walks count up */
+    const el=Math.max(0,sequence[stepIdx].dur-remaining);
+    $('#countdown').textContent=fmtTime(el);
+    return;
+  }
   if(remaining>=60) $('#countdown').textContent=Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0');
   else $('#countdown').textContent=remaining;
 }
@@ -112,6 +131,7 @@ function tick(){
     updateCountdown();updateTimerProgress();
   }
   pm5TickHook(totalEl);
+  if(timerConfig.walk)walkTick(totalEl);
 }
 function pm5TickHook(totalEl){
   if(!pm5.connected||!pm5Stats)return;
@@ -130,7 +150,8 @@ function skipPhase(){
 }
 
 function startTimer(){
-  ensureAudio();sequence=buildSequence();stepIdx=0;remaining=sequence[0].dur;
+  if(!timerConfig.walk)ensureAudio(); /* WebAudio would pause background podcasts */
+  sequence=buildSequence();stepIdx=0;remaining=sequence[0].dur;
   totalSec=sequence.reduce((a,x)=>a+x.dur,0);paused=false;finishedEarly=false;startTime=Date.now();wkStart=Date.now();wkBank=0;
   pm5ResetStats();
   Object.keys(cheerSeen).forEach(k=>delete cheerSeen[k]);
@@ -138,7 +159,7 @@ function startTimer(){
   pickGhost();$('#ghostLine').classList.remove('on');
   showScreen('#timer');updateTimerUI();timerInterval=setInterval(tick,1000);requestWakeLock();tryFullscreen();setScreenDim(false);
 }
-function stopTimer(){clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);
+function stopTimer(){clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);walkStop();
   setScreenDim(true);showScreen('#schedule');renderSchedule()}
 
 function finishEarly(){
@@ -157,10 +178,18 @@ function resumeSession(){
   updateTimerUI();requestWakeLock();setScreenDim(false);
 }
 function finish(){
-  clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);soundDone();setScreenDim(true);
+  clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);if(!timerConfig.walk)soundDone();setScreenDim(true);
   const elapsed=Math.round((Date.now()-startTime)/1000);
 
-  const ps=pm5FinalizeSession();
+  let ps=null;
+  if(timerConfig.walk){
+    walkStop();
+    ps={walk:true,m:walkDistance(),min:Math.max(1,Math.round(elapsed/60)),
+        avgHr:pm5Stats&&pm5Stats.hrN?Math.round(pm5Stats.hrSum/pm5Stats.hrN):0,
+        maxHr:pm5Stats?pm5Stats.hrMax:0};
+  }else{
+    ps=pm5FinalizeSession();
+  }
   let newPowerPB=false;
 
   let xpBefore=0,xpAfter=0,golden=0;
@@ -179,9 +208,12 @@ function finish(){
     xpAfter=calcXP(d)}}
   document.body.className='phase-done';
   $('#doneContinueBtn').style.display=finishedEarly?'':'none';
-  $('#doneSubtext').textContent=finishedEarly?'Session paused \u2014 you can continue or wrap up.':'Session marked complete!';
+  $('#doneSubtext').textContent=timerConfig.walk?'Walk logged!':finishedEarly?'Session paused \u2014 you can continue or wrap up.':'Session marked complete!';
   let h='';h+=sRow('Total time',fmtTime(elapsed));
-  if(timerConfig.steady){
+  if(timerConfig.walk){
+    if(ps&&ps.m)h+=sRow('Distance',(ps.m/1000).toFixed(2)+' km');
+    if(ps&&ps.m>100)h+=sRow('Pace',fmtTime(Math.round(elapsed/(ps.m/1000)))+' /km');
+  } else if(timerConfig.steady){
     h+=sRow('Steady-state',timerConfig.steadyMinutes+' min');
   } else {
     const sprintSec=timerConfig.blocks*5*10;
@@ -189,7 +221,7 @@ function finish(){
     h+=sRow('Total cycles',timerConfig.blocks*5);h+=sRow('Sprint time',fmtTime(sprintSec));
     h+=sRow('Sprints',timerConfig.blocks*5);
   }
-  if(ps){
+  if(ps&&!ps.walk){
     if(ps.m)h+=sRow('Distance rowed',ps.m.toLocaleString()+' m');
     if(ps.avgW)h+=sRow('Avg power',ps.avgW+' W');
     if(ps.peakW)h+=sRow('Peak power',ps.peakW+' W'+(newPowerPB?' \ud83c\udfc6':''));
@@ -197,6 +229,7 @@ function finish(){
     if(ps.strokes)h+=sRow('Strokes',ps.strokes);
     if(ps.avgHr)h+=sRow('Avg / max HR',ps.avgHr+' / '+ps.maxHr+' bpm');
   }
+  if(ps&&ps.walk&&ps.avgHr)h+=sRow('Avg / max HR',ps.avgHr+' / '+ps.maxHr+' bpm');
   $('#summaryBox').innerHTML=h;
 
   /* Enhanced done screen with habit info */
@@ -204,7 +237,7 @@ function finish(){
   if(data&&currentSessionKey){
     const prog=PROGRAMS[data.program];
     const startMon=parseDate(data.startDate);
-    const sessions=injectExtras(buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks);
+    const sessions=injectWalks(injectExtras(buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks),data,startMon);
     const completed=data.completed||{};
     const doneCount=Object.keys(completed).length;
     const si=calcStreak(data,sessions);
@@ -219,7 +252,7 @@ function finish(){
     if(newPowerPB)sh+='<div class="done-pb">⚡ NEW POWER PB: '+ps.peakW+' W</div>';
 
     /* Session grade from sprint stroke-rate compliance (needs rower data) */
-    if(ps&&!timerConfig.steady&&ps.sprintRates.length){
+    if(ps&&!timerConfig.steady&&ps.sprintRates&&ps.sprintRates.length){
       const totalSprints=timerConfig.blocks*5;
       const pct=ps.rateHits/totalSprints;
       const g=pct>=.9&&!finishedEarly?'S':pct>=.7?'A':pct>=.5?'B':'C';
@@ -301,4 +334,4 @@ $('#stopBtn').addEventListener('click',stopTimer);
 $('#doneContinueBtn').addEventListener('click',resumeSession);
 $('#doneBackBtn').addEventListener('click',()=>{finishedEarly=false;renderSchedule();showScreen('#schedule')});
 setNavAbortHook(()=>{clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer)});
-export{launchSession,launchSteadySession,paused,sequence,stepIdx,timerConfig,timerInterval};
+export{launchWalkSession,launchSession,launchSteadySession,paused,sequence,stepIdx,timerConfig,timerInterval};

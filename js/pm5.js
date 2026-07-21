@@ -27,7 +27,8 @@ function pm5OnStatus(e){
 function pm5OnStatus1(e){
   const dv=e.target.value,hr=dv.getUint8(6);
   pm5.spm=dv.getUint8(5);
-  pm5.hr=(hr===0||hr===255)?0:hr;
+  const hv=(hr===0||hr===255)?0:hr;
+  if(hv)pm5.hr=hv; /* keep BLE-strap value when the PM5 has no belt */
   if(pm5Sampling()){
     if(pm5.hr){pm5Stats.hrSum+=pm5.hr;pm5Stats.hrN++;if(pm5.hr>pm5Stats.hrMax)pm5Stats.hrMax=pm5.hr}
     const t=sequence[stepIdx]&&sequence[stepIdx].type;

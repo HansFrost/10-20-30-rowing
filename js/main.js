@@ -1,3 +1,4 @@
+import{launchWalkSession}from'./timer.js';
 import'./audio.js';
 import'./cheers.js';
 import'./cloud.js';
@@ -11,6 +12,8 @@ import'./pm5.js';
 import'./programs.js';
 import'./progress.js';
 import'./reminders.js';
+import'./walk.js';
+import'./hrstrap.js';
 import'./schedule.js';
 import'./session-modals.js';
 import'./store.js';
@@ -67,6 +70,7 @@ $('#resetBtn').addEventListener('click',async()=>{
     cloudReset();clearData();showScreen('#onboarding');showOnboardStep('stepProgram')}});
 
 /* ===== INIT ===== */
+$('#walkBtn').addEventListener('click',()=>launchWalkSession());
 initOnboarding();initSwapModal();initTimeModal();initAddSessionModal();
 const saved=loadData();
 setSkipHist(true);

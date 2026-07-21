@@ -55,17 +55,20 @@ function renderProgress(){
     progStat(totStrokes?totStrokes.toLocaleString():'–','Total strokes')+
     progStat('LVL '+li.lvl,li.rank)+
     progStat(data.bestStreak||0,'Best streak')+
+    progStat(walkKeys.length,'Walks logged')+
+    progStat((walkKeys.reduce((s,k)=>s+(stats[k].m||0),0)/1000).toFixed(1)+' km','Walked')+
   '</div>';
-  const chartKeys=keys.filter(k=>!stats[k].steady&&stats[k].avgW);
+  const walkKeys=keys.filter(k=>stats[k].walk);
+  const chartKeys=keys.filter(k=>!stats[k].walk&&!stats[k].steady&&stats[k].avgW);
   if(chartKeys.length>=2){
     h+='<div class="prog-chart-card"><div class="prog-chart-title">Power per session</div>'+
       chartSvg([chartKeys.map(k=>stats[k].bestSprint||0),chartKeys.map(k=>stats[k].avgW||0)],['#B7BF10','#60a5fa'])+
       '<div class="prog-legend"><span><i style="background:#B7BF10"></i>Best sprint (W)</span>'+
       '<span><i style="background:#60a5fa"></i>Avg power (W)</span></div></div>';
   }
-  if(keys.length>=2){
+  if(keys.filter(k=>!stats[k].walk).length>=2){
     h+='<div class="prog-chart-card"><div class="prog-chart-title">Meters per session</div>'+
-      barsSvg(keys.map(k=>stats[k].m||0),'#22c55e')+'</div>';
+      barsSvg(keys.filter(k=>!stats[k].walk).map(k=>stats[k].m||0),'#22c55e')+'</div>';
   }
   if(keys.length<2){
     h+='<div class="prog-empty">Row at least two sessions with the PM5 connected to unlock power and distance charts.</div>';

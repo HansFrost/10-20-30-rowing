@@ -18,7 +18,7 @@ function levelInfo(xp){
 }
 function lifetimeMeters(data){
   const stats=data.sessionStats||{};
-  return Object.keys(stats).reduce((s,k)=>s+(stats[k].m||0),0);
+  return Object.keys(stats).reduce((s,k)=>s+(stats[k].walk?0:(stats[k].m||0)),0);
 }
 function renderXpStrip(data){
   const el=$('#xpStrip');
