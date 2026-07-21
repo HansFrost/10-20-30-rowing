@@ -13,14 +13,23 @@ function openTimeModal(key,day,sess,prog){
   inp.value=effective||'07:00';
   $('#timeOverlay').classList.add('active');
 }
+/* Walk times live in walkTimes[day] (what the walk editors read/write);
+   everything else goes in sessionTimes[key]. Empty v clears the entry. */
+function writeSessionTime(data,tgt,v){
+  if(tgt.key.indexOf('walk-')===0){
+    if(!data.walkTimes)data.walkTimes={};
+    if(v)data.walkTimes[tgt.day]=v;else delete data.walkTimes[tgt.day];
+    if(data.sessionTimes)delete data.sessionTimes[tgt.key];
+    return;
+  }
+  if(!data.sessionTimes)data.sessionTimes={};
+  if(v)data.sessionTimes[tgt.key]=v;else delete data.sessionTimes[tgt.key];
+}
 function initTimeModal(){
   $('#timeSave').addEventListener('click',()=>{
     if(!timeTarget)return;
     const data=loadData();if(!data)return;
-    const v=$('#timeModalInput').value;
-    if(!data.sessionTimes)data.sessionTimes={};
-    if(v){data.sessionTimes[timeTarget.key]=v}
-    else{delete data.sessionTimes[timeTarget.key]}
+    writeSessionTime(data,timeTarget,$('#timeModalInput').value);
     saveData(data);
     $('#timeOverlay').classList.remove('active');
     timeTarget=null;renderSchedule();
@@ -28,8 +37,7 @@ function initTimeModal(){
   $('#timeClear').addEventListener('click',()=>{
     if(!timeTarget)return;
     const data=loadData();if(!data)return;
-    if(!data.sessionTimes)data.sessionTimes={};
-    delete data.sessionTimes[timeTarget.key];
+    writeSessionTime(data,timeTarget,'');
     saveData(data);
     $('#timeOverlay').classList.remove('active');
     timeTarget=null;renderSchedule();
