@@ -2,7 +2,7 @@ import{walkStart,walkStop,walkTick,walkDistance}from'./walk.js';
 import{beep,ensureAudio,soundBlockEnd,soundDone,soundPhase,soundSprint,soundTick}from'./audio.js';
 import{cheerSeen,pickCheer}from'./cheers.js';
 import{DONE_PRAISE,DONE_TIPS}from'./content.js';
-import{$,setNavAbortHook,showScreen}from'./dom.js';
+import{$,customConfirm,setNavAbortHook,showScreen}from'./dom.js';
 import{confettiBurst}from'./fx.js';
 import{calcStreak,checkMilestones,getHabitStage,showMilestones}from'./habit.js';
 import{hrText}from'./hr.js';
@@ -15,10 +15,29 @@ import{calcXP,levelInfo}from'./xp.js';
 let currentSessionKey=null;
 function launchWalkSession(){
   const now=new Date();
-  currentSessionKey='walk-'+now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  const dk=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  currentSessionKey='walk-'+dk;
+  registerWalkSession(dk,now);
   timerConfig.walk=true;timerConfig.steady=false;timerConfig.warmup=false;timerConfig.cooldown=false;
   startTimer();
   walkStart();
+}
+/* Starting a walk registers it on the schedule (date + start time) right away,
+   so stopping early never erases its existence: the card stays and can be
+   restarted or checked off later. */
+function registerWalkSession(dk,now){
+  const data=loadData();if(!data)return;
+  const dayKeys=['sun','mon','tue','wed','thu','fri','sat'];
+  const isPlanned=(data.walkDays||[]).includes(dayKeys[now.getDay()]);
+  const isExtra=(data.extraSessions||[]).some(e=>e.date===dk&&e.type==='walk');
+  if(!isPlanned&&!isExtra){
+    if(!data.extraSessions)data.extraSessions=[];
+    data.extraSessions.push({date:dk,type:'walk'});
+  }
+  if(!data.sessionTimes)data.sessionTimes={};
+  if(!data.sessionTimes['walk-'+dk])
+    data.sessionTimes['walk-'+dk]=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  saveData(data);
 }
 function launchSession(sess,prog,opts){
   const bare=!!(opts&&opts.bare);
@@ -330,7 +349,9 @@ $('#pauseBtn').addEventListener('click',()=>{
   paused=!paused;$('#pauseBtn').textContent=paused?'RESUME':'PAUSE'});
 $('#skipBtn').addEventListener('click',skipPhase);
 $('#finishBtn').addEventListener('click',finishEarly);
-$('#stopBtn').addEventListener('click',stopTimer);
+$('#stopBtn').addEventListener('click',async()=>{
+  if(await customConfirm('Stop this session? Nothing will be saved. Use FINISH to keep your progress.'))stopTimer();
+});
 $('#doneContinueBtn').addEventListener('click',resumeSession);
 $('#doneBackBtn').addEventListener('click',()=>{finishedEarly=false;renderSchedule();showScreen('#schedule')});
 setNavAbortHook(()=>{clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer)});
