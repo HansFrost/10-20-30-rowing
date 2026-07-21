@@ -34,7 +34,10 @@ body{font-family:'Dosis',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,s
   background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;display:flex;
   flex-direction:column;-webkit-tap-highlight-color:transparent;overflow-x:hidden;
   transition:background .3s}
-@media(max-width:768px){body{height:100vh;height:100dvh;min-height:0;overflow:hidden;zoom:1.25}}
+/* html is not zoomed, so 100dvh on it is the true screen height in every engine;
+   body{height:100%} then matches the screen even though zoom inflates dvh on body in WebKit */
+@media(max-width:768px){html{height:100vh;height:100dvh}
+  body{height:100%;min-height:0;overflow:hidden;zoom:1.25}}
 body.phase-warmup{background:var(--bg-warmup)}body.phase-low{background:var(--bg-low)}
 body.phase-moderate{background:var(--bg-moderate)}body.phase-high{background:var(--bg-high)}
 body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}body.phase-done{background:var(--bg)}
@@ -220,11 +223,12 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 
 /* ONBOARDING TIME PICKERS */
 .time-pick-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;
-  border-bottom:1px solid rgba(255,255,255,.06)}
+  gap:8px;max-width:100%;border-bottom:1px solid rgba(255,255,255,.06)}
 .time-pick-row:last-child{border-bottom:none}
 .time-pick-day{font-size:.9rem;font-weight:600;min-width:50px}
 .time-pick-input{padding:8px 12px;border-radius:10px;border:2px solid var(--border);
-  background:var(--card);color:var(--text);font-size:1rem;font-weight:600;text-align:center}
+  background:var(--card);color:var(--text);font-size:1rem;font-weight:600;text-align:center;
+  min-width:0;max-width:180px;flex:0 1 auto}
 .time-pick-input:focus{outline:none;border-color:var(--accent)}
 
 /* HABIT STRIP (streak + stage badge) */
@@ -260,6 +264,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .done-streak-label{font-size:.85rem;color:var(--muted)}
 .done-pb{font-size:.75rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;text-align:center}
 .done-habit{display:flex;align-items:center;gap:8px;justify-content:center;margin:8px 0}
+.done-habit .habit-ring{position:static;margin-right:0}
 .done-next{font-size:.8rem;color:var(--muted);margin-top:8px;font-style:italic;text-align:center}
 .done-quote{font-size:.85rem;color:var(--muted);font-style:italic;text-align:center;max-width:320px;
   margin:4px auto 0;line-height:1.5}
@@ -321,9 +326,9 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 
 /* HELP */
 #installGuide{display:none;position:fixed;inset:0;background:var(--bg);z-index:300;
-  align-items:center;justify-content:center;padding:24px;flex-direction:column}
+  align-items:center;padding:24px;flex-direction:column;overflow-y:auto}
 #installGuide.active{display:flex}
-#installBox{max-width:400px;width:100%;text-align:center}
+#installBox{max-width:400px;width:100%;text-align:center;margin:auto 0}
 #installBox h2{font-size:1.5rem;font-weight:800;margin-bottom:12px}
 #installBox h3{font-size:1rem;font-weight:700;margin-bottom:8px;color:var(--accent)}
 .install-intro{font-size:.9rem;color:var(--muted);line-height:1.6;margin-bottom:20px}
@@ -819,7 +824,7 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 /* ===== AUDIO ===== */
 const AudioCtx=window.AudioContext||window.webkitAudioContext;
 let audioCtx=null;
-function ensureAudio(){if(!audioCtx)audioCtx=new AudioCtx();if(audioCtx.state==='suspended')audioCtx.resume()}
+function ensureAudio(){try{if(!audioCtx&&AudioCtx)audioCtx=new AudioCtx();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume()}catch(e){}}
 function beep(f,d,v){if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();
   o.connect(g);g.connect(audioCtx.destination);o.frequency.value=f;o.type='sine';g.gain.value=v||.4;
   o.start(audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+d);
