@@ -159,6 +159,7 @@
   <div class="set-group">
     <div class="set-title">Program</div>
     <button class="set-row" id="changProgBtn">Change Program</button>
+    <button class="set-row" id="historyBtn">Program History</button>
     <button class="set-row" id="changeDaysBtn">Change Training Days</button>
     <button class="set-row" id="defTimesBtn">Set Default Times</button>
     <div class="set-row set-row-static maxhr-row">
@@ -558,6 +559,14 @@
       <button class="btn btn-secondary btn-small" id="changeDaysCancel" style="flex:1">Cancel</button>
       <button class="btn btn-primary btn-small" id="changeDaysSave" style="flex:1" disabled>Save</button>
     </div>
+  </div>
+</div>
+
+<div id="historyOverlay">
+  <div id="historyBox">
+    <p class="dt-title">Program History</p>
+    <div id="historyList"></div>
+    <button class="btn btn-secondary btn-small" id="historyClose" style="width:100%">Close</button>
   </div>
 </div>
 
