@@ -609,3 +609,60 @@ test.describe('Advanced program', () => {
     await expectNoHorizontalOverflow(page, 'advanced schedule');
   });
 });
+
+test.describe('Session log', () => {
+  test('shows the empty state before any session is completed', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    await page.locator('.tab-btn[data-tab="#progress"]').click();
+    await expect(page.locator('#progress')).toHaveClass(/active/);
+    await expect(page.locator('#sessionLog')).toContainText('Sessions you complete will appear here with their stats.');
+  });
+
+  test('lists completed sessions newest-first with expandable details', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    await page.evaluate((KEY) => {
+      const data = JSON.parse(localStorage.getItem(KEY));
+      const iso = (daysAgo) => { const d = new Date(); d.setDate(d.getDate() - daysAgo); return d.toISOString(); };
+      const pad = (n) => String(n).padStart(2, '0');
+      const walkDate = new Date();
+      walkDate.setDate(walkDate.getDate() - 1);
+      const walkKey = 'walk-' + walkDate.getFullYear() + '-' + pad(walkDate.getMonth() + 1) + '-' + pad(walkDate.getDate());
+      // Oldest: manual check-off (no stats). Middle: walk. Newest: full rowing session.
+      data.completed = { '1-mon': iso(2), [walkKey]: iso(1), '1-wed': iso(0) };
+      data.sessionStats = {
+        '1-wed': {
+          m: 6420, avgW: 145, peakW: 320, bestSprint: 310, strokes: 812,
+          avgHr: 152, maxHr: 174, rateHits: 12, blocks: 3, steady: false,
+          sprintPeaks: [280, 310], sprintRates: [31, 32], timeline: [[300, 1200], [1800, 6420]],
+        },
+        [walkKey]: { walk: true, m: 3200, min: 38, avgHr: 110, maxHr: 128 },
+      };
+      data.bonusXP = { '1-wed': 100 };
+      localStorage.setItem(KEY, JSON.stringify(data));
+    }, STORAGE_KEY);
+    await page.locator('.tab-btn[data-tab="#progress"]').click();
+    await expect(page.locator('#progress')).toHaveClass(/active/);
+
+    const rows = page.locator('#sessionLog .log-row');
+    await expect(rows).toHaveCount(3);
+    // Newest first: rowing (today), walk (yesterday), manual check-off (2 days ago)
+    await expect(rows.nth(0).locator('.log-tag')).toHaveText('Rowing 3 blocks');
+    await expect(rows.nth(1).locator('.log-tag')).toHaveText('Walk');
+    await expect(rows.nth(2).locator('.log-tag')).toHaveText(/Rowing/);
+
+    // Tapping the rowing row expands its detail grid
+    await rows.nth(0).locator('.log-head').click();
+    await expect(rows.nth(0)).toHaveClass(/open/);
+    await expect(rows.nth(0).locator('.log-details')).toContainText('6,420 m');
+    await expect(rows.nth(0).locator('.log-details')).toContainText('145 W');
+    await expect(rows.nth(0).locator('.log-details')).toContainText('+100 XP');
+
+    // The manual row shows the no-data note; opening it closes the first row
+    await rows.nth(2).locator('.log-head').click();
+    await expect(rows.nth(2).locator('.log-details')).toContainText('No recorded data (checked off manually)');
+    await expect(rows.nth(0)).not.toHaveClass(/open/);
+
+    await expectReachable(rows.nth(0).locator('.log-head'), 'first session log row');
+    await expectNoHorizontalOverflow(page, 'progress screen with session log');
+  });
+});
