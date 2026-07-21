@@ -1,4 +1,3 @@
-import{STAGE_IDENTITY}from'./content.js';
 import{$,customAlertHtml}from'./dom.js';
 import{PROGRAMS,totalAllSessions}from'./programs.js';
 import{loadData,saveData}from'./store.js';
@@ -107,21 +106,15 @@ function renderHabitStrip(data,sessions){
   if(si.best!==(data.bestStreak||0)){data.bestStreak=si.best;saveData(data)}
   const bestTxt=si.best>0?'Best: '+si.best:'';
   const progTxt=stage.next?doneCount+' / '+stage.next+' to next stage':doneCount+' sessions completed';
+  const streakMeta=[bestTxt,si.shields>0?'🛡×'+si.shields:''].filter(Boolean).join(' · ');
   el.innerHTML='<div class="sched-habit">'+
-    '<div class="streak-box">'+
-      '<div class="streak-num">'+si.current+'</div>'+
-      '<div class="streak-label">Streak</div>'+
-      (bestTxt?'<div class="streak-best">'+bestTxt+'</div>':'')+
-      (si.shields>0?'<div class="streak-best">🛡 ×'+si.shields+'</div>':'')+
+    '<div class="habit-ring '+stage.cls+'">'+stage.ring+'</div>'+
+    '<div class="habit-mid">'+
+      '<span class="habit-stage '+stage.colorCls+'">'+stage.name+'</span>'+
+      '<span class="habit-progress">'+progTxt+'</span>'+
     '</div>'+
-    '<div class="habit-divider"></div>'+
-    '<div class="habit-badge">'+
-      '<div class="habit-ring '+stage.cls+'">'+stage.ring+'</div>'+
-      '<div class="habit-info">'+
-        '<div class="habit-stage '+stage.colorCls+'">'+stage.name+'</div>'+
-        (STAGE_IDENTITY[stage.id].subtitle?'<div class="habit-subtitle">'+STAGE_IDENTITY[stage.id].subtitle+'</div>':'')+
-        '<div class="habit-progress">'+progTxt+'</div>'+
-      '</div>'+
+    '<div class="habit-streak"><b>🔥 '+si.current+'</b>'+
+      (streakMeta?'<span>'+streakMeta+'</span>':'')+
     '</div>'+
   '</div>';
 }

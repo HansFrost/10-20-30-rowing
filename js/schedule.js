@@ -190,14 +190,16 @@ function renderSchedule(){
       '<p style="font-size:.8rem;color:var(--muted)">Tap <strong>Change Program</strong> to start again.</p>'+
     '</div>';
   } else {
-    bannerEl.innerHTML='<div class="sched-rest-banner">'+
-      '<p style="font-weight:700;margin-bottom:4px">Rest Day ('+WEEKDAY_NAMES[today.getDay()]+')</p>'+
-      bTagHtml+
-      '<p>Next: '+getNext(sessions,today,completed)+'</p>'+
-      '<button class="quick-session-btn" id="restWalkBtn" style="margin-top:10px">\uD83D\uDEB6 GO FOR A WALK</button></div>';
+    bannerEl.innerHTML='<div class="sched-rest-banner compact">'+
+      '<div class="rest-body">'+
+      '<p class="rest-title">Rest Day ('+WEEKDAY_NAMES[today.getDay()]+')</p>'+
+      '<p class="rest-next">Next: '+getNext(sessions,today,completed)+'</p></div>'+
+      '<button class="quick-session-btn" id="restWalkBtn">\uD83D\uDEB6 WALK</button></div>';
     const rwBtn=$('#restWalkBtn');
     if(rwBtn)rwBtn.addEventListener('click',()=>launchWalkSession());
   }
+  /* The standalone walk button is redundant when the banner already offers a walk */
+  $('#walkBtn').style.display=($('#restWalkBtn')||$('#todayWalkBtn'))?'none':'';
 
   /* Precommit banner — upcoming sessions without times (next 7 days) */
   const weekAhead=addDays(today,7);
