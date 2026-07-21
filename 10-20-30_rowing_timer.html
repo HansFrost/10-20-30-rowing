@@ -2457,7 +2457,7 @@ function startTimer(){
   pm5Stats=pm5NewStats();
   Object.keys(cheerSeen).forEach(k=>delete cheerSeen[k]);
   $('#pauseBtn').textContent='PAUSE';$('#encouragement').textContent='';
-  showScreen('#timer');updateTimerUI();timerInterval=setInterval(tick,1000);requestWakeLock();
+  showScreen('#timer');updateTimerUI();timerInterval=setInterval(tick,1000);requestWakeLock();tryFullscreen();
 }
 function stopTimer(){clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);
   showScreen('#schedule');renderSchedule()}
@@ -2752,6 +2752,14 @@ function renderHabitStrip(data,sessions){
 
 
 async function requestWakeLock(){try{if('wakeLock' in navigator)await navigator.wakeLock.request('screen')}catch(e){}}
+function tryFullscreen(){
+  try{
+    if(document.fullscreenElement||document.webkitFullscreenElement)return;
+    const el=document.documentElement;
+    const p=el.requestFullscreen?el.requestFullscreen():el.webkitRequestFullscreen?el.webkitRequestFullscreen():null;
+    if(p&&p.catch)p.catch(()=>{});
+  }catch(e){}
+}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&timerInterval&&!paused)tick()});
 
 /* ===== MIGRATION ===== */
