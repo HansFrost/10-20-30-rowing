@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PM5 Connection Test</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:#001D38;color:#e8edf2;min-height:100vh;padding:20px;max-width:680px;margin:0 auto}
+h1{font-size:1.3rem;margin-bottom:4px}
+.sub{color:#7a8fa0;font-size:.85rem;margin-bottom:16px}
+button{padding:14px 24px;border:none;border-radius:14px;font-size:1rem;font-weight:700;
+  cursor:pointer;background:#B7BF10;color:#001D38;width:100%;margin-bottom:16px}
+button:disabled{opacity:.4}
+button.disconnect{background:rgba(255,255,255,.1);color:#fff}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.tile{background:#002a4d;border-radius:12px;padding:14px;text-align:center}
+.tile .val{font-size:1.6rem;font-weight:800;line-height:1.2}
+.tile .lbl{font-size:.7rem;color:#7a8fa0;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+#status{padding:10px 14px;border-radius:10px;background:#002a4d;font-size:.85rem;margin-bottom:16px}
+#status.ok{background:rgba(34,197,94,.15);color:#22c55e}
+#status.err{background:rgba(239,68,68,.15);color:#ef4444}
+#log{background:#00152a;border-radius:10px;padding:12px;font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:.7rem;color:#7a8fa0;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow-y:auto}
+</style>
+</head>
+<body>
+<h1>PM5 Connection Test</h1>
+<p class="sub">Open this page in Bluefy on iPhone (or Chrome on Android/desktop). Wake the PM5, then tap Connect.</p>
+
+<div id="status">Not connected</div>
+<button id="connectBtn">Connect to PM5</button>
+
+<div class="grid">
+  <div class="tile"><div class="val" id="vDist">-</div><div class="lbl">Distance (m)</div></div>
+  <div class="tile"><div class="val" id="vTime">-</div><div class="lbl">Elapsed</div></div>
+  <div class="tile"><div class="val" id="vRate">-</div><div class="lbl">Stroke rate (spm)</div></div>
+  <div class="tile"><div class="val" id="vPace">-</div><div class="lbl">Pace /500m</div></div>
+  <div class="tile"><div class="val" id="vWatts">-</div><div class="lbl">Watts</div></div>
+  <div class="tile"><div class="val" id="vHR">-</div><div class="lbl">Heart rate</div></div>
+  <div class="tile"><div class="val" id="vStrokes">-</div><div class="lbl">Strokes</div></div>
+  <div class="tile"><div class="val" id="vDrag">-</div><div class="lbl">Drag factor</div></div>
+</div>
+
+<div id="log"></div>
+
+<script>
+'use strict';
+// Concept2 PM5 BLE UUIDs (PM Communication Interface Definition)
+const SVC_ROWING = 'ce060030-43e5-11e4-916c-0800200c9a66';
+const CH_GENERAL_STATUS = 'ce060031-43e5-11e4-916c-0800200c9a66'; // elapsed, distance, drag
+const CH_ADD_STATUS1    = 'ce060032-43e5-11e4-916c-0800200c9a66'; // stroke rate, HR, pace
+const CH_ADD_STROKE     = 'ce060036-43e5-11e4-916c-0800200c9a66'; // stroke power, stroke count
+
+const $ = id => document.getElementById(id);
+const logEl = $('log'), statusEl = $('status'), btn = $('connectBtn');
+let device = null;
+
+function log(msg){
+  const t = new Date().toTimeString().slice(0,8);
+  logEl.textContent += `[${t}] ${msg}\n`;
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function setStatus(msg, cls){ statusEl.textContent = msg; statusEl.className = cls || ''; }
+
+// 3-byte little-endian unsigned int
+function u24(dv, o){ return dv.getUint8(o) | dv.getUint8(o+1)<<8 | dv.getUint8(o+2)<<16; }
+
+function fmtElapsed(hundredths){
+  const s = Math.floor(hundredths/100);
+  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+}
+function fmtPace(hundredths){
+  if(hundredths === 0 || hundredths >= 65535) return '-';
+  const s = hundredths/100;
+  return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+}
+
+function onGeneralStatus(e){
+  const dv = e.target.value;
+  $('vTime').textContent = fmtElapsed(u24(dv,0));
+  $('vDist').textContent = (u24(dv,3)/10).toFixed(0);
+  if(dv.byteLength > 18) $('vDrag').textContent = dv.getUint8(18);
+}
+function onAddStatus1(e){
+  const dv = e.target.value;
+  $('vRate').textContent = dv.getUint8(5);
+  const hr = dv.getUint8(6);
+  $('vHR').textContent = (hr === 255 || hr === 0) ? '-' : hr;
+  $('vPace').textContent = fmtPace(dv.getUint16(7, true));
+}
+function onAddStroke(e){
+  const dv = e.target.value;
+  $('vWatts').textContent = dv.getUint16(3, true);
+  $('vStrokes').textContent = dv.getUint16(7, true);
+}
+
+async function connect(){
+  if(!navigator.bluetooth){
+    setStatus('Web Bluetooth not available in this browser. On iPhone, open this page in Bluefy.', 'err');
+    log('navigator.bluetooth is undefined');
+    return;
+  }
+  try{
+    setStatus('Opening device picker...');
+    log('Requesting device (namePrefix "PM5")...');
+    device = await navigator.bluetooth.requestDevice({
+      filters: [{ namePrefix: 'PM5' }],
+      optionalServices: [SVC_ROWING]
+    });
+    log(`Selected: ${device.name}`);
+    device.addEventListener('gattserverdisconnected', () => {
+      setStatus('Disconnected', 'err');
+      log('GATT disconnected');
+      btn.textContent = 'Connect to PM5';
+      btn.classList.remove('disconnect');
+    });
+
+    setStatus('Connecting GATT...');
+    const server = await device.gatt.connect();
+    log('GATT connected');
+
+    const svc = await server.getPrimaryService(SVC_ROWING);
+    log('Rowing service found');
+
+    const pairs = [
+      [CH_GENERAL_STATUS, onGeneralStatus, 'General Status (0x0031)'],
+      [CH_ADD_STATUS1,    onAddStatus1,    'Additional Status 1 (0x0032)'],
+      [CH_ADD_STROKE,     onAddStroke,     'Additional Stroke Data (0x0036)'],
+    ];
+    for(const [uuid, handler, name] of pairs){
+      const ch = await svc.getCharacteristic(uuid);
+      ch.addEventListener('characteristicvaluechanged', handler);
+      await ch.startNotifications();
+      log(`Subscribed: ${name}`);
+    }
+
+    setStatus(`Connected to ${device.name} - row a few strokes!`, 'ok');
+    btn.textContent = 'Disconnect';
+    btn.classList.add('disconnect');
+  }catch(err){
+    setStatus(`Error: ${err.message}`, 'err');
+    log(`ERROR: ${err.name}: ${err.message}`);
+  }
+}
+
+btn.addEventListener('click', () => {
+  if(device && device.gatt.connected){
+    device.gatt.disconnect();
+  }else{
+    connect();
+  }
+});
+
+log(`User agent: ${navigator.userAgent}`);
+log(`Web Bluetooth: ${navigator.bluetooth ? 'available' : 'NOT available'}`);
+</script>
+</body>
+</html>
