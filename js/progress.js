@@ -1,5 +1,6 @@
 import{$}from'./dom.js';
 import{countRowingSessions}from'./programs.js';
+import{renderSessionLog}from'./sessionlog.js';
 import{loadData}from'./store.js';
 import{calcXP,levelInfo,lifetimeMeters}from'./xp.js';
 function progStat(v,l){return '<div class="finish-stat"><div class="finish-stat-num">'+v+'</div><div class="finish-stat-label">'+l+'</div></div>'}
@@ -39,6 +40,7 @@ function barsSvg(vals,color){
   return out+'</svg>';
 }
 function renderProgress(){
+  renderSessionLog();
   const body=$('#progressBody');
   const data=loadData();
   if(!data){body.innerHTML='<div class="prog-empty">No program yet.</div>';return}
