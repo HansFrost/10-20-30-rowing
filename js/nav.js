@@ -8,6 +8,7 @@ import{renderSchedule}from'./schedule.js';
 const TAB_RENDER={
   '#schedule':()=>renderSchedule(),
   '#progress':()=>{renderSchedule();renderProgress()},
+  '#connect':()=>{},
   '#settings':()=>{},
 };
 function initNav(){

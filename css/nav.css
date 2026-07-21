@@ -5,6 +5,7 @@
   padding:8px max(8px,env(safe-area-inset-left)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-right))}
 body[data-screen="#schedule"] #tabBar,
 body[data-screen="#progress"] #tabBar,
+body[data-screen="#connect"] #tabBar,
 body[data-screen="#settings"] #tabBar{display:flex}
 .tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;position:relative;
   background:none;border:none;padding:5px 0 2px;cursor:pointer;
@@ -14,18 +15,22 @@ body[data-screen="#settings"] #tabBar{display:flex}
   width:28px;height:3px;border-radius:2px;background:var(--accent);transition:transform .2s}
 body[data-screen="#schedule"] .tab-btn[data-tab="#schedule"],
 body[data-screen="#progress"] .tab-btn[data-tab="#progress"],
+body[data-screen="#connect"] .tab-btn[data-tab="#connect"],
 body[data-screen="#settings"] .tab-btn[data-tab="#settings"]{color:var(--accent)}
 body[data-screen="#schedule"] .tab-btn[data-tab="#schedule"] .tab-ic,
 body[data-screen="#progress"] .tab-btn[data-tab="#progress"] .tab-ic,
+body[data-screen="#connect"] .tab-btn[data-tab="#connect"] .tab-ic,
 body[data-screen="#settings"] .tab-btn[data-tab="#settings"] .tab-ic{filter:none;opacity:1}
 body[data-screen="#schedule"] .tab-btn[data-tab="#schedule"]::before,
 body[data-screen="#progress"] .tab-btn[data-tab="#progress"]::before,
+body[data-screen="#connect"] .tab-btn[data-tab="#connect"]::before,
 body[data-screen="#settings"] .tab-btn[data-tab="#settings"]::before{transform:translateX(-50%) scaleX(1)}
 @media(prefers-reduced-motion:reduce){.tab-btn::before,.tab-btn .tab-ic{transition:none}}
 
 /* Clear the fixed bar on tabbed screens */
 body[data-screen="#schedule"] #schedule,
 body[data-screen="#progress"] #progress,
+body[data-screen="#connect"] #connect,
 body[data-screen="#settings"] #settings{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 
 /* SETTINGS SCREEN */
@@ -41,3 +46,9 @@ body[data-screen="#settings"] #settings{padding-bottom:calc(76px + env(safe-area
 .set-row-static{display:flex;cursor:default}
 .set-row-static:active{background:none}
 .set-row-danger{color:var(--red);opacity:.85}
+
+/* CONNECT SCREEN */
+#connect{gap:14px}
+@media(max-width:768px){#connect{overflow-y:auto}}
+#connect .sched-header{justify-content:center}
+.connect-hint{font-size:.8rem;color:var(--muted);text-align:center;max-width:340px;margin:0 auto;line-height:1.5}
