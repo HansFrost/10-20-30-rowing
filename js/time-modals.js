@@ -106,10 +106,10 @@ function teRenderRows(box,mode,ex){
   if(mode==='same'){
     const v=days.map(d=>ex[d]||'').find(Boolean)||fb;
     rows.innerHTML='<div class="time-pick-row"><span class="time-pick-day">All days</span>'+
-      '<input type="time" class="te-input" data-day="*" value="'+v+'"></div>';
+      '<input type="time" class="time-pick-input te-input" data-day="*" value="'+v+'"></div>';
   }else{
     rows.innerHTML=days.map(d=>'<div class="time-pick-row"><span class="time-pick-day">'+DAY_LABELS[d]+'</span>'+
-      '<input type="time" class="te-input" data-day="'+d+'" value="'+(ex[d]||fb)+'"></div>').join('');
+      '<input type="time" class="time-pick-input te-input" data-day="'+d+'" value="'+(ex[d]||fb)+'"></div>').join('');
   }
 }
 function collectTimeEditor(sel){
