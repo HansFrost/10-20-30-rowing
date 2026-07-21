@@ -99,6 +99,27 @@ test.describe('Schedule screen', () => {
     await expectNoHorizontalOverflow(page, 'rest day schedule');
   });
 
+  test('walk screen shows keep-screen-on hint and flags tracking interruptions', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true, restToday: true });
+    await page.locator('#restWalkBtn').click();
+    await expect(page.locator('#timer')).toHaveClass(/active/);
+    const hint = page.locator('#walkHint');
+    await expect(hint).toBeVisible();
+    await expect(hint).toContainText('Keep the screen on');
+    // Simulate the screen locking for >5s, then coming back
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await page.waitForTimeout(5300);
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await expect(hint).toHaveClass(/warn/);
+    await expect(hint).toContainText('Tracking was paused');
+  });
+
   test('long program name truncates instead of wrapping the header', async ({ page }) => {
     await gotoApp(page, { seedProgram: true, customName: 'FitterHappierMoreProductive' });
     const nameBox = await page.locator('#progName').boundingBox();
