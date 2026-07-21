@@ -1,6 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { gotoApp, expectNoHorizontalOverflow, expectReachable, completeOnboarding, STORAGE_KEY } = require('./helpers');
+const { gotoApp, expectNoHorizontalOverflow, expectReachable, completeOnboarding, APP_PATH, STORAGE_KEY } = require('./helpers');
 
 test.describe('Onboarding', () => {
   test('step 1 (program choice): all controls fit the phone', async ({ page }) => {
@@ -494,6 +494,38 @@ test.describe('Install guide', () => {
     await expectNoHorizontalOverflow(page, 'install guide');
     await page.locator('#installDismiss').click();
     await expect(page.locator('#installGuide')).not.toHaveClass(/active/);
+  });
+});
+
+test.describe('Walk sessions and rowing progression', () => {
+  test('walks count neither toward progress nor streak nor habit stage', async ({ page }) => {
+    await page.addInitScript(({ KEY }) => {
+      localStorage.setItem('install_guide_seen', '1');
+      const pad = (n) => String(n).padStart(2, '0');
+      const ds = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+      // Program started three weeks ago on a Monday
+      const monday = new Date();
+      const dow = monday.getDay();
+      monday.setDate(monday.getDate() - (dow === 0 ? 6 : dow - 1) - 21);
+      const day = (off) => { const d = new Date(monday); d.setDate(d.getDate() + off); return ds(d); };
+      const iso = new Date().toISOString();
+      localStorage.setItem(KEY, JSON.stringify({
+        startDate: ds(monday), program: 'intermediate', days: ['mon', 'wed', 'fri'],
+        maxHR: 176, swaps: {}, defaultTimes: {}, sessionTimes: {},
+        // Week-1 Tuesday walk planned but skipped; Saturday walk completed
+        walkDays: ['tue'], walkStart: ds(monday),
+        completed: { '1-mon': iso, '1-wed': iso, ['walk-' + day(5)]: iso },
+      }));
+    }, { KEY: STORAGE_KEY });
+    await page.goto(APP_PATH);
+    await expect(page.locator('#schedule')).toHaveClass(/active/);
+    // 21 rowing sessions total (7 weeks x 3 days); the completed walk must not count
+    await expect(page.locator('#progLabel')).toHaveText('2 / 21 sessions');
+    await expect(page.locator('#progPct')).toHaveText('10%');
+    // The skipped Tuesday walk must not break the Mon -> Wed rowing streak
+    await expect(page.locator('#habitStrip .habit-streak b')).toHaveText('\u{1F525} 2');
+    // Habit stage progress counts rowing sessions only (3 completions would show 3 / 4)
+    await expect(page.locator('#habitStrip .habit-progress')).toHaveText('2 / 4 to next stage');
   });
 });
 
