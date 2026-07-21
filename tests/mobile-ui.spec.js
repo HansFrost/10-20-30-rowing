@@ -743,4 +743,35 @@ test.describe('XP rebalance and guide', () => {
     // 205 + 100 golden + 240 + 109 = 654 total -> level 2, 354 into the 450 needed
     await expect(page.locator('#xpStrip .xp-nums')).toHaveText('654 XP · 354 / 450 to LVL 3');
   });
+
+  test('tapping the XP strip opens the guide with earning rules and the rank ladder', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    await seedXpSessions(page);
+    // The strip hints it is tappable and opens the guide
+    await expect(page.locator('#xpStrip .xp-chevron')).toBeVisible();
+    await page.locator('#xpStrip .xp-strip').click();
+    await expect(page.locator('#xpGuideOverlay')).toHaveClass(/active/);
+    // Rules table lists the graded earning rules
+    const rules = page.locator('#xpgRules');
+    await expect(rules).toContainText('Complete any session');
+    await expect(rules).toContainText('+100 XP');
+    await expect(rules).toContainText('interval block');
+    await expect(rules).toContainText('+15 XP');
+    await expect(rules).toContainText('Steady-state');
+    await expect(rules).toContainText('+2 XP / min');
+    await expect(rules).toContainText('+3 XP / km');
+    await expect(rules).toContainText('+1 XP / 100 m');
+    await expect(rules).toContainText('+5 XP');
+    // Full ladder with the current rank highlighted (654 XP = LVL 2 = Deckhand)
+    await expect(page.locator('#xpgRanks .xpg-rank')).toHaveCount(11);
+    await expect(page.locator('.xpg-rank.current .xpg-rank-name')).toHaveText('Deckhand');
+    await expect(page.locator('#xpgRanks .xpg-status')).toContainText('654 XP total');
+    await expect(page.locator('#xpgRanks .xpg-status')).toContainText('next rank Paddler at 750 XP');
+    // The modal fits the viewport; the highlighted rank is reachable
+    await expectReachable(page.locator('#xpGuideBox'), 'XP guide box');
+    await expectReachable(page.locator('.xpg-rank.current'), 'highlighted current rank row');
+    // Backdrop tap closes the guide
+    await page.locator('#xpGuideOverlay').click({ position: { x: 5, y: 5 } });
+    await expect(page.locator('#xpGuideOverlay')).not.toHaveClass(/active/);
+  });
 });

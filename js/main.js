@@ -33,6 +33,7 @@ import{renderSchedule}from'./schedule.js';
 import{initAddSessionModal,initSwapModal}from'./session-modals.js';
 import{clearData,loadData,saveData}from'./store.js';
 import{initTimeModal}from'./time-modals.js';
+import{initXpGuide}from'./xpguide.js';
 $('#helpBtn').addEventListener('click',()=>$('#helpOverlay').classList.add('active'));
 $('#helpClose').addEventListener('click',()=>$('#helpOverlay').classList.remove('active'));
 $('#helpOverlay').addEventListener('click',e=>{if(e.target===$('#helpOverlay'))$('#helpOverlay').classList.remove('active')});
@@ -74,7 +75,7 @@ $('#resetBtn').addEventListener('click',async()=>{
 
 /* ===== INIT ===== */
 $('#walkBtn').addEventListener('click',()=>launchWalkSession());
-initOnboarding();initNav();initSwapModal();initTimeModal();initAddSessionModal();initHistory();
+initOnboarding();initNav();initSwapModal();initTimeModal();initAddSessionModal();initHistory();initXpGuide();
 const saved=loadData();
 setSkipHist(true);
 if(saved&&saved.program){

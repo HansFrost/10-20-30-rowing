@@ -112,6 +112,30 @@
 .hr-table td{color:var(--muted)}
 .hr-table .zc{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
 
+/* XP GUIDE */
+#xpGuideOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:190;
+  align-items:center;justify-content:center;padding:20px}
+#xpGuideOverlay.active{display:flex}
+#xpGuideBox{background:var(--card);border-radius:20px;padding:28px 24px;max-width:380px;
+  width:100%;max-height:85vh;max-height:85dvh;overflow-y:auto;position:relative;
+  display:flex;flex-direction:column;gap:10px}
+#xpGuideBox h2{font-size:1.3rem;font-weight:800}
+#xpGuideBox h3{font-size:.9rem;font-weight:700;color:var(--accent);margin-top:6px}
+#xpGuideClose{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);
+  font-size:1.4rem;cursor:pointer;padding:4px 8px}
+.xpg-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.xpg-table td{padding:6px 4px;border-bottom:1px solid rgba(255,255,255,.06);color:var(--muted)}
+.xpg-table .xpg-amount{text-align:right;color:var(--text);font-weight:700;white-space:nowrap}
+.xpg-note{font-size:.75rem;color:var(--muted);line-height:1.4}
+.xpg-status{font-size:.8rem;font-weight:600}
+.xpg-ladder{display:flex;flex-direction:column;gap:6px}
+.xpg-rank{display:flex;justify-content:space-between;align-items:center;gap:8px;
+  padding:8px 12px;border:1px solid var(--border);border-radius:10px;font-size:.85rem}
+.xpg-rank.current{border-color:var(--accent);background:rgba(183,191,16,.15)}
+.xpg-rank.current .xpg-rank-name::after{content:' \2190 you';color:var(--accent);font-size:.7rem;font-weight:700}
+.xpg-rank-name{font-weight:700}
+.xpg-rank-req{font-size:.7rem;color:var(--muted);white-space:nowrap}
+
 /* CONFIRM / SWAP MODALS */
 #confirmOverlay,#swapOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;
   align-items:center;justify-content:center;padding:20px}
