@@ -22,6 +22,10 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .screen{display:none;flex:1;flex-direction:column;padding:20px 16px;max-width:552px;
   width:100%;margin:0 auto}
 .screen.active{display:flex}
+/* Scrollable screens must scroll, never compress their cards: flex children
+   default to shrink, which clips card content once a screen grows past the
+   viewport (seen as cut-off settings rows on iPhone). */
+#schedule>*,#settings>*,#connect>*,#progress>*{flex-shrink:0}
 .btn{padding:14px 24px;border:none;border-radius:14px;font-size:1rem;font-weight:700;
   cursor:pointer;transition:transform .1s,opacity .15s;text-align:center}
 .btn:active{transform:scale(.97)}
