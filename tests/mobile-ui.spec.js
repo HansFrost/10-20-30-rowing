@@ -11,8 +11,20 @@ test.describe('Onboarding', () => {
       await expectReachable(page.locator(`.program-card[data-prog="${prog}"]`), `${prog} program card`);
     }
     await expectReachable(page.locator('#progNextBtn'), 'NEXT button');
+    await expectReachable(page.locator('#onboardCloudBtn'), 'Sign in to sync button');
     await expectReachable(page.locator('#onboardImportBtn'), 'Import Progress button');
     await expectNoHorizontalOverflow(page, 'onboarding step 1');
+  });
+
+  test('cloud sign-in modal opens from onboarding and fits', async ({ page }) => {
+    await gotoApp(page);
+    await page.locator('#onboardCloudBtn').click();
+    await expect(page.locator('#cloudOverlay')).toHaveClass(/active/);
+    await expectReachable(page.locator('#cloudEmail'), 'email input');
+    await expectReachable(page.locator('#cloudSendBtn'), 'send code button');
+    await expectNoHorizontalOverflow(page, 'cloud sign-in modal');
+    await page.locator('#cloudCloseBtn').click();
+    await expect(page.locator('#cloudOverlay')).not.toHaveClass(/active/);
   });
 
   test('step 2 (training days): day picker fits and is tappable', async ({ page }) => {
