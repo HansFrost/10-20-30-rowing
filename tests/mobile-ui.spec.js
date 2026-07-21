@@ -120,6 +120,10 @@ test.describe('Schedule screen', () => {
     await expect(page.locator('#connect')).toHaveClass(/active/);
     await expectReachable(page.locator('#pm5Btn'), 'PM5 connect button');
     await expectReachable(page.locator('#hrBtn'), 'HR strap button');
+    // Device rows carry live-status slots that fill with bpm/watts when connected
+    await expect(page.locator('#hrLive')).toBeAttached();
+    await expect(page.locator('#pm5Live')).toBeAttached();
+    expect(await page.locator('#hrLive').textContent(), 'live slot empty while disconnected').toBe('');
     await page.locator('.tab-btn[data-tab="#settings"]').click();
     await expect(page.locator('#settings')).toHaveClass(/active/);
     await page.locator('.tab-btn[data-tab="#schedule"]').click();
