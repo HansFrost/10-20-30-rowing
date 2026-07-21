@@ -99,6 +99,38 @@ test.describe('Schedule screen', () => {
     await expectNoHorizontalOverflow(page, 'rest day schedule');
   });
 
+  test('STOP asks for confirmation and cancel keeps the session running', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    await page.locator('#todayStartBtn').click();
+    await expect(page.locator('#timer')).toHaveClass(/active/);
+    await page.locator('#stopBtn').click();
+    await expect(page.locator('#confirmOverlay')).toHaveClass(/active/);
+    await page.locator('#confirmCancel').click();
+    await expect(page.locator('#timer'), 'cancel should keep the session').toHaveClass(/active/);
+    await page.locator('#stopBtn').click();
+    await page.locator('#confirmOk').click();
+    await expect(page.locator('#schedule'), 'confirm should stop and return').toHaveClass(/active/);
+  });
+
+  test('starting a walk registers it on the schedule with date and time', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true, restToday: true });
+    await page.locator('#restWalkBtn').click();
+    await expect(page.locator('#timer')).toHaveClass(/active/);
+    // Stop without finishing: the walk card must still exist with a start time
+    await page.locator('#stopBtn').click();
+    await page.locator('#confirmOk').click();
+    await expect(page.locator('#schedule')).toHaveClass(/active/);
+    const walkCard = page.locator('.week-group:not(.collapsed) .session-card[data-type="walk"]').first();
+    await expect(walkCard, 'stopped walk should still be planned on the schedule').toBeVisible();
+    await expect(walkCard.locator('.s-time.has-time'), 'walk card should carry its start time').toBeVisible();
+    // The delete control is a comfortably tappable trashcan
+    const del = walkCard.locator('.s-delete');
+    await expect(del).toBeVisible();
+    const box = await del.boundingBox();
+    expect(box.width, 'delete tap target width').toBeGreaterThanOrEqual(28);
+    expect(box.height, 'delete tap target height').toBeGreaterThanOrEqual(28);
+  });
+
   test('walk screen shows keep-screen-on hint and flags tracking interruptions', async ({ page }) => {
     await gotoApp(page, { seedProgram: true, restToday: true });
     await page.locator('#restWalkBtn').click();
