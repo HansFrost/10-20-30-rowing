@@ -121,3 +121,6 @@ body.phase-walk{background:#0c3020}
 #hrChip.lost .dot{background:var(--red)}
 #walkStrip{display:none;gap:8px;width:100%;max-width:400px;margin-top:clamp(4px,1vh,10px)}
 #walkStrip.on{display:flex}
+#walkHint{display:none;font-size:.72rem;color:var(--muted);margin-top:4px;line-height:1.4}
+#walkHint.on{display:block}
+#walkHint.warn{color:var(--gold);font-weight:600}

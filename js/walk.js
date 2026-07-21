@@ -4,6 +4,22 @@ import{fmtTime}from'./util.js';
 
 /* GPS walk tracking: foreground-only (iOS suspends JS when the screen locks). */
 let walkWatch=null,walkMeters=0,lastFix=null;
+let walkGapMs=0,walkHiddenAt=null;
+
+const HINT_DEFAULT='🔒 Keep the screen on: distance tracking pauses while the phone is locked.';
+function walkHintUi(){
+  const el=$('#walkHint');
+  const warned=walkGapMs>5000;
+  el.classList.toggle('warn',warned);
+  el.textContent=warned
+    ?'⚠ Tracking was paused for '+fmtTime(Math.round(walkGapMs/1000))+' while the screen was off. Distance in that stretch is not counted.'
+    :HINT_DEFAULT;
+}
+document.addEventListener('visibilitychange',()=>{
+  if(!$('#walkHint').classList.contains('on'))return; /* only while a walk runs */
+  if(document.hidden){walkHiddenAt=Date.now();return}
+  if(walkHiddenAt){walkGapMs+=Date.now()-walkHiddenAt;walkHiddenAt=null;walkHintUi()}
+});
 
 function hav(a,b){
   const R=6371000,rad=x=>x*Math.PI/180;
@@ -22,7 +38,10 @@ function onFix(p){
 }
 function walkStart(){
   walkMeters=0;lastFix=null;
+  walkGapMs=0;walkHiddenAt=null;
   $('#walkStrip').classList.add('on');
+  $('#walkHint').classList.add('on');
+  walkHintUi();
   $('#pmWalkDist').textContent='0.00';$('#pmWalkPace').textContent='-';$('#pmWalkHr').textContent='-';
   if(navigator.geolocation)
     walkWatch=navigator.geolocation.watchPosition(onFix,()=>{},{enableHighAccuracy:true,maximumAge:2000,timeout:15000});
@@ -31,6 +50,7 @@ function walkStop(){
   if(walkWatch!==null&&navigator.geolocation)navigator.geolocation.clearWatch(walkWatch);
   walkWatch=null;
   $('#walkStrip').classList.remove('on');
+  $('#walkHint').classList.remove('on','warn');
 }
 function walkTick(totalEl){
   $('#pmWalkDist').textContent=(walkMeters/1000).toFixed(2);
