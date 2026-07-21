@@ -775,3 +775,109 @@ test.describe('XP rebalance and guide', () => {
     await expect(page.locator('#xpGuideOverlay')).not.toHaveClass(/active/);
   });
 });
+
+test.describe('Shop and cosmetics', () => {
+  test('shop opens from Settings and Progress, default avatar equipped', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    await page.locator('.tab-btn[data-tab="#settings"]').click();
+    await expectReachable(page.locator('#shopBtn'), 'Shop & Avatars settings row');
+    await page.locator('#shopBtn').click();
+    await expect(page.locator('#shopOverlay')).toHaveClass(/active/);
+    await expectReachable(page.locator('#shopCoins'), 'coin balance');
+    await expect(page.locator('#shopCoins')).toContainText('0 coins');
+    await expect(page.locator('#shopLog')).toContainText('Coins you earn will show up here.');
+    // Default rower avatar reads as equipped even with nothing bought
+    const rower = page.locator('.shop-item[data-id="rower"]');
+    await expectReachable(rower, 'default rower item');
+    await expect(rower).toHaveClass(/equipped/);
+    await expect(rower.locator('.shop-state')).toHaveText('Equipped');
+    await expectNoHorizontalOverflow(page, 'shop modal');
+    await page.locator('#shopClose').click();
+    await expect(page.locator('#shopOverlay')).not.toHaveClass(/active/);
+    // Same modal from the Progress card under the XP strip
+    await page.locator('.tab-btn[data-tab="#progress"]').click();
+    await expectReachable(page.locator('#shopCard .shop-card'), 'shop card on progress screen');
+    await page.locator('#shopCard .shop-card').click();
+    await expect(page.locator('#shopOverlay')).toHaveClass(/active/);
+    await expectReachable(page.locator('#shopClose'), 'shop close button');
+  });
+
+  test('buying a coin item, equipping it, and the coin log record', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    await page.evaluate((KEY) => {
+      const d = JSON.parse(localStorage.getItem(KEY));
+      d.coins = 500;
+      d.coinLog = [
+        { ts: Date.now() - 3600000, amount: 20, reason: 'Sprint challenge' },
+        { ts: Date.now() - 1800000, amount: 30, reason: 'Golden session' },
+      ];
+      d.completed['1-' + d.days[0]] = new Date().toISOString();
+      localStorage.setItem(KEY, JSON.stringify(d));
+    }, STORAGE_KEY);
+    // Re-render via tab switch (reload would re-run the seeding init script)
+    await page.locator('.tab-btn[data-tab="#progress"]').click();
+    await page.locator('#shopCard .shop-card').click();
+    await expect(page.locator('#shopCoins')).toContainText('500 coins');
+
+    // Buy the kayak (150 coins) through the confirm dialog
+    const kayak = page.locator('.shop-item[data-id="kayak"]');
+    await expect(kayak.locator('.shop-state')).toContainText('150');
+    await kayak.click();
+    await expect(page.locator('#confirmOverlay')).toHaveClass(/active/);
+    await expect(page.locator('#confirmMsg')).toContainText('Buy Kayak for 150 coins?');
+    await page.locator('#confirmOk').click();
+    await expect(kayak.locator('.shop-state')).toHaveText('Tap to equip');
+    await expect(page.locator('#shopCoins')).toContainText('350 coins');
+    const after = await page.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)), STORAGE_KEY);
+    expect(after.coins, 'coins reduced by the price').toBe(350);
+    expect(after.cosmetics.owned, 'kayak recorded as owned').toContain('kayak');
+
+    // Coin log: purchase on top as a negative entry, seeded earnings below
+    const logRows = page.locator('#shopLog .shop-log-row');
+    await expect(logRows.nth(0).locator('.shop-log-amt')).toHaveText('-150');
+    await expect(logRows.nth(0).locator('.shop-log-reason')).toHaveText('Kayak');
+    await expect(logRows.nth(0).locator('.shop-log-ts')).toHaveText(/^\w{3} \d{1,2} \w{3} \d{2}:\d{2}$/);
+    await expect(logRows.nth(1).locator('.shop-log-amt')).toHaveText('+30');
+    await expect(logRows.nth(1).locator('.shop-log-reason')).toHaveText('Golden session');
+    await expect(logRows.nth(2).locator('.shop-log-amt')).toHaveText('+20');
+    await expect(logRows.nth(2).locator('.shop-log-reason')).toHaveText('Sprint challenge');
+    await expectNoHorizontalOverflow(page, 'shop modal with coin history');
+
+    // Equip: item highlights and the XP strip level circle shows the kayak
+    await kayak.click();
+    await expect(kayak).toHaveClass(/equipped/);
+    await expect(kayak.locator('.shop-state')).toHaveText('Equipped');
+    await page.locator('#shopClose').click();
+    await expect(page.locator('#xpStrip .xp-avatar')).toHaveText('\u{1F6F6}');
+    await expect(page.locator('#xpStrip .lvl-badge')).toHaveText('1');
+  });
+
+  test('rank-locked items become owned at high XP, still-locked ones show their rank', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    await page.evaluate((KEY) => {
+      const d = JSON.parse(localStorage.getItem(KEY));
+      const k = '1-' + d.days[0];
+      d.completed[k] = new Date().toISOString();
+      d.bonusXP = { [k]: 5000 }; // 5100 XP -> LVL 7 -> rank index 3 (Oarsman)
+      localStorage.setItem(KEY, JSON.stringify(d));
+    }, STORAGE_KEY);
+    await page.locator('.tab-btn[data-tab="#progress"]').click();
+    await page.locator('#shopCard .shop-card').click();
+    // Longship needs rank 2 (LVL 5): auto-owned now, no purchase required
+    const longship = page.locator('.shop-item[data-id="longship"]');
+    await expect(longship).not.toHaveClass(/locked/);
+    await expect(longship.locator('.shop-state')).toHaveText('Tap to equip');
+    // Viking needs rank 5 (LVL 11): still locked and says so
+    const viking = page.locator('.shop-item[data-id="viking"]');
+    await expect(viking).toHaveClass(/locked/);
+    await expect(viking.locator('.shop-state')).toContainText('Unlocks at Stroke Seat');
+    await viking.click(); // tapping a locked item must do nothing
+    await expect(page.locator('#confirmOverlay')).not.toHaveClass(/active/);
+    // Equip the rank-unlocked longship and check the strip
+    await longship.click();
+    await expect(longship).toHaveClass(/equipped/);
+    await page.locator('#shopClose').click();
+    await expect(page.locator('#xpStrip .xp-avatar')).toHaveText('⛵');
+    await expect(page.locator('#xpStrip .lvl-badge')).toHaveText('7');
+  });
+});
