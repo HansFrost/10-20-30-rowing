@@ -9,6 +9,7 @@ import{openTimeModal}from'./time-modals.js';
 import{launchSession,launchSteadySession,launchWalkSession}from'./timer.js';
 import{WEEKDAY_NAMES,addDays,fmtDate,parseDate,sameDay}from'./util.js';
 import{renderXpStrip}from'./xp.js';
+let openWeeks=null,openWeeksSig='';
 function renderSchedule(){
   const data=loadData();
   if(!data){showScreen('#onboarding');return}
@@ -219,14 +220,28 @@ function renderSchedule(){
     pcEl.innerHTML='';
   }
 
-  /* Week grid */
+  /* Week grid \u2014 accordion: only the current week starts expanded */
+  const curWeek=Math.min(prog.weeks,Math.max(1,Math.floor((today-startMon)/(7*864e5))+1));
+  const owSig=data.startDate+data.program;
+  if(openWeeksSig!==owSig){openWeeks=new Set([curWeek]);openWeeksSig=owSig}
   let html='';
   for(let w=1;w<=prog.weeks;w++){
     const ws=sessions.filter(s=>s.week===w);
     const ibs=ws.filter(s=>s.type==='interval').map(s=>s.blocks);
     const lo=Math.min(...ibs),hi=Math.max(...ibs);
     const tag=ibs.length?lo===hi?lo+' blocks':lo+'\u2013'+hi+' blocks':'';
-    html+='<div class="week-group"><div class="week-label"><span>Week '+w+'</span>'+
+    const open=openWeeks.has(w);
+    const dots=ws.map(s=>{
+      let dc='wd';
+      if(completed[s.key])dc+=' wd-done';
+      else if(sameDay(s.date,today))dc+=' wd-today';
+      else if(s.date<today)dc+=' wd-miss';
+      return '<i class="'+dc+'"></i>';
+    }).join('');
+    html+='<div class="week-group'+(open?'':' collapsed')+'" data-week="'+w+'">'+
+      '<div class="week-label" data-wtoggle="'+w+'">'+
+      '<span class="week-chevron">'+(open?'\u25be':'\u25b8')+'</span><span>Week '+w+'</span>'+
+      '<span class="week-dots">'+dots+'</span>'+
       '<span class="blocks-tag">'+tag+'</span>'+
       '<button class="add-session-btn" data-add-week="'+w+'">+</button></div><div class="week-sessions">';
     ws.forEach(s=>{
@@ -303,6 +318,14 @@ function renderSchedule(){
   });
   $$('[data-add-week]').forEach(btn=>{
     btn.addEventListener('click',e=>{e.stopPropagation();openAddSessionModal(+btn.dataset.addWeek)});
+  });
+  $$('[data-wtoggle]').forEach(lbl=>{
+    lbl.addEventListener('click',()=>{
+      const w=+lbl.dataset.wtoggle;
+      openWeeks.has(w)?openWeeks.delete(w):openWeeks.add(w);
+      lbl.closest('.week-group').classList.toggle('collapsed',!openWeeks.has(w));
+      lbl.querySelector('.week-chevron').textContent=openWeeks.has(w)?'▾':'▸';
+    });
   });
 }
 

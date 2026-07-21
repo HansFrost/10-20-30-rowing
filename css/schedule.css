@@ -30,8 +30,19 @@
 .finish-stat-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
 .finish-msg{font-size:.85rem;color:var(--fg);font-style:italic;line-height:1.5;margin:8px 0}
 .week-group{margin:16px auto 0;width:calc(3 * 140px + 2 * 8px)}
+.week-group.collapsed{margin-top:6px}
+.week-group.collapsed .week-sessions{display:none}
+.week-group.collapsed .week-label{margin-bottom:0;background:rgba(255,255,255,.03);
+  border-radius:10px;padding:8px 10px}
 .week-label{font-size:.8rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);
-  margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+  margin-bottom:8px;display:flex;gap:8px;align-items:center;cursor:pointer;
+  -webkit-tap-highlight-color:transparent}
+.week-chevron{font-size:.65rem;width:12px;flex-shrink:0}
+.week-dots{display:flex;gap:4px;align-items:center;flex:1}
+.wd{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.14);display:inline-block}
+.wd-done{background:var(--green)}
+.wd-today{background:var(--accent);box-shadow:0 0 0 2px rgba(183,191,16,.25)}
+.wd-miss{background:rgba(239,68,68,.45)}
 .week-label .blocks-tag{font-size:.7rem;background:rgba(255,255,255,.06);padding:2px 8px;
   border-radius:6px;letter-spacing:0}
 .week-sessions{display:grid;grid-template-columns:repeat(3,140px);gap:8px;justify-content:center}
