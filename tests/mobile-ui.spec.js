@@ -117,6 +117,14 @@ test.describe('Schedule screen', () => {
     await expectReachable(page.locator('#cdDayPicker'), 'day picker in modal');
     await expectReachable(page.locator('#changeDaysSave'), 'save button');
     await expectReachable(page.locator('#changeDaysCancel'), 'cancel button');
+    // Time editor inputs must be dark-themed, not native white
+    const timeInput = page.locator('#changeDaysOverlay .te-input').first();
+    await expect(timeInput, 'time editor should render in the modal').toBeVisible();
+    const luminance = await timeInput.evaluate((el) => {
+      const rgb = getComputedStyle(el).backgroundColor.match(/\d+/g).map(Number);
+      return rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114;
+    });
+    expect(luminance, 'time input background should be dark-themed, not native white').toBeLessThan(100);
     await expectNoHorizontalOverflow(page, 'change days modal');
     await page.locator('#changeDaysCancel').click();
   });
