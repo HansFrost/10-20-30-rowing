@@ -1,5 +1,5 @@
 import{DAILY_TIPS,STAGE_IDENTITY}from'./content.js';
-import{$,$$,showScreen}from'./dom.js';
+import{$,$$,customAlert,showScreen}from'./dom.js';
 import{calcStreak,checkMilestones,getHabitStage,renderHabitStrip,showMilestones}from'./habit.js';
 import{DEFAULT_MAX_HR,renderHrTable}from'./hr.js';
 import{countRowingSessions,DAY_LABELS,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions,goalTime,injectWalks}from'./programs.js';
@@ -347,6 +347,12 @@ function toggleDone(key){
     if(sess.date>today)return;
   }
   const wasCompleted=!!data.completed[key];
+  /* Sessions with recorded workout data are locked: unchecking would hide the
+     recording and re-checking would falsify the completion date */
+  if(wasCompleted&&data.sessionStats&&data.sessionStats[key]){
+    customAlert('This session has recorded workout data, so its checkmark is locked. Its details are in the Session Log on the Progress tab.');
+    return;
+  }
   if(data.completed[key]) delete data.completed[key];
   else data.completed[key]=new Date().toISOString();
   const si=calcStreak(data,sessions);

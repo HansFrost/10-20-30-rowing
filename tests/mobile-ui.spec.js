@@ -99,6 +99,36 @@ test.describe('Schedule screen', () => {
     await expectNoHorizontalOverflow(page, 'rest day schedule');
   });
 
+  test('checkmark: recorded sessions are locked, manual check-offs toggle freely', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    // Seed one recorded and one manual completion on past/today sessions
+    await page.evaluate((STORAGE_KEY) => {
+      const d = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      const days = d.days;
+      d.completed['1-' + days[0]] = new Date().toISOString();
+      d.sessionStats = { ['1-' + days[0]]: { m: 5000, avgW: 120, blocks: 3 } };
+      d.completed['1-' + days[1]] = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+    }, STORAGE_KEY);
+    // Re-render without reload (reload would re-run the seeding init script)
+    await page.locator('.tab-btn[data-tab="#progress"]').click();
+    await page.locator('.tab-btn[data-tab="#schedule"]').click();
+    const recorded = page.locator('.session-card.completed').first();
+    await recorded.locator('.s-check').click();
+    await expect(page.locator('#confirmOverlay'), 'locked check should explain itself').toHaveClass(/active/);
+    await expect(page.locator('#confirmMsg')).toContainText('locked');
+    await page.locator('#confirmOk').click();
+    expect(await page.evaluate((k) => {
+      const d = JSON.parse(localStorage.getItem(k));
+      return Object.keys(d.completed).length;
+    }, STORAGE_KEY), 'recorded session must stay completed').toBe(2);
+    // The manual one (no stats) still toggles off
+    const manual = page.locator('.session-card.completed').nth(1);
+    await manual.locator('.s-check').click();
+    expect(await page.evaluate((k) => Object.keys(JSON.parse(localStorage.getItem(k)).completed).length, STORAGE_KEY),
+      'manual check-off should uncheck').toBe(1);
+  });
+
   test('STOP asks for confirmation and cancel keeps the session running', async ({ page }) => {
     await gotoApp(page, { seedProgram: true });
     await page.locator('#todayStartBtn').click();
