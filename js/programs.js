@@ -100,8 +100,24 @@ function injectExtras(sessions,data,startMon,progWeeks){
 function injectWalks(sessions,data,startMon){
   const stats=data.sessionStats||{};
   const out=sessions.slice();
+  const seen=new Set();
+  const prog=PROGRAMS[data.program];
+  if(prog&&data.walkDays&&data.walkDays.length){
+    const from=data.walkStart?parseDate(data.walkStart):new Date();
+    for(let w=1;w<=prog.weeks;w++){
+      data.walkDays.forEach(d=>{
+        const date=addDays(startMon,(w-1)*7+DAY_OFFSET[d]);
+        if(date<from)return;
+        const k='walk-'+dateStr(date);
+        seen.add(k);
+        const s=stats[k]||{};
+        out.push({key:k,date:date,week:w,day:WEEKDAY_NAMES[date.getDay()],type:'walk',
+          minutes:s.min||0,blocks:0,actualDay:d,defaultDay:d,swapped:false,isExtra:false,planned:true});
+      });
+    }
+  }
   for(const k of Object.keys(data.completed||{})){
-    if(k.indexOf('walk-')!==0)continue;
+    if(k.indexOf('walk-')!==0||seen.has(k))continue;
     const date=parseDate(k.slice(5));
     const s=stats[k]||{};
     out.push({key:k,date:date,week:Math.floor((date-startMon)/(7*86400000))+1,

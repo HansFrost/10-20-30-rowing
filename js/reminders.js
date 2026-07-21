@@ -1,5 +1,5 @@
 import{$}from'./dom.js';
-import{PROGRAMS,buildSchedule,getEffectiveTime,injectExtras}from'./programs.js';
+import{PROGRAMS,buildSchedule,getEffectiveTime,injectExtras,injectWalks}from'./programs.js';
 import{loadData}from'./store.js';
 import{customAlert}from'./dom.js';
 import{parseDate}from'./util.js';
@@ -11,13 +11,14 @@ function icsStamp(d,hm){
     'T'+String(p[0]).padStart(2,'0')+String(p[1]).padStart(2,'0')+'00';
 }
 function sessionMinutes(s,prog){
+  if(s.type==='walk')return s.minutes||30;
   if(s.type==='steady')return s.minutes+9;
   return 4+s.blocks*5+(s.blocks-1)*Math.round(prog.restSec/60)+5;
 }
 function buildIcs(data){
   const prog=PROGRAMS[data.program];
   const startMon=parseDate(data.startDate);
-  const sessions=injectExtras(buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks);
+  const sessions=injectWalks(injectExtras(buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks),data,startMon);
   const today=new Date();today.setHours(0,0,0,0);
   const completed=data.completed||{};
   const upcoming=sessions.filter(s=>s.date>=today&&!completed[s.key]);
@@ -25,7 +26,7 @@ function buildIcs(data){
   const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//10-20-30 Rowing//EN','CALSCALE:GREGORIAN'];
   upcoming.forEach(s=>{
     const hm=getEffectiveTime(data,s.key,s.actualDay,s.date)||'07:00';
-    const title=s.type==='steady'?'Rowing: steady-state '+s.minutes+' min':'Rowing: 10-20-30 ('+s.blocks+' blocks)';
+    const title=s.type==='walk'?'Walk':s.type==='steady'?'Rowing: steady-state '+s.minutes+' min':'Rowing: 10-20-30 ('+s.blocks+' blocks)';
     L.push('BEGIN:VEVENT',
       'UID:'+s.key+'@10-20-30-rowing',
       'DTSTAMP:'+icsStamp(today,'00:00')+'Z',

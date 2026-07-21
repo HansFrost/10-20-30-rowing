@@ -49,6 +49,7 @@ function cdUpdateTimesSection(data,selected){
   if(!ok)return;
   const allDays=selected.slice();
   if(cdSteady&&!allDays.includes(cdSteady))allDays.push(cdSteady);
+  cdGetWalkDays().forEach(d=>{if(!allDays.includes(d))allDays.push(d)});
   allDays.sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
   const prev=Object.assign({},data.defaultTimes||{},collectTimeEditor('#cdTimesList'));
   buildTimeEditor('#cdTimesList',allDays,prev);
@@ -72,6 +73,11 @@ function cdBuildSteadyPicker(intervalDays){
   });
 }
 
+function cdGetWalkDays(){
+  const days=[];
+  $$('#cdWalkPicker .day-btn.selected').forEach(b=>days.push(b.dataset.day));
+  return days;
+}
 function openChangeDaysModal(){
   const data=loadData();if(!data)return;
   const prog=PROGRAMS[data.program||'intermediate'];
@@ -93,6 +99,10 @@ function openChangeDaysModal(){
   /* Day picker: pre-select current days */
   $$('#cdDayPicker .day-btn').forEach(b=>{
     b.classList.toggle('selected',currentDays.includes(b.dataset.day));
+  });
+  const walkDays=data.walkDays||[];
+  $$('#cdWalkPicker .day-btn').forEach(b=>{
+    b.classList.toggle('selected',walkDays.includes(b.dataset.day));
   });
 
   cdUpdateState();
@@ -136,6 +146,12 @@ $$('#cdDayPicker .day-btn').forEach(b=>{
 });
 
 /* Save */
+$$('#cdWalkPicker .day-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    b.classList.toggle('selected');
+    cdUpdateState();
+  });
+});
 $('#changeDaysSave').addEventListener('click',()=>{
   const data=loadData();if(!data)return;
   const prog=PROGRAMS[data.program||'intermediate'];
@@ -201,6 +217,13 @@ $('#changeDaysSave').addEventListener('click',()=>{
 
   data.days=newDays;
   if(isAdv)data.steadyDay=newSteady;
+  const walkSel=cdGetWalkDays();
+  if(walkSel.length){
+    data.walkDays=walkSel;
+    if(!data.walkStart)data.walkStart=dateStr(new Date());
+  }else{
+    delete data.walkDays;delete data.walkStart;
+  }
   data.defaultTimes=collectTimeEditor('#cdTimesList');
   saveData(data);
   $('#changeDaysOverlay').classList.remove('active');

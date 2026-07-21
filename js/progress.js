@@ -66,6 +66,10 @@ function renderProgress(){
       '<div class="prog-legend"><span><i style="background:#B7BF10"></i>Best sprint (W)</span>'+
       '<span><i style="background:#60a5fa"></i>Avg power (W)</span></div></div>';
   }
+  if(walkKeys.length>=2){
+    h+='<div class="prog-chart-card"><div class="prog-chart-title">Km per walk</div>'+
+      barsSvg(walkKeys.map(k=>Math.round((stats[k].m||0)/10)/100),'#60a5fa')+'</div>';
+  }
   if(keys.filter(k=>!stats[k].walk).length>=2){
     h+='<div class="prog-chart-card"><div class="prog-chart-title">Meters per session</div>'+
       barsSvg(keys.filter(k=>!stats[k].walk).map(k=>stats[k].m||0),'#22c55e')+'</div>';
