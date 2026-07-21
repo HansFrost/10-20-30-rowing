@@ -1,4 +1,5 @@
 import{$}from'./dom.js';
+import{countRowingSessions}from'./programs.js';
 import{loadData}from'./store.js';
 import{calcXP,levelInfo,lifetimeMeters}from'./xp.js';
 function progStat(v,l){return '<div class="finish-stat"><div class="finish-stat-num">'+v+'</div><div class="finish-stat-label">'+l+'</div></div>'}
@@ -44,7 +45,7 @@ function renderProgress(){
   const stats=data.sessionStats||{},completed=data.completed||{};
   const keys=Object.keys(stats).filter(k=>completed[k])
     .sort((a,b)=>new Date(completed[a])-new Date(completed[b]));
-  const doneCount=Object.keys(completed).length;
+  const doneCount=countRowingSessions(completed); /* walks are shown separately below */
   const xp=calcXP(data),li=levelInfo(xp),lm=lifetimeMeters(data);
   const totStrokes=keys.reduce((s,k)=>s+(stats[k].strokes||0),0);
   const pb=(data.pm5PB&&data.pm5PB.peakW)||0;

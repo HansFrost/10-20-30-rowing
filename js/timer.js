@@ -7,7 +7,7 @@ import{confettiBurst}from'./fx.js';
 import{calcStreak,checkMilestones,getHabitStage,showMilestones}from'./habit.js';
 import{hrText}from'./hr.js';
 import{pickGhost,pm5,pm5FinalizeSession,pm5PhaseChange,pm5ResetStats,pm5Stats,pm5UpdateStrip,updateGhost}from'./pm5.js';
-import{PROGRAMS,buildSchedule,getNext,injectExtras,injectWalks}from'./programs.js';
+import{countRowingSessions,PROGRAMS,buildSchedule,getNext,injectExtras,injectWalks}from'./programs.js';
 import{renderSchedule}from'./schedule.js';
 import{loadData,saveData}from'./store.js';
 import{fmtTime,parseDate}from'./util.js';
@@ -239,7 +239,7 @@ function finish(){
     const startMon=parseDate(data.startDate);
     const sessions=injectWalks(injectExtras(buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks),data,startMon);
     const completed=data.completed||{};
-    const doneCount=Object.keys(completed).length;
+    const doneCount=countRowingSessions(completed);
     const si=calcStreak(data,sessions);
     const stage=getHabitStage(doneCount);
     const today=new Date();today.setHours(0,0,0,0);
