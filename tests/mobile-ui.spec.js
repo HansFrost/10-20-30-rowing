@@ -881,3 +881,136 @@ test.describe('Shop and cosmetics', () => {
     await expect(page.locator('#xpStrip .lvl-badge')).toHaveText('7');
   });
 });
+
+test.describe('Coin bonuses and challenges', () => {
+  /** Mark every week-1 session except today's as completed; returns today's key. */
+  const seedWeekAlmostDone = async (page) => {
+    const todayKey = await page.evaluate((KEY) => {
+      const d = JSON.parse(localStorage.getItem(KEY));
+      const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      const tk = '1-' + dayKeys[new Date().getDay()];
+      for (const day of d.days) if ('1-' + day !== tk) d.completed['1-' + day] = new Date().toISOString();
+      localStorage.setItem(KEY, JSON.stringify(d));
+      return tk;
+    }, STORAGE_KEY);
+    // Re-render via tab switch (reload would re-run the seeding init script)
+    await page.locator('.tab-btn[data-tab="#progress"]').click();
+    await page.locator('.tab-btn[data-tab="#schedule"]').click();
+    return todayKey;
+  };
+  const dismissDialogs = async (page) => {
+    for (let i = 0; i < 6; i++) {
+      const ok = page.locator('#confirmOverlay.active #confirmOk');
+      if (await ok.isVisible().catch(() => false)) { await ok.click(); await page.waitForTimeout(250); }
+      else break;
+    }
+  };
+
+  test('manual checkmark completing week 1 awards the weekly bonus once', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    const todayKey = await seedWeekAlmostDone(page);
+    await page.locator(`.session-card[data-key="${todayKey}"] .s-check`).click();
+    await dismissDialogs(page); // milestone celebrations pop after the 3rd completion
+    await expect.poll(() => page.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)).coins, STORAGE_KEY),
+      'weekly bonus coins should land in storage').toBe(30);
+    const d = await page.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)), STORAGE_KEY);
+    expect(d.weekBonus, 'week 1 recorded as awarded').toEqual([1]);
+    expect(d.coinLog.map((r) => r.reason)).toContain('Full week completed');
+    // The award shows up in the shop: balance and coin log entry
+    await page.locator('.tab-btn[data-tab="#progress"]').click();
+    await page.locator('#shopCard .shop-card').click();
+    await expect(page.locator('#shopCoins')).toContainText('30 coins');
+    await expect(page.locator('#shopLog')).toContainText('Full week completed');
+    await expect(page.locator('#shopLog .shop-log-amt').first()).toHaveText('+30');
+    await page.locator('#shopClose').click();
+    // Un-check + re-check must NOT double-award (weekBonus guard)
+    await page.locator('.tab-btn[data-tab="#schedule"]').click();
+    await page.locator(`.session-card[data-key="${todayKey}"] .s-check`).click(); // off
+    await page.locator(`.session-card[data-key="${todayKey}"] .s-check`).click(); // on again
+    await dismissDialogs(page);
+    expect(await page.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)).coins, STORAGE_KEY),
+      'no double award for the same week').toBe(30);
+  });
+
+  test('finishing the last week-1 session in the timer awards the weekly bonus', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    await seedWeekAlmostDone(page);
+    await page.locator('#todayStartBtn').click();
+    await expect(page.locator('#timer')).toHaveClass(/active/);
+    await page.locator('#finishBtn').click();
+    const confirm = page.locator('#confirmOverlay.active #confirmOk');
+    if (await confirm.isVisible({ timeout: 1000 }).catch(() => false)) await confirm.click();
+    await expect(page.locator('#done')).toHaveClass(/active/);
+    await expect.poll(() => page.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)).coins, STORAGE_KEY),
+      'timer finish path should award the weekly bonus').toBe(30);
+    const d = await page.evaluate((KEY) => JSON.parse(localStorage.getItem(KEY)), STORAGE_KEY);
+    expect(d.weekBonus).toEqual([1]);
+    expect(d.coinLog.map((r) => r.reason)).toContain('Full week completed');
+    // No PM5 data: no watt/PB bonuses may sneak in
+    expect(d.coins).toBe(30);
+    expect(d.wattMarks || []).toEqual([]);
+  });
+
+  test('computeBonuses: power PB, watt thresholds and week completion rules', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    const res = await page.evaluate(async (KEY) => {
+      const { computeBonuses } = await import('/js/challenges.js');
+      const base = JSON.parse(localStorage.getItem(KEY));
+      const done = {};
+      base.days.forEach((day) => { done['1-' + day] = 'x'; });
+      return {
+        pb: computeBonuses({ peakW: 260 }, { ...base, pm5PB: { peakW: 240 }, wattMarks: [200], completed: {} }, null),
+        none: computeBonuses({ peakW: 240 }, { ...base, pm5PB: { peakW: 300 }, wattMarks: [200, 250], completed: {} }, null),
+        firstEver: computeBonuses({ peakW: 205 }, { ...base, completed: {} }, null),
+        walkStats: computeBonuses({ walk: true, peakW: 300 }, { ...base, completed: {} }, null),
+        week: computeBonuses(null, { ...base, completed: done }, '1-' + base.days[0]),
+        weekDup: computeBonuses(null, { ...base, completed: done, weekBonus: [1] }, '1-' + base.days[0]),
+        weekPartial: computeBonuses(null, { ...base, completed: { ['1-' + base.days[0]]: 'x' } }, '1-' + base.days[0]),
+        walkKey: computeBonuses(null, { ...base, completed: done }, 'walk-2026-01-05'),
+        combo: computeBonuses({ peakW: 420 }, { ...base, pm5PB: { peakW: 180 }, completed: done }, '1-' + base.days[0]),
+      };
+    }, STORAGE_KEY);
+    expect(res.pb).toEqual([
+      { amount: 50, reason: 'New power PB' },
+      { amount: 25, reason: 'First time over 250 W', mark: 250 },
+    ]);
+    expect(res.none, 'below PB and already-marked thresholds earn nothing').toEqual([]);
+    expect(res.firstEver, 'first recorded peak counts as a PB and marks 200 W').toEqual([
+      { amount: 50, reason: 'New power PB' },
+      { amount: 25, reason: 'First time over 200 W', mark: 200 },
+    ]);
+    expect(res.walkStats, 'walk stats never earn watt bonuses').toEqual([]);
+    expect(res.week).toEqual([{ amount: 30, reason: 'Full week completed', week: 1 }]);
+    expect(res.weekDup, 'weekBonus guard blocks double award').toEqual([]);
+    expect(res.weekPartial, 'incomplete week earns nothing').toEqual([]);
+    expect(res.walkKey, 'walk completions never trigger the week bonus').toEqual([]);
+    expect(res.combo.map((a) => a.amount).reduce((a, b) => a + b, 0), 'PB + all five thresholds + week').toBe(50 + 5 * 25 + 30);
+  });
+
+  test('challenge banner: present, hidden without PM5, fits when visible', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    await page.locator('#todayStartBtn').click();
+    await expect(page.locator('#timer')).toHaveClass(/active/);
+    const banner = page.locator('#challengeBanner');
+    await expect(banner).toBeAttached();
+    await expect(banner, 'banner starts hidden').toBeHidden();
+    // Skip through warm-up and into the interval sprints: with no PM5
+    // connected a challenge must never fire, so the banner stays hidden
+    for (let i = 0; i < 9; i++) await page.locator('#skipBtn').click();
+    await expect(banner, 'banner stays hidden without a rower').toBeHidden();
+    // Forced visible (challenge, success and miss states) it must fit the phone
+    for (const [cls, text] of [
+      ['on', 'CHALLENGE: hit 250 W on this sprint for 20 coins'],
+      ['on success', '⚡ 250 W hit! +20 coins'],
+      ['on miss', 'Challenge missed, next time!'],
+    ]) {
+      await page.evaluate(([cls, text]) => {
+        const el = document.getElementById('challengeBanner');
+        el.textContent = text;
+        el.className = cls;
+      }, [cls, text]);
+      await expect(banner).toBeVisible();
+      await expectNoHorizontalOverflow(page, `timer with challenge banner (${cls})`);
+    }
+  });
+});
