@@ -1,4 +1,4 @@
-import{$,showScreen}from'./dom.js';
+import{$}from'./dom.js';
 import{loadData}from'./store.js';
 import{calcXP,levelInfo,lifetimeMeters}from'./xp.js';
 function progStat(v,l){return '<div class="finish-stat"><div class="finish-stat-num">'+v+'</div><div class="finish-stat-label">'+l+'</div></div>'}
@@ -48,6 +48,7 @@ function renderProgress(){
   const xp=calcXP(data),li=levelInfo(xp),lm=lifetimeMeters(data);
   const totStrokes=keys.reduce((s,k)=>s+(stats[k].strokes||0),0);
   const pb=(data.pm5PB&&data.pm5PB.peakW)||0;
+  const walkKeys=keys.filter(k=>stats[k].walk);
   let h='<div class="finish-stats">'+
     progStat(lm?lm.toLocaleString():'0','Lifetime meters')+
     progStat(doneCount,'Sessions done')+
@@ -58,7 +59,6 @@ function renderProgress(){
     progStat(walkKeys.length,'Walks logged')+
     progStat((walkKeys.reduce((s,k)=>s+(stats[k].m||0),0)/1000).toFixed(1)+' km','Walked')+
   '</div>';
-  const walkKeys=keys.filter(k=>stats[k].walk);
   const chartKeys=keys.filter(k=>!stats[k].walk&&!stats[k].steady&&stats[k].avgW);
   if(chartKeys.length>=2){
     h+='<div class="prog-chart-card"><div class="prog-chart-title">Power per session</div>'+
@@ -80,5 +80,4 @@ function renderProgress(){
   body.innerHTML=h;
 }
 
-$('#progressBtn').addEventListener('click',()=>{renderProgress();showScreen('#progress')});
-$('#progressBackBtn').addEventListener('click',()=>showScreen('#schedule'));
+export{renderProgress};
