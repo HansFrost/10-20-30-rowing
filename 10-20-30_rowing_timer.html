@@ -92,6 +92,10 @@
       <input type="number" class="maxhr-input" id="maxHrInput" value="176" min="100" max="230">
       <span>bpm</span>
     </div>
+    <div style="width:100%;max-width:380px;text-align:left">
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:6px">Optional habit cue: <strong>"After I ..., I row."</strong></p>
+      <input type="text" id="anchorInput" class="cloud-input" placeholder="e.g. my morning coffee" maxlength="60">
+    </div>
     <button class="btn btn-primary" id="onboardBtn" style="width:100%;max-width:380px">START PROGRAM</button>
     <button class="btn btn-secondary btn-small" id="dateBackBtn">Back</button>
     <p style="font-size:.75rem;color:var(--muted)">Date will snap to Monday of the chosen week.</p>
@@ -134,6 +138,7 @@
     </div>
     <button class="btn btn-secondary btn-small" id="pm5Btn" style="font-size:.75rem;width:100%">Connect Rower (PM5)</button>
     <button class="btn btn-secondary btn-small" id="progressBtn" style="font-size:.75rem;width:100%">📈 Progress &amp; Stats</button>
+    <button class="btn btn-secondary btn-small" id="remindersBtn" style="font-size:.75rem;width:100%">🔔 Add Reminders to Calendar</button>
     <button class="btn btn-secondary btn-small" id="cloudBtn" style="font-size:.75rem;width:100%">☁ Cloud Sync</button>
     <div style="display:flex;gap:8px">
       <button class="btn btn-secondary btn-small" id="exportBtn" style="font-size:.75rem">Export Progress</button>
@@ -432,6 +437,16 @@
     <p class="dt-title">Default Training Times</p>
     <p class="dt-desc">Set a default time for each training day. Individual sessions can still be overridden.</p>
     <div id="defTimesList"></div>
+    <div id="goalSection" style="width:100%;border-top:1px solid rgba(255,255,255,.08);padding-top:12px">
+      <p class="dt-desc" style="margin-bottom:6px">🎯 <strong>Gradual goal</strong> (optional): shift all times weekly toward a target, e.g. 05:30</p>
+      <div class="time-pick-row"><span class="time-pick-day">Goal</span><input type="time" id="goalTimeInput" class="te-input"></div>
+      <div class="time-pick-row"><span class="time-pick-day">Shift</span>
+        <select id="goalStepSel" class="time-pick-input" style="max-width:140px">
+          <option value="5">5 min/week</option><option value="10">10 min/week</option>
+          <option value="15" selected>15 min/week</option><option value="30">30 min/week</option>
+        </select></div>
+      <p id="goalPreview" class="dt-desc" style="margin-top:6px"></p>
+    </div>
     <div style="display:flex;gap:8px;width:100%">
       <button class="btn btn-secondary btn-small" id="defTimesCancel" style="flex:1">Cancel</button>
       <button class="btn btn-primary btn-small" id="defTimesSave" style="flex:1">Save</button>

@@ -112,8 +112,21 @@ function getNext(sessions,today,completed){
   return n.day+' '+fmtDate(n.date)+' (Week '+n.week+', '+label+')';
 }
 
-function getEffectiveTime(data,key,day){
+/* Gradual time goal: shift session times step-minutes per week toward the target */
+function goalTime(data,date){
+  const g=data.timeGoal;
+  if(!g||!g.target||!g.from)return null;
+  const t2m=s=>{const p=s.split(':');return(+p[0])*60+(+p[1])};
+  const m2t=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+  const weeks=Math.max(0,Math.floor((date-parseDate(g.startDate))/(7*86400000)));
+  const from=t2m(g.from),target=t2m(g.target),step=g.step||15;
+  const cur=from<target?Math.min(target,from+step*weeks):Math.max(target,from-step*weeks);
+  return m2t(cur);
+}
+function getEffectiveTime(data,key,day,date){
   if(data.sessionTimes&&data.sessionTimes[key])return data.sessionTimes[key];
+  const g=goalTime(data,date||new Date());
+  if(g)return g;
   if(data.defaultTimes&&data.defaultTimes[day])return data.defaultTimes[day];
   return null;
 }
@@ -131,4 +144,4 @@ function migrateData(data){
   saveData(data);
   return data;
 }
-export{ALL_DAYS,DAY_LABELS,DAY_OFFSET,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions};
+export{goalTime,ALL_DAYS,DAY_LABELS,DAY_OFFSET,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions};

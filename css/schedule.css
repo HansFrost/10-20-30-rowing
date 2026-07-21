@@ -198,3 +198,11 @@
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
 .pulse{animation:pulse .3s ease}
 
+
+/* ANCHOR CUE + GOAL LINE + PULSING START */
+.anchor-line{font-size:.8rem;font-weight:600;color:rgba(0,29,56,.75);margin-bottom:6px;cursor:pointer}
+.anchor-line.dim{opacity:.6;font-style:italic;font-weight:400}
+.anchor-line[contenteditable="true"]{outline:2px solid rgba(0,29,56,.4);border-radius:6px;padding:2px 6px;background:rgba(255,255,255,.25)}
+.weekly-goal{font-size:.75rem;color:var(--accent);margin-bottom:8px;text-align:center}
+@keyframes btnGlow{0%,100%{box-shadow:0 0 0 0 rgba(0,29,56,.35)}50%{box-shadow:0 0 0 9px rgba(0,29,56,0)}}
+.sched-today-banner .btn-primary{animation:btnGlow 2.6s ease-in-out infinite}

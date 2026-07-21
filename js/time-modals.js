@@ -1,13 +1,13 @@
 import{$,$$}from'./dom.js';
-import{DAY_LABELS,DAY_OFFSET,getEffectiveTime}from'./programs.js';
+import{DAY_LABELS,DAY_OFFSET,getEffectiveTime,goalTime}from'./programs.js';
 import{renderSchedule}from'./schedule.js';
 import{loadData,saveData}from'./store.js';
-import{fmtDate}from'./util.js';
+import{fmtDate,dateStr}from'./util.js';
 let timeTarget=null;
 function openTimeModal(key,day,sess,prog){
   const data=loadData();
   timeTarget={key,day,sess,prog};
-  const effective=getEffectiveTime(data,key,day);
+  const effective=getEffectiveTime(data,key,day,sess.date);
   $('#timeTitle').textContent='Set time for '+sess.day+' '+fmtDate(sess.date);
   const inp=$('#timeModalInput');
   inp.value=effective||'07:00';
@@ -49,12 +49,29 @@ function openDefTimesModal(){
   if(data.steadyDay&&!days.includes(data.steadyDay))days.push(data.steadyDay);
   days.sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
   buildTimeEditor('#defTimesList',days,data.defaultTimes||{});
+  const g=data.timeGoal||{};
+  $('#goalTimeInput').value=g.target||'';
+  $('#goalStepSel').value=String(g.step||15);
+  goalPreview(data);
   $('#defTimesOverlay').classList.add('active');
+}
+function goalPreview(data){
+  const el=$('#goalPreview');
+  const cur=goalTime(data,new Date());
+  el.textContent=(data.timeGoal&&cur)?('This week: '+cur+' \u00b7 shifting '+data.timeGoal.step+' min/week toward '+data.timeGoal.target):'';
 }
 $('#defTimesBtn').addEventListener('click',openDefTimesModal);
 $('#defTimesSave').addEventListener('click',()=>{
   const data=loadData();if(!data)return;
   data.defaultTimes=collectTimeEditor('#defTimesList');
+  const target=$('#goalTimeInput').value;
+  if(target){
+    const times=Object.values(data.defaultTimes);
+    const from=goalTime(data,new Date())||times[0]||'07:00';
+    data.timeGoal={target:target,step:+$('#goalStepSel').value||15,from:from,startDate:dateStr(new Date())};
+  }else{
+    delete data.timeGoal;
+  }
   saveData(data);
   $('#defTimesOverlay').classList.remove('active');
   renderSchedule();

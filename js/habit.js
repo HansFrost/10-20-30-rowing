@@ -25,7 +25,12 @@ const MILESTONES={
 function calcStreak(data,sessions){
   const completed=data.completed||{};
   const sorted=[...sessions].sort((a,b)=>a.date-b.date);
-  if(!sorted.length)return{current:0,best:0};
+  if(!sorted.length)return{current:0,best:0,shields:0};
+  /* Shields: one earned per fully completed week */
+  const weeks={};
+  sorted.forEach(s=>{(weeks[s.week]=weeks[s.week]||[]).push(s)});
+  let earned=0;
+  for(const w in weeks){if(weeks[w].length&&weeks[w].every(s=>completed[s.key]))earned++}
   /* Scan all streaks to find true best */
   let best=0,run=0;
   for(let i=0;i<sorted.length;i++){
@@ -36,12 +41,14 @@ function calcStreak(data,sessions){
   for(let i=sorted.length-1;i>=0;i--){
     if(completed[sorted[i].key]){lastDone=i;break;}
   }
-  if(lastDone===-1)return{current:0,best:0};
-  let current=0;
+  if(lastDone===-1)return{current:0,best,shields:earned};
+  let current=0,shields=earned;
   for(let i=lastDone;i>=0;i--){
-    if(completed[sorted[i].key])current++;else break;
+    if(completed[sorted[i].key])current++;
+    else if(shields>0)shields--; /* a shield bridges the gap, streak survives */
+    else break;
   }
-  return{current,best};
+  return{current,best,shields};
 }
 
 function getHabitStage(doneCount){
@@ -103,6 +110,7 @@ function renderHabitStrip(data,sessions){
       '<div class="streak-num">'+si.current+'</div>'+
       '<div class="streak-label">Streak</div>'+
       (bestTxt?'<div class="streak-best">'+bestTxt+'</div>':'')+
+      (si.shields>0?'<div class="streak-best">🛡 ×'+si.shields+'</div>':'')+
     '</div>'+
     '<div class="habit-divider"></div>'+
     '<div class="habit-badge">'+

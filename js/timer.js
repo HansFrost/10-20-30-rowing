@@ -12,11 +12,12 @@ import{loadData,saveData}from'./store.js';
 import{fmtTime,parseDate}from'./util.js';
 import{calcXP,levelInfo}from'./xp.js';
 let currentSessionKey=null;
-function launchSession(sess,prog){
+function launchSession(sess,prog,opts){
+  const bare=!!(opts&&opts.bare);
   currentSessionKey=sess.key;
   timerConfig.blocks=sess.blocks;
   timerConfig.restSec=prog.restSec;
-  timerConfig.warmup=true;timerConfig.cooldown=true;timerConfig.steady=false;
+  timerConfig.warmup=!bare;timerConfig.cooldown=!bare;timerConfig.steady=false;
   startTimer();
 }
 
@@ -162,10 +163,13 @@ function finish(){
   const ps=pm5FinalizeSession();
   let newPowerPB=false;
 
-  let xpBefore=0,xpAfter=0;
+  let xpBefore=0,xpAfter=0,golden=0;
   if(currentSessionKey){const d=loadData();if(d){
     xpBefore=calcXP(d);
     d.completed[currentSessionKey]=new Date().toISOString();
+    d.bonusXP=d.bonusXP||{};
+    if(d.bonusXP[currentSessionKey]===undefined&&Math.random()<0.15)d.bonusXP[currentSessionKey]=100;
+    golden=d.bonusXP[currentSessionKey]||0;
     if(ps){
       d.sessionStats=d.sessionStats||{};d.sessionStats[currentSessionKey]=ps;
       d.pm5PB=d.pm5PB||{peakW:0};
@@ -224,13 +228,18 @@ function finish(){
         '<span class="g-detail">'+gLabel+'<br>'+ps.rateHits+' / '+totalSprints+' sprints at 30+ spm</span></div>';
     }
 
-    /* XP earned + level-up */
+    /* XP earned + level-up + golden session */
+    let levelUp=false;
+    if(golden)sh+='<div class="done-pb" style="color:var(--gold)">🌟 GOLDEN SESSION! +'+golden+' bonus XP</div>';
     if(xpAfter>xpBefore){
       const li0=levelInfo(xpBefore),li1=levelInfo(xpAfter);
+      levelUp=li1.lvl>li0.lvl;
       sh+='<div class="done-xp">+'+(xpAfter-xpBefore)+' XP</div>';
-      if(li1.lvl>li0.lvl)sh+='<div class="done-levelup">Level up! LVL '+li1.lvl+' · '+li1.rank+'</div>';
-      if(li1.lvl>li0.lvl||newPowerPB||isNewBest)setTimeout(confettiBurst,400);
+      if(levelUp)sh+='<div class="done-levelup">Level up! LVL '+li1.lvl+' · '+li1.rank+'</div>';
     }
+    /* Celebrate every completion; go big on special moments */
+    const big=levelUp||newPowerPB||isNewBest||golden>0;
+    setTimeout(()=>confettiBurst(big?90:25),400);
     $('#doneStreakArea').innerHTML=sh;
 
     $('#doneHabitArea').innerHTML='<div class="done-habit">'+

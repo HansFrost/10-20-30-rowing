@@ -224,6 +224,13 @@ test.describe('Timer and done screens', () => {
     await expectReachable(page.locator('#summaryBox'), 'summary box');
     await expectReachable(page.locator('#doneBackBtn'), 'Back to Schedule button');
     await expectNoHorizontalOverflow(page, 'done screen');
+    // Milestone celebrations may pop ~1.2s after finishing; dismiss them first
+    await page.waitForTimeout(1400);
+    for (let i = 0; i < 5; i++) {
+      const ok = page.locator('#confirmOverlay.active #confirmOk');
+      if (await ok.isVisible().catch(() => false)) { await ok.click(); await page.waitForTimeout(250); }
+      else break;
+    }
     // And back-navigation must land on the schedule
     await page.locator('#doneBackBtn').click();
     await expect(page.locator('#schedule')).toHaveClass(/active/);

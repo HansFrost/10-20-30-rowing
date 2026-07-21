@@ -2,7 +2,7 @@ import{DAILY_TIPS,STAGE_IDENTITY}from'./content.js';
 import{$,$$,setNavRenderHook,showScreen}from'./dom.js';
 import{calcStreak,checkMilestones,getHabitStage,renderHabitStrip,showMilestones}from'./habit.js';
 import{DEFAULT_MAX_HR,renderHrTable}from'./hr.js';
-import{DAY_LABELS,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions}from'./programs.js';
+import{DAY_LABELS,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions,goalTime}from'./programs.js';
 import{deleteExtraSession,openAddSessionModal,openSwapModal}from'./session-modals.js';
 import{loadData,saveData}from'./store.js';
 import{openTimeModal}from'./time-modals.js';
@@ -87,33 +87,62 @@ function renderSchedule(){
   const bTagHtml=bTagline?'<div class="today-tagline">'+bTagline+'</div>':'';
   const bStreak=calcStreak(data,sessions);
   const hasUndone=todayInterval||todaySteady;
-  const streakWarnHtml=(hasUndone&&bStreak.current>=2)?'<div class="streak-warning">Your '+bStreak.current+'-session streak is at risk today</div>':'';
+  const streakWarnHtml=(hasUndone&&bStreak.current>=2)
+    ?(bStreak.shields>0
+      ?'<div class="streak-warning">🛡 A shield protects your '+bStreak.current+'-session streak today, but rowing beats spending it</div>'
+      :'<div class="streak-warning">Your '+bStreak.current+'-session streak is at risk today</div>')
+    :'';
+  const anchorHtml=data.anchor
+    ?'<div class="anchor-line" id="anchorLine">After '+String(data.anchor).replace(/</g,'&lt;')+' \u2192 row</div>'
+    :'<div class="anchor-line dim" id="anchorLine">\uFF0B set your cue: "After I ..., I row"</div>';
+  const wireAnchor=()=>{
+    const line=$('#anchorLine');if(!line)return;
+    line.addEventListener('click',()=>{
+      if(line.isContentEditable)return;
+      line.textContent=data.anchor||'';
+      line.contentEditable='true';line.classList.remove('dim');line.focus();
+    });
+    line.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();line.blur()}});
+    line.addEventListener('blur',()=>{
+      line.contentEditable='false';
+      const v=line.textContent.trim();
+      if(v)data.anchor=v;else delete data.anchor;
+      saveData(data);renderSchedule();
+    });
+  };
 
   if(todayInterval){
-    const tTime=getEffectiveTime(data,todayInterval.key,todayInterval.actualDay);
+    const tTime=getEffectiveTime(data,todayInterval.key,todayInterval.actualDay,todayInterval.date);
     const timeInfo=tTime?' \u00B7 '+tTime:'';
     bannerEl.innerHTML='<div class="sched-today-banner">'+
       '<div class="day-label">TODAY &middot; '+todayInterval.day+timeInfo+'</div>'+
       '<div class="day-title">Week '+todayInterval.week+' &middot; '+todayInterval.blocks+' Blocks</div>'+
-      bTagHtml+streakWarnHtml+
+      anchorHtml+bTagHtml+streakWarnHtml+
       '<button class="btn btn-primary" id="todayStartBtn">START TODAY\'S SESSION</button>'+
-      (todayInterval.blocks>1?'<button class="quick-session-btn" id="quickSessionBtn">'+(bStreak.current>=2?'PROTECT YOUR STREAK \u2014 ':'')+'QUICK SESSION (1 block)</button>':'')+
+      (todayInterval.blocks>1?'<button class="quick-session-btn" id="quickSessionBtn">QUICK SESSION (1 block)</button>':'')+
+      (bStreak.current>=2?'<button class="quick-session-btn" id="microSessionBtn">\uD83D\uDEE1 5-MIN STREAK SAVER (1 block, no extras)</button>':'')+
     '</div>';
     $('#todayStartBtn').addEventListener('click',()=>launchSession(todayInterval,prog));
+    wireAnchor();
+    const mBtn=$('#microSessionBtn');
+    if(mBtn)mBtn.addEventListener('click',()=>{
+      launchSession(Object.assign({},todayInterval,{blocks:1}),prog,{bare:true});
+    });
     const qBtn=$('#quickSessionBtn');
     if(qBtn)qBtn.addEventListener('click',()=>{
       const qs=Object.assign({},todayInterval,{blocks:1});
       launchSession(qs,prog);
     });
   } else if(todaySteady){
-    const tTime=getEffectiveTime(data,todaySteady.key,todaySteady.actualDay);
+    const tTime=getEffectiveTime(data,todaySteady.key,todaySteady.actualDay,todaySteady.date);
     const timeInfo=tTime?' \u00B7 '+tTime:'';
     bannerEl.innerHTML='<div class="sched-today-banner">'+
       '<div class="day-label">TODAY &middot; '+todaySteady.day+timeInfo+'</div>'+
       '<div class="day-title">Steady-State '+todaySteady.minutes+' min</div>'+
-      bTagHtml+streakWarnHtml+
+      anchorHtml+bTagHtml+streakWarnHtml+
       '<button class="btn btn-primary" id="todaySteadyBtn">START STEADY SESSION</button></div>';
     $('#todaySteadyBtn').addEventListener('click',()=>launchSteadySession(todaySteady));
+    wireAnchor();
   } else if(programOver){
     /* Compute encouraging stats from actual data */
     const doneSessions=sessions.filter(s=>!!completed[s.key]);
@@ -157,7 +186,7 @@ function renderSchedule(){
 
   /* Precommit banner — upcoming sessions without times (next 7 days) */
   const weekAhead=addDays(today,7);
-  const uncommitted=sessions.filter(s=>s.date>=today&&s.date<=weekAhead&&!completed[s.key]&&!getEffectiveTime(data,s.key,s.actualDay));
+  const uncommitted=sessions.filter(s=>s.date>=today&&s.date<=weekAhead&&!completed[s.key]&&!getEffectiveTime(data,s.key,s.actualDay,s.date));
   const pcEl=$('#precommitBanner');
   if(uncommitted.length){
     let pcHtml='<div class="sched-precommit"><p style="font-size:.8rem;font-weight:600;margin-bottom:8px">\uD83D\uDCC5 Set times for upcoming sessions</p><div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">';
@@ -199,7 +228,7 @@ function renderSchedule(){
       else if(isPast&&!isDone) cls+=' past';
 
       const label=s.type==='steady'?'Steady '+s.minutes+'m':s.blocks+' blocks';
-      const sTime=getEffectiveTime(data,s.key,s.actualDay);
+      const sTime=getEffectiveTime(data,s.key,s.actualDay,s.date);
       const timeCls=sTime?'s-time has-time':'s-time';
       const timeContent=sTime?sTime:'\uD83D\uDD50';
       const swapBtn='<div class="s-swap" data-swap-key="'+s.key+'" data-swap-week="'+s.week+'" data-swap-default="'+s.defaultDay+'" data-swap-current="'+s.actualDay+'"'+(s.isExtra?' data-swap-extra="1"':'')+'>&#8652;</div>';
@@ -291,6 +320,7 @@ function renderWeeklyCard(data,sessions,today,completed,startMon){
   const sprints=ws.reduce((sum,s)=>sum+((completed[s.key]&&s.type==='interval')?s.blocks*5:0),0);
   el.innerHTML='<div class="weekly-card">'+
     '<div class="weekly-head"><span>This week</span><span>Week '+wk+'</span></div>'+
+    (data.timeGoal&&goalTime(data,today)?'<div class="weekly-goal">\u23F0 '+goalTime(data,today)+' this week \u2192 goal '+data.timeGoal.target+'</div>':'')+
     '<div class="weekly-stats">'+
       '<div class="weekly-stat"><div class="wv">'+done+'/'+ws.length+'</div><div class="wl">Sessions</div></div>'+
       '<div class="weekly-stat"><div class="wv">'+sprints+'</div><div class="wl">Sprints</div></div>'+

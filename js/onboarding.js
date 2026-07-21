@@ -86,7 +86,9 @@ function initOnboarding(){
     if(dow!==1){const off=dow===0?6:dow-1;d.setDate(d.getDate()-off)}
     const mhr=parseInt($('#maxHrInput').value)||DEFAULT_MAX_HR;
     const defaultTimes=collectTimeEditor('#timesPickerList');
+    const anchor=($('#anchorInput').value||'').trim();
     const saveObj={
+      anchor:anchor||undefined,
       startDate:dateStr(d),program:selectedProg,
       days:selectedDays,
       maxHR:Math.min(230,Math.max(100,mhr)),

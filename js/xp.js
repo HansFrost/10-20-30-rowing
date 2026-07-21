@@ -7,6 +7,7 @@ function calcXP(data){
     xp+=100;
     const s=stats[k];
     if(s){xp+=Math.floor((s.m||0)/100)+(s.rateHits||0)*5}
+    xp+=(data.bonusXP&&data.bonusXP[k])||0;
   }
   return xp;
 }

@@ -10,6 +10,7 @@ import'./onboarding.js';
 import'./pm5.js';
 import'./programs.js';
 import'./progress.js';
+import'./reminders.js';
 import'./schedule.js';
 import'./session-modals.js';
 import'./store.js';
