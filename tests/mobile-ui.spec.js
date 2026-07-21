@@ -175,6 +175,21 @@ test.describe('Schedule screen', () => {
     await expectNoHorizontalOverflow(page, 'settings screen');
   });
 
+  test('add-session modal can add a walk to a week', async ({ page }) => {
+    await page.locator('.week-group:not(.collapsed) .add-session-btn').click();
+    await expect(page.locator('#addSessionOverlay')).toHaveClass(/active/);
+    await expectReachable(page.locator('#addSessionTypePicker'), 'session type picker');
+    await page.locator('#addSessionTypePicker button[data-stype="walk"]').click();
+    await expect(page.locator('#addSessionBlockPicker'), 'blocks picker hides for walks').toBeHidden();
+    await page.locator('#addSessionDayPicker .day-btn[data-day="sun"]').click();
+    await expectNoHorizontalOverflow(page, 'add session modal');
+    await page.locator('#addSessionSave').click();
+    await expect(page.locator('#addSessionOverlay')).not.toHaveClass(/active/);
+    const walkCard = page.locator('.week-group:not(.collapsed) .session-card[data-type="walk"]').first();
+    await expect(walkCard, 'walk card should appear in the week').toBeVisible();
+    await expectReachable(walkCard, 'added walk card');
+  });
+
   test('help overlay opens, fits, and closes', async ({ page }) => {
     await page.locator('#helpBtn').click();
     await expect(page.locator('#helpOverlay')).toHaveClass(/active/);
