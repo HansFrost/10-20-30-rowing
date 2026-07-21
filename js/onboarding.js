@@ -53,6 +53,12 @@ function initOnboarding(){
     });
   });
 
+  /* Walk day buttons: bound once here, NOT in initDayPicker which runs on every
+     step-2 entry and would stack toggle listeners (making buttons appear dead) */
+  $$('#obWalkPicker .day-btn').forEach(b=>{
+    b.addEventListener('click',()=>{b.classList.toggle('selected');obUpdateWalkTimes()});
+  });
+
   /* Step 2 → Step 3 */
   $('#daysNextBtn').addEventListener('click',()=>{
     selectedDays=getSelectedIntervalDays();
@@ -117,9 +123,6 @@ function obUpdateWalkTimes(){
   if(wd.length)buildTimeEditor('#obWalkTimesList',wd,collectTimeEditor('#obWalkTimesList'));
 }
 function initDayPicker(){
-  $$('#obWalkPicker .day-btn').forEach(b=>{
-    b.addEventListener('click',()=>{b.classList.toggle('selected');obUpdateWalkTimes()});
-  });
   const prog=PROGRAMS[selectedProg];
   const defaults=prog.defaultDays;
   const isAdv=!!prog.defaultSteady;
