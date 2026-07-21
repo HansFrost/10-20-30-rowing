@@ -1,4 +1,5 @@
 import{$,$$,customConfirm}from'./dom.js';
+import{buildTimeEditor,collectTimeEditor}from'./time-modals.js';
 import{ALL_DAYS,DAY_LABELS,DAY_OFFSET,PROGRAMS,buildSchedule,injectExtras}from'./programs.js';
 import{renderSchedule}from'./schedule.js';
 import{loadData,saveData}from'./store.js';
@@ -40,6 +41,17 @@ function cdUpdateState(){
     $('#cdSteadySection').style.display='none';
     $('#changeDaysSave').disabled=count!==cdNumDays;
   }
+  cdUpdateTimesSection(data,selected);
+}
+function cdUpdateTimesSection(data,selected){
+  const ok=!$('#changeDaysSave').disabled;
+  $('#cdTimesSection').style.display=ok?'':'none';
+  if(!ok)return;
+  const allDays=selected.slice();
+  if(cdSteady&&!allDays.includes(cdSteady))allDays.push(cdSteady);
+  allDays.sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
+  const prev=Object.assign({},data.defaultTimes||{},collectTimeEditor('#cdTimesList'));
+  buildTimeEditor('#cdTimesList',allDays,prev);
 }
 
 function cdBuildSteadyPicker(intervalDays){
@@ -189,6 +201,7 @@ $('#changeDaysSave').addEventListener('click',()=>{
 
   data.days=newDays;
   if(isAdv)data.steadyDay=newSteady;
+  data.defaultTimes=collectTimeEditor('#cdTimesList');
   saveData(data);
   $('#changeDaysOverlay').classList.remove('active');
   renderSchedule();

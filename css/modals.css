@@ -104,3 +104,8 @@
 #swapBox{display:flex;flex-direction:column;align-items:center;gap:16px}
 #swapTitle{font-size:1rem;font-weight:700}
 
+
+/* SHARED TIME EDITOR */
+.time-mode-row{width:100%;max-width:260px;margin:0 auto 8px}
+.time-mode-row button{font-size:.8rem;padding:8px 0}
+.te-rows{width:100%}

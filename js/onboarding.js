@@ -3,7 +3,7 @@ import{DEFAULT_MAX_HR}from'./hr.js';
 import{ALL_DAYS,DAY_LABELS,DAY_OFFSET,PROGRAMS}from'./programs.js';
 import{renderSchedule}from'./schedule.js';
 import{loadData,saveData}from'./store.js';
-import{buildTimePickers}from'./time-modals.js';
+import{buildTimeEditor,collectTimeEditor}from'./time-modals.js';
 import{addDays,dateStr,parseDate}from'./util.js';
 let selectedProg='intermediate';
 let selectedNumDays=3;
@@ -85,8 +85,7 @@ function initOnboarding(){
     const dow=d.getDay();
     if(dow!==1){const off=dow===0?6:dow-1;d.setDate(d.getDate()-off)}
     const mhr=parseInt($('#maxHrInput').value)||DEFAULT_MAX_HR;
-    const defaultTimes={};
-    $$('.time-pick-input').forEach(inp=>{if(inp.value)defaultTimes[inp.dataset.day]=inp.value});
+    const defaultTimes=collectTimeEditor('#timesPickerList');
     const saveObj={
       startDate:dateStr(d),program:selectedProg,
       days:selectedDays,
@@ -168,7 +167,7 @@ function updateDayPickerState(){
       const allDays=selected.slice().sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
       if(selectedSteady)allDays.push(selectedSteady);
       allDays.sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
-      $('#timesSection').style.display='';buildTimePickers(allDays);
+      $('#timesSection').style.display='';buildTimeEditor('#timesPickerList',allDays,collectTimeEditor('#timesPickerList'),'07:00');
     } else {$('#timesSection').style.display='none'}
   } else {
     $('#steadySection').style.display='none';
@@ -176,7 +175,7 @@ function updateDayPickerState(){
     $('#daysNextBtn').disabled=!ready;
     if(ready){
       const allDays=selected.slice().sort((a,b)=>DAY_OFFSET[a]-DAY_OFFSET[b]);
-      $('#timesSection').style.display='';buildTimePickers(allDays);
+      $('#timesSection').style.display='';buildTimeEditor('#timesPickerList',allDays,collectTimeEditor('#timesPickerList'),'07:00');
     } else {$('#timesSection').style.display='none'}
   }
 }
