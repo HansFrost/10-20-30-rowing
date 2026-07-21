@@ -23,6 +23,7 @@ import'./util.js';
 import'./xp.js';
 import{cloudConfigured,cloudOpenModal,cloudReset,cloudSession,cloudSyncNow,cloudUiRefresh}from'./cloud.js';
 import{$,customAlert,customConfirm,setSkipHist,showOnboardStep,showScreen}from'./dom.js';
+import{initHistory}from'./history.js';
 import{DEFAULT_MAX_HR}from'./hr.js';
 import{initNav}from'./nav.js';
 import{initOnboarding}from'./onboarding.js';
@@ -67,12 +68,12 @@ $('#importFile').addEventListener('change',e=>{
   };
   reader.readAsText(file);e.target.value=''});
 $('#resetBtn').addEventListener('click',async()=>{
-  if(await customConfirm('Reset the entire program? All progress will be lost.')){
+  if(await customConfirm('Reset the entire program? All progress and your Program History will be permanently deleted.')){
     cloudReset();clearData();showScreen('#onboarding');showOnboardStep('stepProgram')}});
 
 /* ===== INIT ===== */
 $('#walkBtn').addEventListener('click',()=>launchWalkSession());
-initOnboarding();initNav();initSwapModal();initTimeModal();initAddSessionModal();
+initOnboarding();initNav();initSwapModal();initTimeModal();initAddSessionModal();initHistory();
 const saved=loadData();
 setSkipHist(true);
 if(saved&&saved.program){

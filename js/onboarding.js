@@ -1,8 +1,9 @@
 import{$,$$,customConfirm,showOnboardStep,showScreen}from'./dom.js';
+import{activateProgram}from'./history.js';
 import{DEFAULT_MAX_HR}from'./hr.js';
 import{ALL_DAYS,DAY_LABELS,DAY_OFFSET,PROGRAMS}from'./programs.js';
 import{renderSchedule}from'./schedule.js';
-import{loadData,saveData}from'./store.js';
+import{loadData}from'./store.js';
 import{buildTimeEditor,collectTimeEditor}from'./time-modals.js';
 import{addDays,dateStr,parseDate}from'./util.js';
 let selectedProg='intermediate';
@@ -84,7 +85,7 @@ function initOnboarding(){
     const v=$('#dateInput').value;if(!v)return;
     const existing=loadData();
     if(existing&&existing.program){
-      if(!await customConfirm('Start a new program? Your current progress will be replaced.'))return;
+      if(!await customConfirm('Start a new program? Your current one will be moved to Program History.'))return;
     }
     const d=parseDate(v);
     /* Snap to Monday */
@@ -107,7 +108,7 @@ function initOnboarding(){
       saveObj.walkDays=walkSel;saveObj.walkStart=dateStr(d);
       saveObj.walkTimes=collectTimeEditor('#obWalkTimesList');
     }
-    saveData(saveObj);
+    activateProgram(saveObj);
     renderSchedule();showScreen('#schedule');
   });
 }

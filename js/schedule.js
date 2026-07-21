@@ -189,6 +189,11 @@ function renderSchedule(){
       '<p class="finish-msg">'+finishMsg+'</p>'+
       '<p style="font-size:.8rem;color:var(--muted)">Tap <strong>Change Program</strong> to start again.</p>'+
     '</div>';
+  } else if(startMon>today){
+    bannerEl.innerHTML='<div class="sched-rest-banner compact">'+
+      '<div class="rest-body">'+
+      '<p class="rest-title">Starts '+WEEKDAY_NAMES[startMon.getDay()]+' '+fmtDate(startMon)+'</p>'+
+      '<p class="rest-next">First session: '+getNext(sessions,today,completed)+'</p></div></div>';
   } else {
     bannerEl.innerHTML='<div class="sched-rest-banner compact">'+
       '<div class="rest-body">'+
