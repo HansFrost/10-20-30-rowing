@@ -68,10 +68,28 @@ test.describe('Schedule screen', () => {
   test('header, progress and today-banner fit the phone', async ({ page }) => {
     await expectReachable(page.locator('#progName'), 'program name');
     await expectReachable(page.locator('#helpBtn'), 'help button');
-    await expectReachable(page.locator('#changProgBtn'), 'Change Program button');
     await expectReachable(page.locator('.sched-progress'), 'progress bar');
     await expectReachable(page.locator('#todayStartBtn'), "START TODAY'S SESSION button");
     await expectNoHorizontalOverflow(page, 'schedule top');
+  });
+
+  test('tab bar: all tabs visible, switch screens, hidden during workout', async ({ page }) => {
+    await expect(page.locator('#tabBar')).toBeVisible();
+    for (const tab of ['#schedule', '#progress', '#settings']) {
+      await expectReachable(page.locator(`.tab-btn[data-tab="${tab}"]`), `${tab} tab`);
+    }
+    await page.locator('.tab-btn[data-tab="#progress"]').click();
+    await expect(page.locator('#progress')).toHaveClass(/active/);
+    await expectReachable(page.locator('#progress h1'), 'progress heading');
+    await expectReachable(page.locator('#progress .finish-stats'), 'lifetime stats block');
+    await page.locator('.tab-btn[data-tab="#settings"]').click();
+    await expect(page.locator('#settings')).toHaveClass(/active/);
+    await page.locator('.tab-btn[data-tab="#schedule"]').click();
+    await expect(page.locator('#schedule')).toHaveClass(/active/);
+    // During a workout the bar must disappear
+    await page.locator('#todayStartBtn').click();
+    await expect(page.locator('#timer')).toHaveClass(/active/);
+    await expect(page.locator('#tabBar')).not.toBeVisible();
   });
 
   test('every week and session card is reachable and fits', async ({ page }) => {
@@ -91,19 +109,26 @@ test.describe('Schedule screen', () => {
     await expectNoHorizontalOverflow(page, 'schedule week grid');
   });
 
-  test('settings controls at the bottom are reachable', async ({ page }) => {
+  test('settings tab: every control is reachable', async ({ page }) => {
+    await page.locator('.tab-btn[data-tab="#settings"]').click();
+    await expect(page.locator('#settings')).toHaveClass(/active/);
     for (const [sel, label] of [
-      ['#maxHrEdit', 'max HR input'],
-      ['#maxHrSaveBtn', 'max HR save button'],
+      ['#changProgBtn', 'Change Program button'],
       ['#changeDaysBtn', 'Change Training Days button'],
       ['#defTimesBtn', 'Set Default Times button'],
+      ['#maxHrEdit', 'max HR input'],
+      ['#maxHrSaveBtn', 'max HR save button'],
+      ['#pm5Btn', 'PM5 connect button'],
+      ['#hrBtn', 'HR strap button'],
+      ['#remindersBtn', 'reminders button'],
+      ['#cloudBtn', 'cloud sync button'],
       ['#exportBtn', 'Export button'],
       ['#importBtn', 'Import button'],
       ['#resetBtn', 'Reset button'],
     ]) {
       await expectReachable(page.locator(sel), label);
     }
-    await expectNoHorizontalOverflow(page, 'schedule bottom');
+    await expectNoHorizontalOverflow(page, 'settings screen');
   });
 
   test('help overlay opens, fits, and closes', async ({ page }) => {
@@ -124,6 +149,7 @@ test.describe('Schedule screen', () => {
   });
 
   test('change training days modal fits', async ({ page }) => {
+    await page.locator('.tab-btn[data-tab="#settings"]').click();
     await page.locator('#changeDaysBtn').click();
     await expect(page.locator('#changeDaysOverlay')).toHaveClass(/active/);
     await expectReachable(page.locator('#cdDayPicker'), 'day picker in modal');
@@ -142,6 +168,7 @@ test.describe('Schedule screen', () => {
   });
 
   test('default times modal fits', async ({ page }) => {
+    await page.locator('.tab-btn[data-tab="#settings"]').click();
     await page.locator('#defTimesBtn').click();
     await expect(page.locator('#defTimesOverlay')).toHaveClass(/active/);
     await expectReachable(page.locator('#defTimesList'), 'times list');
@@ -170,6 +197,7 @@ test.describe('Schedule screen', () => {
   });
 
   test('reset confirmation dialog fits', async ({ page }) => {
+    await page.locator('.tab-btn[data-tab="#settings"]').click();
     await page.locator('#resetBtn').scrollIntoViewIfNeeded();
     await page.locator('#resetBtn').click();
     await expect(page.locator('#confirmOverlay')).toHaveClass(/active/);
