@@ -37,7 +37,7 @@
 .finish-stat-num{font-size:1.3rem;font-weight:800;color:var(--fg);line-height:1.2}
 .finish-stat-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
 .finish-msg{font-size:.85rem;color:var(--fg);font-style:italic;line-height:1.5;margin:8px 0}
-.week-group{margin:16px auto 0;width:calc(3 * 140px + 2 * 8px)}
+.week-group{margin:16px auto 0;width:100%}
 .week-group.collapsed{margin-top:6px}
 .week-group.collapsed .week-sessions{display:none}
 .week-group.collapsed .week-label{margin-bottom:0;background:rgba(255,255,255,.03);
@@ -53,10 +53,10 @@
 .wd-miss{background:rgba(239,68,68,.45)}
 .week-label .blocks-tag{font-size:.7rem;background:rgba(255,255,255,.06);padding:2px 8px;
   border-radius:6px;letter-spacing:0}
-.week-sessions{display:grid;grid-template-columns:repeat(3,140px);gap:8px;justify-content:center}
+.week-sessions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;justify-content:center}
 .session-card{background:var(--card);border:2px solid var(--border);border-radius:12px;
   padding:12px;cursor:pointer;transition:all .15s;position:relative;text-align:center;
-  width:140px;min-width:80px}
+  width:auto;min-width:0}
 .session-card:active{transform:scale(.97)}
 .session-card .s-day{font-size:.78rem;text-transform:uppercase;letter-spacing:1px;
   color:var(--muted);margin-bottom:2px}
