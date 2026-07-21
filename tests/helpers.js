@@ -92,6 +92,29 @@ async function expectReachable(locator, label) {
   expect(box.height, `${label} has zero height`).toBeGreaterThan(0);
 }
 
+/**
+ * No element on the active screen may be vertically compressed below its
+ * content (the scrollable-flex-column bug: flex children shrink to fit the
+ * viewport instead of the screen scrolling, clipping their own content).
+ */
+async function expectNoVerticalClipping(page, context = 'page') {
+  const clipped = await page.evaluate(() => {
+    const bad = [];
+    for (const el of document.querySelectorAll('.screen.active, .screen.active *')) {
+      const style = getComputedStyle(el);
+      if (style.display === 'none' || style.visibility === 'hidden') continue;
+      if (style.overflowY === 'auto' || style.overflowY === 'scroll') continue; // scrollers may scroll
+      if (el.scrollHeight > el.clientHeight + 2 && el.clientHeight > 0) {
+        bad.push(el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') +
+          (typeof el.className === 'string' && el.className ? '.' + el.className.split(' ')[0] : '') +
+          ` content ${el.scrollHeight}px in ${el.clientHeight}px box`);
+      }
+    }
+    return bad.slice(0, 8);
+  });
+  expect(clipped, `${context}: elements clipping their own content vertically`).toEqual([]);
+}
+
 /** Complete onboarding through the UI, landing on the schedule screen. */
 async function completeOnboarding(page) {
   await page.locator('.program-card[data-prog="intermediate"]').click();
@@ -108,4 +131,4 @@ async function completeOnboarding(page) {
   await expect(page.locator('#schedule')).toHaveClass(/active/);
 }
 
-module.exports = { gotoApp, expectNoHorizontalOverflow, expectReachable, completeOnboarding, APP_PATH, STORAGE_KEY };
+module.exports = { gotoApp, expectNoHorizontalOverflow, expectNoVerticalClipping, expectReachable, completeOnboarding, APP_PATH, STORAGE_KEY };

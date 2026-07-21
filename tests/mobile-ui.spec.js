@@ -1,6 +1,6 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
-const { gotoApp, expectNoHorizontalOverflow, expectReachable, completeOnboarding, APP_PATH, STORAGE_KEY } = require('./helpers');
+const { gotoApp, expectNoHorizontalOverflow, expectNoVerticalClipping, expectReachable, completeOnboarding, APP_PATH, STORAGE_KEY } = require('./helpers');
 
 test.describe('Onboarding', () => {
   test('step 1 (program choice): all controls fit the phone', async ({ page }) => {
@@ -84,6 +84,7 @@ test.describe('Schedule screen', () => {
     await expectReachable(page.locator('.sched-progress'), 'progress bar');
     await expectReachable(page.locator('#todayStartBtn'), "START TODAY'S SESSION button");
     await expectReachable(page.locator('#walkBtn'), 'Start a Walk button');
+    await expectNoVerticalClipping(page, 'schedule screen');
     // Walk button sits above the week grid, not below it
     const walkY = (await page.locator('#walkBtn').boundingBox()).y;
     const gridY = (await page.locator('#weekGrid').boundingBox()).y;
@@ -201,6 +202,7 @@ test.describe('Schedule screen', () => {
     await expect(page.locator('#progress')).toHaveClass(/active/);
     await expectReachable(page.locator('#progress h1'), 'progress heading');
     await expectReachable(page.locator('#progress .finish-stats'), 'lifetime stats block');
+    await expectNoVerticalClipping(page, 'progress screen');
     await page.locator('.tab-btn[data-tab="#connect"]').click();
     await expect(page.locator('#connect')).toHaveClass(/active/);
     await expectReachable(page.locator('#pm5Btn'), 'PM5 connect button');
@@ -260,6 +262,8 @@ test.describe('Schedule screen', () => {
   test('settings tab: every control is reachable', async ({ page }) => {
     await page.locator('.tab-btn[data-tab="#settings"]').click();
     await expect(page.locator('#settings')).toHaveClass(/active/);
+    // Settings must scroll, never compress its group cards (iPhone clipping bug)
+    await expectNoVerticalClipping(page, 'settings screen');
     for (const [sel, label] of [
       ['#changProgBtn', 'Change Program button'],
       ['#historyBtn', 'Program History button'],
