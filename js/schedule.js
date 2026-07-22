@@ -21,7 +21,7 @@ function renderSchedule(){
   const sessions=injectWalks(injectExtras(buildSchedule(startMon,progKey,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks),data,startMon);
   const today=new Date();today.setHours(0,0,0,0);
   const completed=data.completed||{};
-  const total=totalAllSessions(progKey,data.days.length,(data.extraSessions||[]).length);
+  const total=totalAllSessions(progKey,data.days.length,data.extraSessions||[]);
 
   /* Program name */
   const nameEl=$('#progName');

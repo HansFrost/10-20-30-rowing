@@ -139,11 +139,14 @@ function injectWalks(sessions,data,startMon){
 function countRowingSessions(completed){
   return Object.keys(completed||{}).filter(k=>k.indexOf('walk-')!==0).length;
 }
-function totalAllSessions(progKey,numDays,extraCount){
+function totalAllSessions(progKey,numDays,extras){
   const prog=PROGRAMS[progKey];
   let n=prog.weeks*numDays;
   if(prog.steadyMinutes)n+=prog.weeks;
-  return n+(extraCount||0);
+  /* walks are supplementary: they never count toward program progression, so
+     walk-type extras must not inflate the program total either */
+  const extraCount=Array.isArray(extras)?extras.filter(e=>e.type!=='walk').length:(extras||0);
+  return n+extraCount;
 }
 
 function getNext(sessions,today,completed){

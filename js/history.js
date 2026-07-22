@@ -59,7 +59,7 @@ function entryStats(e){
   const prog=PROGRAMS[e.program];
   if(!prog||!e.startDate)return null;
   const numDays=(e.days&&e.days.length)||prog.defaultNumDays;
-  const total=totalAllSessions(e.program,numDays,(e.extraSessions||[]).length);
+  const total=totalAllSessions(e.program,numDays,e.extraSessions||[]);
   const done=Object.keys(e.completed||{}).length;
   const start=parseDate(e.startDate);
   const end=addDays(start,prog.weeks*7-1);

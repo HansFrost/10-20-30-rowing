@@ -73,7 +73,7 @@ function checkFullWeek(sessions){
 
 function checkMilestones(data,sessions,streakInfo){
   const doneCount=countRowingSessions(data.completed);
-  const total=totalAllSessions(data.program,data.days.length,(data.extraSessions||[]).length);
+  const total=totalAllSessions(data.program,data.days.length,data.extraSessions||[]);
   const meters=lifetimeMeters(data);
   const shown=data.milestones||[];
   const found=[];
