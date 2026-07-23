@@ -43,12 +43,12 @@
   overflow:hidden}
 #phaseLabel{font-size:clamp(.75rem,min(4vw,2.5vh),1.3rem);text-transform:uppercase;letter-spacing:3px;opacity:.8;font-weight:600}
 #phaseName{font-size:clamp(1.8rem,min(13vw,8vh),4.5rem);font-weight:800;line-height:1}
-#hrZone{font-size:clamp(.7rem,min(3.5vw,2vh),1.1rem);opacity:.7;margin-top:2px;font-weight:600;letter-spacing:.5px}
+#hrZone{font-size:clamp(.85rem,min(4.2vw,2.6vh),1.35rem);opacity:.7;margin-top:2px;font-weight:600;letter-spacing:.5px}
 #countdown{font-size:clamp(5rem,min(37vw,30vh),12rem);font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-2px}
-#instruction{font-size:clamp(.9rem,min(5vw,3vh),1.6rem);font-weight:500;opacity:.85;min-height:1.4em;margin-top:2px}
-#encouragement{font-size:clamp(.75rem,min(3.7vw,2.2vh),1.1rem);opacity:.6;font-style:italic;min-height:1.2em;transition:opacity .3s}
+#instruction{font-size:clamp(1.05rem,min(5.6vw,3.4vh),1.9rem);font-weight:500;opacity:.85;min-height:1.4em;margin-top:2px}
+#encouragement{font-size:clamp(.9rem,min(4.2vw,2.6vh),1.3rem);opacity:.6;font-style:italic;min-height:1.2em;transition:opacity .3s}
 #timerProgress{width:100%;max-width:400px;margin-top:clamp(4px,1.5vh,12px)}
-#timerProgressText{font-size:clamp(.75rem,2.5vw,.95rem);opacity:.6;margin-bottom:6px;letter-spacing:.5px}
+#timerProgressText{font-size:clamp(.9rem,3vw,1.15rem);opacity:.6;margin-bottom:6px;letter-spacing:.5px}
 #timerProgressBar{width:100%;height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden}
 #timerProgressFill{height:100%;background:rgba(255,255,255,.55);border-radius:3px;transition:width .3s;width:0}
 #timerControls{display:flex;gap:10px;margin-top:clamp(6px,2vh,16px);flex-wrap:wrap;justify-content:center;width:100%;max-width:400px}

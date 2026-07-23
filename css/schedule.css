@@ -208,14 +208,14 @@ time-field:focus-within{border-color:var(--accent)}
     height:100vh;max-height:100vh;overflow:hidden;box-sizing:border-box}
   #countdown{grid-column:1;grid-row:2/span 2;align-self:center;
     font-size:clamp(3.2rem,48vh,13.5rem);letter-spacing:-4px}
-  #encouragement{display:block;grid-column:1;grid-row:4;font-size:clamp(.85rem,4.5vh,1.25rem);
+  #encouragement{display:block;grid-column:1;grid-row:4;font-size:clamp(1.1rem,6vh,1.7rem);
     opacity:.65;min-height:1.2em}
   #timerProgress{display:block;grid-column:1;grid-row:5;width:92%;max-width:none;margin-top:4px}
-  #timerProgressText{font-size:clamp(.9rem,4vh,1.2rem)}
+  #timerProgressText{font-size:clamp(1.15rem,5.5vh,1.6rem)}
   #phaseLabel{grid-column:2;grid-row:2;align-self:end;font-size:clamp(1rem,5.5vh,1.6rem)}
   #phaseName{grid-column:2;grid-row:3;font-size:clamp(2rem,20vh,5.5rem)}
-  #hrZone{grid-column:2;grid-row:4;font-size:clamp(.95rem,5.5vh,1.5rem)}
-  #instruction{grid-column:2;grid-row:5;align-self:start;font-size:clamp(1.1rem,7.5vh,2.1rem)}
+  #hrZone{grid-column:2;grid-row:4;font-size:clamp(1.2rem,7vh,2rem)}
+  #instruction{grid-column:2;grid-row:5;align-self:start;font-size:clamp(1.4rem,9vh,2.6rem)}
   #timerControls{grid-column:1/span 2;grid-row:7;align-self:end;width:100%;max-width:none;gap:14px}
   .timer-btn{padding:16px 20px;font-size:clamp(1rem,6vh,1.5rem)}
   #pm5Strip,#walkStrip,#ghostLine,#walkHint,#challengeBanner{grid-column:1/span 2}
