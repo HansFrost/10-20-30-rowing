@@ -16,8 +16,26 @@ const WATT_MARKS=[200,250,300,350,400];
 const ROW_COINS=20,WALK_COINS=15,WALK_TARGET_M=300,WALK_WINDOW=240,GPS_STALE=30;
 let rowPicks=null,walkTimes=null,active=null,hideAt=-1,lastDist=0,lastMoveEl=0;
 
+let flashTimer=null;
+function flashFullscreen(text){
+  let el=document.getElementById('challengeFlash');
+  if(!el){
+    el=document.createElement('div');el.id='challengeFlash';
+    el.innerHTML='<div class="cf-text"></div>';
+    el.addEventListener('click',()=>{el.className=''});
+    document.body.appendChild(el);
+  }
+  el.querySelector('.cf-text').textContent=text;
+  el.className='on';
+  clearTimeout(flashTimer);
+  flashTimer=setTimeout(()=>{
+    el.classList.add('out');
+    setTimeout(()=>{el.className=''},450);
+  },2200);
+}
 function showBanner(text,cls){const el=$('#challengeBanner');if(!el)return;
-  el.textContent=text;el.className='on'+(cls?' '+cls:'')}
+  el.textContent=text;el.className='on'+(cls?' '+cls:'');
+  flashFullscreen(text)}
 function hideBanner(){const el=$('#challengeBanner');if(el){el.className='';el.textContent=''}}
 
 /* Called from startTimer: plan this session's challenges. */
