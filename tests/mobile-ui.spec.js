@@ -194,7 +194,7 @@ test.describe('Schedule screen', () => {
       document.dispatchEvent(new Event('visibilitychange'));
     });
     await expect(hint).toHaveClass(/warn/);
-    await expect(hint).toContainText('Tracking was paused');
+    await expect(hint).toContainText('Screen was off');
   });
 
   test('long program name truncates instead of wrapping the header', async ({ page }) => {

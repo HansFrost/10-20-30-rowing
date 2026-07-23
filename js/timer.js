@@ -1,3 +1,4 @@
+import{keepAwakeOn,keepAwakeOff}from'./keepawake.js';
 import{walkStart,walkStop,walkTick,walkDistance}from'./walk.js';
 import{beep,ensureAudio,soundBlockEnd,soundDone,soundPhase,soundSprint,soundTick}from'./audio.js';
 import{challengeTick,challengesBegin,challengesClear,evalSessionBonuses}from'./challenges.js';
@@ -179,10 +180,10 @@ function startTimer(){
   Object.keys(cheerSeen).forEach(k=>delete cheerSeen[k]);
   $('#pauseBtn').textContent='PAUSE';$('#encouragement').textContent='';
   pickGhost();$('#ghostLine').classList.remove('on');
-  showScreen('#timer');updateTimerUI();timerInterval=setInterval(tick,1000);requestWakeLock();tryFullscreen();setScreenDim(false);
+  showScreen('#timer');updateTimerUI();timerInterval=setInterval(tick,1000);requestWakeLock();keepAwakeOn();tryFullscreen();setScreenDim(false);
 }
 function stopTimer(){clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);walkStop();challengesClear();
-  setScreenDim(true);showScreen('#schedule');renderSchedule()}
+  setScreenDim(true);keepAwakeOff();showScreen('#schedule');renderSchedule()}
 
 function finishEarly(){
   finishedEarly=true;
@@ -197,10 +198,10 @@ function resumeSession(){
   showScreen('#timer');
   timerInterval=setInterval(tick,1000);
   $('#pauseBtn').textContent='PAUSE';
-  updateTimerUI();requestWakeLock();setScreenDim(false);
+  updateTimerUI();requestWakeLock();keepAwakeOn();setScreenDim(false);
 }
 function finish(){
-  clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);challengesClear();if(!timerConfig.walk)soundDone();setScreenDim(true);
+  clearInterval(timerInterval);timerInterval=null;clearTimeout(cheerTimer);challengesClear();if(!timerConfig.walk)soundDone();setScreenDim(true);keepAwakeOff();
   const elapsed=Math.round((Date.now()-startTime)/1000);
 
   let ps=null;
