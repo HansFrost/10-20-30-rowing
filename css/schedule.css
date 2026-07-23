@@ -218,7 +218,15 @@ time-field:focus-within{border-color:var(--accent)}
   #timer.active #instruction{grid-column:2;grid-row:5;align-self:start;font-size:3.4vw;line-height:1.15;max-width:96%}
   #timer.active #timerControls{grid-column:1/span 2;grid-row:7;align-self:end;width:100%;max-width:none;gap:14px}
   #timer.active .timer-btn{padding:16px 20px;font-size:clamp(1rem,6vh,1.5rem)}
-  #pm5Strip,#walkStrip,#ghostLine,#walkHint,#challengeBanner{grid-column:1/span 2}
+  #timer.active #pm5Strip,#timer.active #walkStrip{grid-column:1/span 2;grid-row:1;
+    align-self:center;max-width:min(58vw,560px);gap:10px;margin-top:2px}
+  #timer.active .pm5-tile .pv{font-size:2.6vw}
+  #timer.active .pm5-tile .pl{font-size:1.1vw}
+  #timer.active #ghostLine{grid-column:1/span 2;grid-row:6;align-self:center;font-size:2.2vw}
+  #timer.active #walkHint{grid-column:1/span 2;grid-row:6;align-self:center;font-size:1.8vw;max-width:90%}
+  #timer.active #challengeBanner{grid-column:1/span 2;grid-row:6;align-self:end;margin-bottom:4px}
+  #timer.active:has(#pm5Strip.on) #countdown,#timer.active:has(#walkStrip.on) #countdown{font-size:clamp(3rem,38vh,11rem)}
+  #timer.active:has(#pm5Strip.on) #phaseName,#timer.active:has(#walkStrip.on) #phaseName{font-size:6.4vw}
   #pm5Chip,#hrChip{font-size:.95rem;padding:10px 16px}
   #pm5Chip .dot,#hrChip .dot{width:11px;height:11px}
 }
