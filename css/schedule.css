@@ -203,21 +203,23 @@ time-field:focus-within{border-color:var(--accent)}
 }
 @media(orientation:landscape) and (max-height:500px){
   #timer.active{display:grid;grid-template-columns:1.15fr 1fr;
-    grid-template-rows:auto auto auto 1fr auto;
+    grid-template-rows:auto auto auto auto 1fr auto;
     justify-items:center;max-width:none;padding:6px 16px 10px;gap:1px 12px;text-align:center;
     height:100vh;max-height:100vh;overflow:hidden;box-sizing:border-box}
-  #countdown{grid-column:1;grid-row:1/span 4;align-self:center;
-    font-size:clamp(4rem,50vh,13rem);letter-spacing:-5px}
-  #phaseLabel{grid-column:2;grid-row:1;align-self:end;margin-top:10px;font-size:clamp(.8rem,4vh,1.2rem)}
-  #phaseName{grid-column:2;grid-row:2;font-size:clamp(1.5rem,11vh,3.2rem)}
-  #hrZone{grid-column:2;grid-row:3;font-size:clamp(.75rem,3.5vh,1.1rem)}
-  #instruction{grid-column:2;grid-row:4;align-self:start;font-size:clamp(.9rem,5vh,1.4rem)}
-  #encouragement,#timerProgress{display:none}
-  #timerControls{grid-column:1/span 2;grid-row:5;align-self:end;width:100%;max-width:none;gap:12px}
+  #countdown{grid-column:1;grid-row:1/span 2;align-self:start;margin-top:30px;
+    font-size:clamp(3.2rem,34vh,9rem);letter-spacing:-4px}
+  #encouragement{display:block;grid-column:1;grid-row:3;font-size:clamp(.8rem,4vh,1.1rem);
+    opacity:.65;min-height:1.2em}
+  #timerProgress{display:block;grid-column:1;grid-row:4;width:92%;max-width:none;margin-top:4px}
+  #phaseLabel{grid-column:2;grid-row:1;align-self:end;margin-top:42px;font-size:clamp(.9rem,4.5vh,1.35rem)}
+  #phaseName{grid-column:2;grid-row:2;font-size:clamp(1.8rem,14vh,4rem)}
+  #hrZone{grid-column:2;grid-row:3;font-size:clamp(.85rem,4.5vh,1.3rem)}
+  #instruction{grid-column:2;grid-row:4;align-self:start;font-size:clamp(1rem,6vh,1.6rem)}
+  #timerControls{grid-column:1/span 2;grid-row:6;align-self:end;width:100%;max-width:none;gap:12px}
   .timer-btn{padding:14px 18px;font-size:clamp(1rem,5.5vh,1.3rem)}
   #pm5Strip,#walkStrip,#ghostLine,#walkHint,#challengeBanner{grid-column:1/span 2}
-  #pm5Chip,#hrChip{font-size:.85rem;padding:8px 14px}
-  #pm5Chip .dot,#hrChip .dot{width:10px;height:10px}
+  #pm5Chip,#hrChip{font-size:.95rem;padding:10px 16px}
+  #pm5Chip .dot,#hrChip .dot{width:11px;height:11px}
 }
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
 .pulse{animation:pulse .3s ease}
