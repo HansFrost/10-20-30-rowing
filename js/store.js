@@ -4,7 +4,9 @@ const saveHooks=[];
 function onSave(fn){saveHooks.push(fn)}
 function loadData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||null}catch(e){return null}}
 function saveData(d){
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(d));
+  const s=JSON.stringify(d);
+  if(s===localStorage.getItem(STORAGE_KEY))return; /* no-op write: keep modified stamp honest for sync */
+  localStorage.setItem(STORAGE_KEY,s);
   localStorage.setItem(MODIFIED_KEY,String(Date.now()));
   saveHooks.forEach(f=>f());
 }

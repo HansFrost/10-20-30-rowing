@@ -161,5 +161,8 @@ $('#cloudSignOutBtn').addEventListener('click',()=>{
   cloudStatus('Signed out. Your data stays on this device.');
 });
 window.addEventListener('pagehide',()=>{if(cloudTimer){clearTimeout(cloudTimer);cloudTimer=null;cloudPush(true)}});
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden&&cloudTimer){clearTimeout(cloudTimer);cloudTimer=null;cloudPush(true)}
+});
 onSave(scheduleCloudPush);
 export{cloudConfigured,cloudOpenModal,cloudReset,cloudSession,cloudSyncNow,cloudUiRefresh};
