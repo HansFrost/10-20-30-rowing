@@ -126,6 +126,11 @@
 .precommit-chip:active{transform:scale(.97)}
 .precommit-chip .pc-day{font-weight:700}
 .precommit-chip .pc-date{color:var(--muted)}
+.sched-precommit .pc-title{font-size:.8rem;font-weight:600;margin-bottom:8px}
+.pc-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+/* Daily mode asks once for one slot instead of listing every day */
+.sched-precommit.daily .pc-sub{font-size:.75rem;color:var(--muted);line-height:1.4;margin-bottom:4px}
+.sched-precommit.daily .quick-session-btn{margin-top:8px}
 
 /* ONBOARDING TIME PICKERS */
 .time-pick-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;

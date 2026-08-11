@@ -140,6 +140,41 @@ test.describe('Daily banner', () => {
   });
 });
 
+test.describe('Precommit prompt', () => {
+  test('daily mode asks once for one time instead of a chip per day', async ({ page }) => {
+    await seedDaily(page, { daily: { target: 2, floor: 1 } });
+    const pc = page.locator('.sched-precommit.daily');
+    await expect(pc).toBeVisible();
+    await expect(pc).toContainText('One time, every day');
+    // The seven-chip wall is exactly what this replaces
+    await expect(page.locator('.precommit-chip')).toHaveCount(0);
+    await expectReachable(page.locator('#pcDailyBtn'), 'daily time button');
+    await expectNoHorizontalOverflow(page, 'daily precommit banner');
+
+    // It opens the shared editor, which defaults to one time for all days
+    await page.locator('#pcDailyBtn').click();
+    await expect(page.locator('#defTimesOverlay')).toHaveClass(/active/);
+    await expect(page.locator('#defTimesList .time-pick-day')).toHaveText('All days');
+    await page.locator('#defTimesOverlay').evaluate((o) => { o.querySelector('.te-input').value = '07:15'; });
+    await page.locator('#defTimesSave').click();
+
+    // One time covers every day, so the prompt is done
+    await expect(page.locator('.sched-precommit')).toHaveCount(0);
+    const data = await readData(page);
+    expect(Object.keys(data.defaultTimes)).toHaveLength(7);
+    expect(data.defaultTimes.mon).toBe('07:15');
+    await expect(page.locator('.sched-today-banner.daily')).toContainText('07:15');
+  });
+
+  test('the other programs keep their per-session chips', async ({ page }) => {
+    await gotoApp(page, { seedProgram: true });
+    await expect(page.locator('.sched-precommit')).toBeVisible();
+    await expect(page.locator('#pcDailyBtn')).toHaveCount(0);
+    const chips = await page.locator('.precommit-chip').count();
+    expect(chips).toBeGreaterThan(0);
+  });
+});
+
 test.describe('Banking the floor', () => {
   /** Tap SKIP until the floor banner appears, or give up after `limit` taps. */
   async function skipToFloor(page, limit = 30) {

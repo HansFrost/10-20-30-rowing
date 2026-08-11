@@ -132,4 +132,4 @@ function collectTimeEditor(sel){
   box.querySelectorAll('.te-input').forEach(inp=>{if(inp.value)out[inp.dataset.day]=inp.value});
   return out;
 }
-export{buildTimeEditor,collectTimeEditor,initTimeModal,openTimeModal};
+export{buildTimeEditor,collectTimeEditor,initTimeModal,openDefTimesModal,openTimeModal};

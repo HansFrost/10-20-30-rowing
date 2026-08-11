@@ -7,7 +7,7 @@ import{DEFAULT_MAX_HR,renderHrTable}from'./hr.js';
 import{countRowingSessions,DAY_LABELS,PROGRAMS,getEffectiveTime,migrateData,progWeeks,scheduleFor,totalAllSessions,goalTime}from'./programs.js';
 import{deleteExtraSession,openAddSessionModal,openSwapModal}from'./session-modals.js';
 import{loadData,saveData}from'./store.js';
-import{openTimeModal}from'./time-modals.js';
+import{openDefTimesModal,openTimeModal}from'./time-modals.js';
 import{renderTodayBanner}from'./today-banner.js';
 import{launchSession,launchSteadySession,launchWalkSession}from'./timer.js';
 import{addDays,fmtDate,parseDate,sameDay}from'./util.js';
@@ -88,26 +88,8 @@ function renderSchedule(){
   /* The standalone walk button is redundant when the banner already offers a walk */
   $('#walkBtn').style.display=($('#restWalkBtn')||$('#todayWalkBtn'))?'none':'';
 
-  /* Precommit banner — upcoming sessions without times (next 7 days) */
-  const weekAhead=addDays(today,7);
-  const uncommitted=sessions.filter(s=>s.date>=today&&s.date<=weekAhead&&!completed[s.key]&&!getEffectiveTime(data,s.key,s.actualDay,s.date));
-  const pcEl=$('#precommitBanner');
-  if(uncommitted.length){
-    let pcHtml='<div class="sched-precommit"><p style="font-size:.8rem;font-weight:600;margin-bottom:8px">\uD83D\uDCC5 Set times for upcoming sessions</p><div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">';
-    uncommitted.forEach(s=>{
-      pcHtml+='<span class="precommit-chip" data-pc-key="'+s.key+'" data-pc-day="'+s.actualDay+'"><span class="pc-day">'+s.day+'</span><span class="pc-date">'+fmtDate(s.date)+'</span></span>';
-    });
-    pcHtml+='</div></div>';
-    pcEl.innerHTML=pcHtml;
-    $$('.precommit-chip').forEach(chip=>{
-      chip.addEventListener('click',()=>{
-        const s=sessions.find(x=>x.key===chip.dataset.pcKey);
-        if(s)openTimeModal(s.key,s.actualDay,s,prog);
-      });
-    });
-  } else {
-    pcEl.innerHTML='';
-  }
+  renderPrecommit(data,sessions,today,completed,prog);
+
 
   /* Week grid \u2014 accordion: only the current week starts expanded */
   const curWeek=Math.min(weeks,Math.max(1,Math.floor((today-startMon)/(7*864e5))+1));
@@ -214,6 +196,36 @@ function renderSchedule(){
       openWeeks.has(w)?openWeeks.delete(w):openWeeks.add(w);
       lbl.closest('.week-group').classList.toggle('collapsed',!openWeeks.has(w));
       lbl.querySelector('.week-chevron').textContent=openWeeks.has(w)?'▾':'▸';
+    });
+  });
+}
+
+/* Nudge to commit a time for what is coming. A daily program would list seven
+   chips a week, which is noise, so it asks once for the one slot that every
+   day shares: a habit needs the same cue, not seven appointments. */
+function renderPrecommit(data,sessions,today,completed,prog){
+  const pcEl=$('#precommitBanner');
+  const weekAhead=addDays(today,7);
+  const uncommitted=sessions.filter(s=>s.date>=today&&s.date<=weekAhead&&!completed[s.key]&&
+    !getEffectiveTime(data,s.key,s.actualDay,s.date));
+  if(!uncommitted.length){pcEl.innerHTML='';return}
+  if(isDaily(data)){
+    pcEl.innerHTML='<div class="sched-precommit daily">'+
+      '<p class="pc-title">⏰ One time, every day</p>'+
+      '<p class="pc-sub">The same slot each day is what makes it automatic.</p>'+
+      '<button class="quick-session-btn" id="pcDailyBtn">SET MY DAILY TIME</button></div>';
+    $('#pcDailyBtn').addEventListener('click',openDefTimesModal);
+    return;
+  }
+  pcEl.innerHTML='<div class="sched-precommit"><p class="pc-title">📅 Set times for upcoming sessions</p>'+
+    '<div class="pc-chips">'+
+    uncommitted.map(s=>'<span class="precommit-chip" data-pc-key="'+s.key+'" data-pc-day="'+s.actualDay+'">'+
+      '<span class="pc-day">'+s.day+'</span><span class="pc-date">'+fmtDate(s.date)+'</span></span>').join('')+
+    '</div></div>';
+  $$('.precommit-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      const s=sessions.find(x=>x.key===chip.dataset.pcKey);
+      if(s)openTimeModal(s.key,s.actualDay,s,prog);
     });
   });
 }
