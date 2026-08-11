@@ -1,8 +1,7 @@
 import{$}from'./dom.js';
-import{PROGRAMS,buildSchedule,getEffectiveTime,injectExtras,injectWalks}from'./programs.js';
+import{PROGRAMS,dailySettings,getEffectiveTime,scheduleFor}from'./programs.js';
 import{loadData}from'./store.js';
 import{customAlert}from'./dom.js';
-import{parseDate}from'./util.js';
 
 /* Calendar reminders: .ics with alarms -> native iOS notification banners, no server needed. */
 function icsStamp(d,hm){
@@ -10,15 +9,22 @@ function icsStamp(d,hm){
   return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')+
     'T'+String(p[0]).padStart(2,'0')+String(p[1]).padStart(2,'0')+'00';
 }
-function sessionMinutes(s,prog){
+function sessionMinutes(s,cfg){
   if(s.type==='walk')return s.minutes||30;
   if(s.type==='steady')return s.minutes+9;
-  return 4+s.blocks*5+(s.blocks-1)*Math.round(prog.restSec/60)+5;
+  return(cfg.warmup?4:0)+s.blocks*5+(s.blocks-1)*Math.round(cfg.restSec/60)+(cfg.cooldown?5:0);
+}
+/* Daily mode can drop the warm-up and the cool-down, so the calendar entry
+   must be built from the user's settings, not the program constants. */
+function sessionConfig(data){
+  const prog=PROGRAMS[data.program];
+  if(!prog.daily)return{restSec:prog.restSec,warmup:true,cooldown:true};
+  const s=dailySettings(data);
+  return{restSec:s.restSec,warmup:s.warmup,cooldown:s.cooldown};
 }
 function buildIcs(data){
-  const prog=PROGRAMS[data.program];
-  const startMon=parseDate(data.startDate);
-  const sessions=injectWalks(injectExtras(buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks),data,startMon);
+  const cfg=sessionConfig(data);
+  const sessions=scheduleFor(data);
   const today=new Date();today.setHours(0,0,0,0);
   const completed=data.completed||{};
   const upcoming=sessions.filter(s=>s.date>=today&&!completed[s.key]);
@@ -31,7 +37,7 @@ function buildIcs(data){
       'UID:'+s.key+'@10-20-30-rowing',
       'DTSTAMP:'+icsStamp(today,'00:00')+'Z',
       'DTSTART:'+icsStamp(s.date,hm),
-      'DURATION:PT'+sessionMinutes(s,prog)+'M',
+      'DURATION:PT'+sessionMinutes(s,cfg)+'M',
       'SUMMARY:'+title,
       'BEGIN:VALARM','TRIGGER:-PT30M','ACTION:DISPLAY','DESCRIPTION:Rowing in 30 minutes','END:VALARM',
       'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:Time to row','END:VALARM',

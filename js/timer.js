@@ -3,18 +3,16 @@ import{walkStart,walkStop,walkTick,walkDistance}from'./walk.js';
 import{beep,ensureAudio,soundBlockEnd,soundDone,soundPhase,soundSprint,soundTick}from'./audio.js';
 import{challengeTick,challengesBegin,challengesClear,evalSessionBonuses}from'./challenges.js';
 import{cheerSeen,pickCheer}from'./cheers.js';
-import{getEquipped}from'./cosmetics.js';
-import{DONE_PRAISE,DONE_TIPS}from'./content.js';
+import{bankFloor,dailyTimerOpts,floorStepIndex,isDaily}from'./daily.js';
+import{renderDoneExtras}from'./done-screen.js';
 import{$,customConfirm,setNavAbortHook,showScreen}from'./dom.js';
 import{confettiBurst}from'./fx.js';
-import{calcStreak,checkMilestones,getHabitStage,showMilestones}from'./habit.js';
 import{hrText}from'./hr.js';
 import{pickGhost,pm5,pm5FinalizeSession,pm5PhaseChange,pm5ResetStats,pm5Stats,pm5UpdateStrip,updateGhost}from'./pm5.js';
-import{countRowingSessions,PROGRAMS,buildSchedule,getNext,injectExtras,injectWalks}from'./programs.js';
 import{renderSchedule}from'./schedule.js';
 import{loadData,saveData}from'./store.js';
-import{fmtTime,parseDate}from'./util.js';
-import{calcXP,levelInfo}from'./xp.js';
+import{fmtTime}from'./util.js';
+import{calcXP}from'./xp.js';
 let currentSessionKey=null;
 function launchWalkSession(){
   const now=new Date();
@@ -44,11 +42,17 @@ function registerWalkSession(dk,now){
 }
 function launchSession(sess,prog,opts){
   const bare=!!(opts&&opts.bare);
+  const data=loadData();
+  const daily=!bare&&isDaily(data)?dailyTimerOpts(data):null;
   currentSessionKey=sess.key;
   timerConfig.walk=false;
   timerConfig.blocks=sess.blocks;
-  timerConfig.restSec=prog.restSec;
-  timerConfig.warmup=!bare;timerConfig.cooldown=!bare;timerConfig.steady=false;
+  timerConfig.restSec=daily?daily.restSec:prog.restSec;
+  timerConfig.warmup=bare?false:daily?daily.warmup:true;
+  timerConfig.cooldown=bare?false:daily?daily.cooldown:true;
+  timerConfig.steady=false;
+  /* The floor is the day's real commitment; passing it banks the session. */
+  timerConfig.floor=daily?Math.min(daily.floor,sess.blocks):0;
   startTimer();
 }
 
@@ -60,10 +64,11 @@ function launchSteadySession(sess){
   startTimer();
 }
 
-let timerConfig={blocks:3,restSec:120,warmup:true,cooldown:true,steady:false,steadyMinutes:0,walk:false};
+let timerConfig={blocks:3,restSec:120,warmup:true,cooldown:true,steady:false,steadyMinutes:0,walk:false,floor:0};
 let sequence=[],stepIdx=0,remaining=0,timerInterval=null,paused=false,startTime=null,totalSec=0,cheerTimer=null;
 let wkStart=0,wkBank=0;
 let finishedEarly=false;
+let floorIdx=-1,floorBanked=false;
 
 function buildSequence(){
   const c=timerConfig,seq=[];
@@ -153,8 +158,23 @@ function tick(){
     updateCountdown();updateTimerProgress();
   }
   pm5TickHook(totalEl);
+  checkFloor();
   if(timerConfig.walk)walkTick(totalEl);
   challengeTick(totalEl);
+}
+/* Fogg's celebration has to land the moment the behaviour is done, not at the
+   end of the session. Passing the floor banks the day and says so. */
+function checkFloor(){
+  if(floorBanked||floorIdx<0||stepIdx<=floorIdx)return;
+  floorBanked=true;
+  const fresh=bankFloor(currentSessionKey);
+  const el=$('#floorBanner');
+  if(el){
+    el.textContent=fresh?'✅ Day banked. Everything from here is a bonus.'
+                        :'✅ Floor passed. Everything from here is a bonus.';
+    el.classList.add('on');
+  }
+  if(fresh)confettiBurst(30);
 }
 function pm5TickHook(totalEl){
   if(!pm5.connected||!pm5Stats)return;
@@ -176,6 +196,10 @@ function startTimer(){
   if(!timerConfig.walk)ensureAudio(); /* WebAudio would pause background podcasts */
   sequence=buildSequence();stepIdx=0;remaining=sequence[0].dur;
   totalSec=sequence.reduce((a,x)=>a+x.dur,0);paused=false;finishedEarly=false;startTime=Date.now();wkStart=Date.now();wkBank=0;
+  floorIdx=timerConfig.floor?floorStepIndex(sequence,timerConfig.floor):-1;
+  floorBanked=false;
+  const fb=$('#floorBanner');
+  if(fb){fb.classList.remove('on');fb.textContent=''}
   pm5ResetStats();challengesBegin();
   Object.keys(cheerSeen).forEach(k=>delete cheerSeen[k]);
   $('#pauseBtn').textContent='PAUSE';$('#encouragement').textContent='';
@@ -257,83 +281,9 @@ function finish(){
   }
   if(ps&&ps.walk&&ps.avgHr)h+=sRow('Avg / max HR',ps.avgHr+' / '+ps.maxHr+' bpm');
   $('#summaryBox').innerHTML=h;
-
-  /* Enhanced done screen with habit info */
-  const data=loadData();
-  if(data&&currentSessionKey){
-    const prog=PROGRAMS[data.program];
-    const startMon=parseDate(data.startDate);
-    const sessions=injectWalks(injectExtras(buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks),data,startMon);
-    const completed=data.completed||{};
-    const doneCount=countRowingSessions(completed);
-    const si=calcStreak(data,sessions);
-    const stage=getHabitStage(doneCount);
-    const today=new Date();today.setHours(0,0,0,0);
-    const oldBest=data.bestStreak||0;
-    const isNewBest=si.best>oldBest&&si.best>1;
-    if(si.best!==oldBest){data.bestStreak=si.best;saveData(data)}
-
-    let sh='<div class="done-streak"><div class="done-streak-num">'+si.current+'</div><div class="done-streak-label">session streak</div></div>';
-    if(isNewBest)sh+='<div class="done-pb">NEW PERSONAL BEST!</div>';
-    if(newPowerPB)sh+='<div class="done-pb">⚡ NEW POWER PB: '+ps.peakW+' W</div>';
-
-    /* Session grade from sprint stroke-rate compliance (needs rower data) */
-    if(ps&&!timerConfig.steady&&ps.sprintRates&&ps.sprintRates.length){
-      const totalSprints=timerConfig.blocks*5;
-      const pct=ps.rateHits/totalSprints;
-      const g=pct>=.9&&!finishedEarly?'S':pct>=.7?'A':pct>=.5?'B':'C';
-      const gLabel={S:'Flawless',A:'Strong',B:'Solid',C:'Keep pushing'}[g];
-      sh+='<div class="done-grade g-'+g+'"><span class="g-letter">'+g+'</span>'+
-        '<span class="g-detail">'+gLabel+'<br>'+ps.rateHits+' / '+totalSprints+' sprints at 30+ spm</span></div>';
-    }
-
-    /* XP earned + level-up + golden session */
-    let levelUp=false;
-    if(golden)sh+='<div class="done-pb" style="color:var(--gold)">🌟 GOLDEN SESSION! +'+golden+' bonus XP</div>';
-    if(xpAfter>xpBefore){
-      const li0=levelInfo(xpBefore),li1=levelInfo(xpAfter);
-      levelUp=li1.lvl>li0.lvl;
-      sh+='<div class="done-xp">+'+(xpAfter-xpBefore)+' XP</div>';
-      if(levelUp)sh+='<div class="done-levelup">Level up! LVL '+li1.lvl+' · '+li1.rank+'</div>';
-    }
-    /* Celebrate every completion; go big on special moments */
-    const big=levelUp||newPowerPB||isNewBest||golden>0;
-    setTimeout(()=>confettiBurst(big?90:25),400);
-    $('#doneStreakArea').innerHTML=sh;
-
-    const eq=getEquipped(data);
-    $('#doneHabitArea').innerHTML='<div class="done-habit">'+
-      '<div class="habit-ring '+stage.cls+'">'+stage.ring+'</div>'+
-      '<span class="habit-stage '+stage.colorCls+'">'+stage.name+'</span>'+
-      '<span class="done-avatar">'+eq.avatar.emoji+
-        (eq.flair?'<span class="done-flair">'+eq.flair.emoji+'</span>':'')+'</span></div>';
-
-    $('#doneNextArea').innerHTML='<div class="done-next">Next: '+getNext(sessions,today,completed)+'</div>';
-
-    /* Performance praise or tip */
-    const blocks=timerConfig.blocks||0;
-    const sprints=blocks*5;
-    const isTipSession=(doneCount%3===0);
-    if(isTipSession&&!timerConfig.steady){
-      const tipIdx=doneCount%DONE_TIPS.length;
-      $('#doneQuoteArea').innerHTML='<div class="done-tip">\uD83D\uDCA1 '+DONE_TIPS[tipIdx]+'</div>';
-    } else {
-      const praiseIdx=doneCount%DONE_PRAISE.length;
-      const praise=DONE_PRAISE[praiseIdx]
-        .replace(/\{blocks\}/g,blocks).replace(/\{sprints\}/g,sprints)
-        .replace(/\{streak\}/g,si.current).replace(/\{total\}/g,doneCount);
-      $('#doneQuoteArea').innerHTML='<div class="done-praise">'+praise+'</div>';
-    }
-
-    const milestones=checkMilestones(data,sessions,si);
-    if(milestones.length)setTimeout(()=>showMilestones(milestones,data),1200);
-  } else {
-    $('#doneStreakArea').innerHTML='';
-    $('#doneHabitArea').innerHTML='';
-    $('#doneNextArea').innerHTML='';
-    $('#doneQuoteArea').innerHTML='';
-  }
-
+  renderDoneExtras({ps,newPowerPB,xpBefore,xpAfter,golden,sessionKey:currentSessionKey,
+    blocks:timerConfig.walk||timerConfig.steady?0:timerConfig.blocks,
+    steady:timerConfig.steady,finishedEarly});
   showScreen('#done');
 }
 function sRow(l,v){return '<div class="summary-row"><span class="label">'+l+'</span><span class="value">'+v+'</span></div>'}
@@ -360,7 +310,10 @@ $('#pauseBtn').addEventListener('click',()=>{
 $('#skipBtn').addEventListener('click',skipPhase);
 $('#finishBtn').addEventListener('click',finishEarly);
 $('#stopBtn').addEventListener('click',async()=>{
-  if(await customConfirm('Stop this session? Nothing will be saved. Use FINISH to keep your progress.'))stopTimer();
+  const msg=floorBanked
+    ?'Stop here? Today is already banked, so your day still counts. Use FINISH to record the rower stats too.'
+    :'Stop this session? Nothing will be saved. Use FINISH to keep your progress.';
+  if(await customConfirm(msg))stopTimer();
 });
 $('#doneContinueBtn').addEventListener('click',resumeSession);
 $('#doneBackBtn').addEventListener('click',()=>{finishedEarly=false;renderSchedule();showScreen('#schedule')});

@@ -50,6 +50,20 @@ body.phase-rest{background:var(--bg-rest)}body.phase-steady{background:#1a3038}b
 .program-card .pc-tag{font-size:.7rem;background:rgba(255,255,255,.08);padding:3px 8px;
   border-radius:6px;color:var(--muted)}
 .program-card .pc-desc{font-size:.8rem;color:var(--muted);line-height:1.5}
+.program-card.daily-card{border-style:dashed}
+.program-card.daily-card.selected{border-style:solid}
+.program-card.daily-card .pc-tag{background:rgba(183,191,16,.18);color:var(--accent)}
+
+/* DAILY MINIMUM SETUP */
+#dailySection{width:100%;max-width:340px;display:flex;flex-direction:column;gap:8px;
+  background:var(--card);border-radius:14px;padding:14px}
+.daily-intro{font-size:.85rem;color:var(--text);font-style:italic;text-align:center;margin-bottom:4px}
+.daily-lbl{font-size:.78rem;color:var(--muted);margin-top:6px}
+.daily-lbl strong{color:var(--text)}
+.daily-toggles{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.daily-toggles label{display:flex;align-items:center;gap:8px;font-size:.85rem;cursor:pointer}
+.daily-toggles input{width:18px;height:18px;accent-color:var(--accent)}
+.daily-est{font-size:.8rem;color:var(--accent);font-weight:600;text-align:center;margin-top:10px}
 #dateInput{color-scheme:dark;padding:14px 20px;border-radius:12px;border:2px solid var(--border);
   background:var(--card);color:var(--text);font-size:1.1rem;font-weight:600;
   width:100%;max-width:260px;text-align:center}

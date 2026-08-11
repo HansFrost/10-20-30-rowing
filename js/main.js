@@ -3,7 +3,10 @@ import'./audio.js';
 import'./cheers.js';
 import'./cloud.js';
 import'./content.js';
+import'./daily.js';
 import'./dom.js';
+import'./done-screen.js';
+import'./today-banner.js';
 import'./fx.js';
 import'./habit.js';
 import'./hr.js';
@@ -84,7 +87,12 @@ if(saved&&saved.program){
   renderSchedule();showScreen('#schedule');
   history.replaceState({screen:'#schedule'},'');
 }
-else if(saved){clearData();showScreen('#onboarding');history.replaceState({screen:'#onboarding',step:'stepProgram'},'');}
+/* No active program: a paused one may still be waiting in the archive, so
+   only genuinely empty data is cleared. */
+else if(saved){
+  if(!saved.archive||!saved.archive.length)clearData();
+  showScreen('#onboarding');history.replaceState({screen:'#onboarding',step:'stepProgram'},'');
+}
 else{showScreen('#onboarding');history.replaceState({screen:'#onboarding',step:'stepProgram'},'');}
 setSkipHist(false);
 cloudUiRefresh();

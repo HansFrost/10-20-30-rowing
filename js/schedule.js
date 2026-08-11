@@ -1,27 +1,30 @@
 import{evalSessionBonuses}from'./challenges.js';
-import{DAILY_TIPS,STAGE_IDENTITY}from'./content.js';
+import{DAILY_TIPS}from'./content.js';
+import{floorLabel,isDaily}from'./daily.js';
 import{$,$$,customAlert,showScreen}from'./dom.js';
-import{calcStreak,checkMilestones,getHabitStage,renderHabitStrip,showMilestones}from'./habit.js';
+import{calcStreak,checkMilestones,renderHabitStrip,showMilestones}from'./habit.js';
 import{DEFAULT_MAX_HR,renderHrTable}from'./hr.js';
-import{countRowingSessions,DAY_LABELS,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions,goalTime,injectWalks}from'./programs.js';
+import{countRowingSessions,DAY_LABELS,PROGRAMS,getEffectiveTime,migrateData,progWeeks,scheduleFor,totalAllSessions,goalTime}from'./programs.js';
 import{deleteExtraSession,openAddSessionModal,openSwapModal}from'./session-modals.js';
 import{loadData,saveData}from'./store.js';
 import{openTimeModal}from'./time-modals.js';
+import{renderTodayBanner}from'./today-banner.js';
 import{launchSession,launchSteadySession,launchWalkSession}from'./timer.js';
-import{WEEKDAY_NAMES,addDays,fmtDate,parseDate,sameDay}from'./util.js';
+import{addDays,fmtDate,parseDate,sameDay}from'./util.js';
 import{renderXpStrip}from'./xp.js';
 let openWeeks=null,openWeeksSig='';
 function renderSchedule(){
   const data=loadData();
-  if(!data){showScreen('#onboarding');return}
+  if(!data||!data.program||!PROGRAMS[data.program]){showScreen('#onboarding');return}
   if(!data.days){migrateData(data)}
   const progKey=data.program||'intermediate';
   const prog=PROGRAMS[progKey];
   const startMon=parseDate(data.startDate);
-  const sessions=injectWalks(injectExtras(buildSchedule(startMon,progKey,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks),data,startMon);
+  const sessions=scheduleFor(data);
+  const weeks=progWeeks(data);
   const today=new Date();today.setHours(0,0,0,0);
   const completed=data.completed||{};
-  const total=totalAllSessions(progKey,data.days.length,data.extraSessions||[]);
+  const total=totalAllSessions(data);
 
   /* Program name */
   const nameEl=$('#progName');
@@ -42,8 +45,9 @@ function renderSchedule(){
   nameEl.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();nameEl.blur()}};
 
   /* Badge */
-  let badge=prog.name+' \u00B7 '+prog.weeks+'w \u00B7 '+data.days.map(d=>DAY_LABELS[d]).join('/');
+  let badge=prog.name+' \u00B7 '+weeks+'w \u00B7 '+(isDaily(data)&&data.days.length===7?'daily':data.days.map(d=>DAY_LABELS[d]).join('/'));
   if(data.steadyDay)badge+='+'+DAY_LABELS[data.steadyDay];
+  if(isDaily(data))badge+=' \u00B7 '+floorLabel(data);
   $('#progBadge').textContent=badge;
 
   /* Help */
@@ -79,131 +83,8 @@ function renderSchedule(){
   tipEl.innerHTML='<div class="sched-tip"><div class="sched-tip-label">Tip of the day</div>'+tip+'</div>';
 
   /* Today banner */
-  const todaySessions=sessions.filter(s=>sameDay(s.date,today));
-  const todayInterval=todaySessions.find(s=>s.type==='interval'&&!completed[s.key]);
-  const todayWalk=todaySessions.find(s=>s.type==='walk'&&!completed[s.key]);
-  const todaySteady=todaySessions.find(s=>s.type==='steady'&&!completed[s.key]);
-  const bannerEl=$('#todayBanner');
-  const bDoneCount=countRowingSessions(completed);
-  const bStage=getHabitStage(bDoneCount);
-  const bTagline=STAGE_IDENTITY[bStage.id].tagline;
-  const bTagHtml=bTagline?'<div class="today-tagline">'+bTagline+'</div>':'';
-  const bStreak=calcStreak(data,sessions);
-  const hasUndone=todayInterval||todaySteady;
-  const streakWarnHtml=(hasUndone&&bStreak.current>=2)
-    ?(bStreak.shields>0
-      ?'<div class="streak-warning">🛡 A shield protects your '+bStreak.current+'-session streak today, but rowing beats spending it</div>'
-      :'<div class="streak-warning">Your '+bStreak.current+'-session streak is at risk today</div>')
-    :'';
-  const anchorHtml=data.anchor
-    ?'<div class="anchor-line" id="anchorLine">After '+String(data.anchor).replace(/</g,'&lt;')+' \u2192 row</div>'
-    :'<div class="anchor-line dim" id="anchorLine">\uFF0B set your cue: "After I ..., I row"</div>';
-  const wireAnchor=()=>{
-    const line=$('#anchorLine');if(!line)return;
-    line.addEventListener('click',()=>{
-      if(line.isContentEditable)return;
-      line.textContent=data.anchor||'';
-      line.contentEditable='true';line.classList.remove('dim');line.focus();
-    });
-    line.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();line.blur()}});
-    line.addEventListener('blur',()=>{
-      line.contentEditable='false';
-      const v=line.textContent.trim();
-      if(v)data.anchor=v;else delete data.anchor;
-      saveData(data);renderSchedule();
-    });
-  };
+  renderTodayBanner(data,sessions,today,completed,prog,startMon,{doneCount,total,pct,programOver});
 
-  if(todayInterval){
-    const tTime=getEffectiveTime(data,todayInterval.key,todayInterval.actualDay,todayInterval.date);
-    const timeInfo=tTime?' \u00B7 '+tTime:'';
-    bannerEl.innerHTML='<div class="sched-today-banner">'+
-      '<div class="day-label">TODAY &middot; '+todayInterval.day+timeInfo+'</div>'+
-      '<div class="day-title">Week '+todayInterval.week+' &middot; '+todayInterval.blocks+' Blocks</div>'+
-      anchorHtml+bTagHtml+streakWarnHtml+
-      '<button class="btn btn-primary" id="todayStartBtn">START TODAY\'S SESSION</button>'+
-      (todayInterval.blocks>1?'<button class="quick-session-btn" id="quickSessionBtn">QUICK SESSION (1 block)</button>':'')+
-      (bStreak.current>=2?'<button class="quick-session-btn" id="microSessionBtn">\uD83D\uDEE1 5-MIN STREAK SAVER (1 block, no extras)</button>':'')+
-    '</div>';
-    $('#todayStartBtn').addEventListener('click',()=>launchSession(todayInterval,prog));
-    wireAnchor();
-    const mBtn=$('#microSessionBtn');
-    if(mBtn)mBtn.addEventListener('click',()=>{
-      launchSession(Object.assign({},todayInterval,{blocks:1}),prog,{bare:true});
-    });
-    const qBtn=$('#quickSessionBtn');
-    if(qBtn)qBtn.addEventListener('click',()=>{
-      const qs=Object.assign({},todayInterval,{blocks:1});
-      launchSession(qs,prog);
-    });
-  } else if(todaySteady){
-    const tTime=getEffectiveTime(data,todaySteady.key,todaySteady.actualDay,todaySteady.date);
-    const timeInfo=tTime?' \u00B7 '+tTime:'';
-    bannerEl.innerHTML='<div class="sched-today-banner">'+
-      '<div class="day-label">TODAY &middot; '+todaySteady.day+timeInfo+'</div>'+
-      '<div class="day-title">Steady-State '+todaySteady.minutes+' min</div>'+
-      anchorHtml+bTagHtml+streakWarnHtml+
-      '<button class="btn btn-primary" id="todaySteadyBtn">START STEADY SESSION</button></div>';
-    $('#todaySteadyBtn').addEventListener('click',()=>launchSteadySession(todaySteady));
-    wireAnchor();
-  } else if(todayWalk){
-    const tTime=getEffectiveTime(data,todayWalk.key,todayWalk.actualDay,todayWalk.date);
-    const timeInfo=tTime?' \u00B7 '+tTime:'';
-    bannerEl.innerHTML='<div class="sched-today-banner">'+
-      '<div class="day-label">TODAY &middot; '+todayWalk.day+timeInfo+'</div>'+
-      '<div class="day-title">\uD83D\uDEB6 Walk day</div>'+
-      anchorHtml+bTagHtml+streakWarnHtml+
-      '<button class="btn btn-primary" id="todayWalkBtn">START WALK</button></div>';
-    $('#todayWalkBtn').addEventListener('click',()=>launchWalkSession());
-    wireAnchor();
-  } else if(programOver){
-    /* Compute encouraging stats from actual data */
-    const doneSessions=sessions.filter(s=>!!completed[s.key]&&s.type!=='walk');
-    const totalBlocks=doneSessions.reduce((sum,s)=>sum+(s.type==='interval'?s.blocks:0),0);
-    const totalSprints=totalBlocks*5;
-    const totalCycles=totalBlocks*5;
-    const estMinutes=doneSessions.reduce((sum,s)=>{
-      if(s.type==='steady')return sum+s.minutes+4+5;
-      return sum+4+s.blocks*5+(s.blocks-1)*(prog.restSec/60)+5;
-    },0);
-    const estHours=Math.round(estMinutes/60*10)/10;
-    const weeksActive=new Set(doneSessions.map(s=>s.week)).size;
-    const si=calcStreak(data,sessions);
-
-    /* Pick encouraging message based on completion rate */
-    let finishMsg;
-    if(doneCount===total) finishMsg='Perfect completion. Every single session, done. That is extraordinary.';
-    else if(pct>=75) finishMsg='You completed more than three quarters of the program. That level of consistency changes your physiology.';
-    else if(pct>=50) finishMsg='You showed up for more than half the program. Most people never make it this far.';
-    else if(pct>=25) finishMsg='You built a real training habit over '+weeksActive+' weeks. That foundation carries forward.';
-    else finishMsg='You showed up '+doneCount+' times. Every session made you fitter than you were before.';
-
-    bannerEl.innerHTML='<div class="sched-rest-banner">'+
-      '<p style="font-weight:700;color:var(--green);margin-bottom:4px;font-size:1rem">Program Finished!</p>'+
-      bTagHtml+
-      '<div class="finish-stats">'+
-        '<div class="finish-stat"><div class="finish-stat-num">'+doneCount+'</div><div class="finish-stat-label">Sessions</div></div>'+
-        '<div class="finish-stat"><div class="finish-stat-num">'+totalSprints+'</div><div class="finish-stat-label">Sprints</div></div>'+
-        '<div class="finish-stat"><div class="finish-stat-num">'+estHours+'h</div><div class="finish-stat-label">Training time</div></div>'+
-        '<div class="finish-stat"><div class="finish-stat-num">'+si.best+'</div><div class="finish-stat-label">Best streak</div></div>'+
-      '</div>'+
-      '<p class="finish-msg">'+finishMsg+'</p>'+
-      '<p style="font-size:.8rem;color:var(--muted)">Tap <strong>Change Program</strong> to start again.</p>'+
-    '</div>';
-  } else if(startMon>today){
-    bannerEl.innerHTML='<div class="sched-rest-banner compact">'+
-      '<div class="rest-body">'+
-      '<p class="rest-title">Starts '+WEEKDAY_NAMES[startMon.getDay()]+' '+fmtDate(startMon)+'</p>'+
-      '<p class="rest-next">First session: '+getNext(sessions,today,completed)+'</p></div></div>';
-  } else {
-    bannerEl.innerHTML='<div class="sched-rest-banner compact">'+
-      '<div class="rest-body">'+
-      '<p class="rest-title">Rest Day ('+WEEKDAY_NAMES[today.getDay()]+')</p>'+
-      '<p class="rest-next">Next: '+getNext(sessions,today,completed)+'</p></div>'+
-      '<button class="quick-session-btn" id="restWalkBtn">\uD83D\uDEB6 WALK</button></div>';
-    const rwBtn=$('#restWalkBtn');
-    if(rwBtn)rwBtn.addEventListener('click',()=>launchWalkSession());
-  }
   /* The standalone walk button is redundant when the banner already offers a walk */
   $('#walkBtn').style.display=($('#restWalkBtn')||$('#todayWalkBtn'))?'none':'';
 
@@ -229,11 +110,11 @@ function renderSchedule(){
   }
 
   /* Week grid \u2014 accordion: only the current week starts expanded */
-  const curWeek=Math.min(prog.weeks,Math.max(1,Math.floor((today-startMon)/(7*864e5))+1));
-  const owSig=data.startDate+data.program;
+  const curWeek=Math.min(weeks,Math.max(1,Math.floor((today-startMon)/(7*864e5))+1));
+  const owSig=data.startDate+data.program+weeks;
   if(openWeeksSig!==owSig){openWeeks=new Set([curWeek]);openWeeksSig=owSig}
   let html='';
-  for(let w=1;w<=prog.weeks;w++){
+  for(let w=1;w<=weeks;w++){
     const ws=sessions.filter(s=>s.week===w);
     const ibs=ws.filter(s=>s.type==='interval').map(s=>s.blocks);
     const lo=Math.min(...ibs),hi=Math.max(...ibs);
@@ -339,9 +220,7 @@ function renderSchedule(){
 
 function toggleDone(key){
   const data=loadData();if(!data)return;
-  const prog=PROGRAMS[data.program];
-  const startMon=parseDate(data.startDate);
-  const sessions=injectWalks(injectExtras(buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks),data,startMon);
+  const sessions=scheduleFor(data);
   const sess=sessions.find(s=>s.key===key);
   if(sess){
     const today=new Date();today.setHours(0,0,0,0);

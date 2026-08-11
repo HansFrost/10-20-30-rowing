@@ -24,6 +24,16 @@
 .sched-today-banner .btn-primary{background:#001D38;color:#B7BF10}
 .sched-today-banner .today-tagline{color:rgba(0,29,56,.5)}
 .sched-today-banner .streak-warning{color:rgba(0,29,56,.8)}
+/* Daily Minimum: the floor is the promise, so it reads first and reads big */
+.sched-today-banner.daily .daily-dose{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.dose-item{background:rgba(0,29,56,.12);border-radius:10px;padding:10px 6px;
+  display:flex;flex-direction:column;align-items:center;gap:2px}
+.dose-item.floor{background:rgba(0,29,56,.28);outline:2px solid rgba(0,29,56,.45)}
+.dose-num{font-size:1.6rem;font-weight:800;color:#001D38;line-height:1}
+.dose-lbl{font-size:.62rem;font-weight:700;letter-spacing:.5px;color:rgba(0,29,56,.7);
+  text-transform:uppercase;text-align:center;line-height:1.35}
+.daily-grace{font-size:.75rem;font-weight:600;color:rgba(0,29,56,.75);margin-bottom:10px}
+.daily-grace.spent{color:rgba(0,29,56,.55)}
 .sched-rest-banner{background:var(--card);border-radius:14px;padding:18px;text-align:center}
 .sched-rest-banner p{color:var(--muted);font-size:.9rem}
 .sched-rest-banner.compact{display:flex;align-items:center;gap:10px;flex-wrap:wrap;

@@ -25,8 +25,34 @@ const PROGRAMS={
     weekRange:[[3],[3],[3],[3,4,.3],[3,4,.8],[4],[4],[4]],
     steadyMinutes:[30,30,35,35,35,40,40,40],
     desc:'Interval + 1 steady-state/week. Blocks 3\u20134. 2-min rest.'
+  },
+  /* Habit-first mode: a flat, tiny daily dose with no weekly ramp. The
+     commitment is the floor, not the target, so a bad day still counts. */
+  daily:{
+    name:'Daily Minimum',weeks:12,restSec:60,
+    defaultNumDays:7,minDays:3,maxDays:7,
+    defaultDays:ALL_DAYS,
+    weekRange:null,
+    daily:true,weekChoices:[4,8,12],
+    defaults:{target:2,floor:1,warmup:false,cooldown:false,restSec:60},
+    desc:'Every day, on purpose small. Pass the floor and the day counts \u2014 the rest is a bonus.'
   }
 };
+
+/* Daily settings resolve the program defaults against the user's overrides.
+   This lives beside the program table so programs.js needs no feature import. */
+function dailySettings(data){
+  const s=Object.assign({},PROGRAMS.daily.defaults,(data&&data.daily)||{});
+  s.target=Math.max(1,Math.min(8,s.target|0||1));
+  s.floor=Math.max(1,Math.min(s.target,s.floor|0||1));
+  return s;
+}
+/* Only the daily program has a user-chosen length; the others are fixed. */
+function progWeeks(data){
+  const prog=data&&PROGRAMS[data.program];
+  if(!prog)return 0;
+  return(prog.daily&&data.programWeeks)||prog.weeks;
+}
 
 function distributeBlocks(base,peak,n,ratio){
   if(!peak||peak===base||!ratio||n<=0)return Array(Math.max(0,n)).fill(base);
@@ -42,14 +68,22 @@ function distributeBlocks(base,peak,n,ratio){
   return arr;
 }
 
-function buildSchedule(startMon,progKey,days,steadyDay,swaps){
-  const prog=PROGRAMS[progKey];
+/* Daily mode is flat by design: growth is offered, never scheduled. */
+function weekBlocks(prog,data,w,n){
+  if(prog.daily)return Array(n).fill(dailySettings(data).target);
+  const wr=prog.weekRange[w];
+  return distributeBlocks(wr[0],wr[1],n,wr[2]);
+}
+
+function buildSchedule(startMon,data){
+  const prog=PROGRAMS[data.program];
+  const days=data.days,steadyDay=data.steadyDay,swaps=data.swaps||{};
   const sessions=[];
   const n=days.length;
-  for(let w=0;w<prog.weeks;w++){
+  const weeks=progWeeks(data);
+  for(let w=0;w<weeks;w++){
     const weekMon=addDays(startMon,w*7);
-    const wr=prog.weekRange[w];
-    const wBlocks=distributeBlocks(wr[0],wr[1],n,wr[2]);
+    const wBlocks=weekBlocks(prog,data,w,n);
     const weekSessions=[];
     /* Interval sessions — one per chosen day */
     days.forEach((day,idx)=>{
@@ -111,7 +145,7 @@ function injectWalks(sessions,data,startMon){
   const prog=PROGRAMS[data.program];
   if(prog&&data.walkDays&&data.walkDays.length){
     const from=data.walkStart?parseDate(data.walkStart):new Date();
-    for(let w=1;w<=prog.weeks;w++){
+    for(let w=1;w<=progWeeks(data);w++){
       data.walkDays.forEach(d=>{
         const date=addDays(startMon,(w-1)*7+DAY_OFFSET[d]);
         if(date<from)return;
@@ -135,18 +169,31 @@ function injectWalks(sessions,data,startMon){
   out.sort((a,b)=>a.date-b.date);
   return out;
 }
+/* Single entry points for "the sessions of this program", so every caller
+   agrees on program length, daily blocks, extras and walks.
+   rowingSchedule omits walks; scheduleFor includes them. */
+function rowingSchedule(data,startMon){
+  const mon=startMon||parseDate(data.startDate);
+  return injectExtras(buildSchedule(mon,data),data,mon,progWeeks(data));
+}
+function scheduleFor(data){
+  const mon=parseDate(data.startDate);
+  return injectWalks(rowingSchedule(data,mon),data,mon);
+}
 /* Walks are a supplementary habit: only rowing keys count toward program progression */
 function countRowingSessions(completed){
   return Object.keys(completed||{}).filter(k=>k.indexOf('walk-')!==0).length;
 }
-function totalAllSessions(progKey,numDays,extras){
-  const prog=PROGRAMS[progKey];
-  let n=prog.weeks*numDays;
-  if(prog.steadyMinutes)n+=prog.weeks;
+function totalAllSessions(data){
+  const prog=data&&PROGRAMS[data.program];
+  if(!prog)return 0;
+  const weeks=progWeeks(data);
+  const numDays=(data.days&&data.days.length)||prog.defaultNumDays;
+  let n=weeks*numDays;
+  if(prog.steadyMinutes)n+=weeks;
   /* walks are supplementary: they never count toward program progression, so
      walk-type extras must not inflate the program total either */
-  const extraCount=Array.isArray(extras)?extras.filter(e=>e.type!=='walk').length:(extras||0);
-  return n+extraCount;
+  return n+(data.extraSessions||[]).filter(e=>e.type!=='walk').length;
 }
 
 function getNext(sessions,today,completed){
@@ -192,4 +239,4 @@ function migrateData(data){
   saveData(data);
   return data;
 }
-export{injectWalks,goalTime,ALL_DAYS,countRowingSessions,DAY_LABELS,DAY_OFFSET,PROGRAMS,buildSchedule,getEffectiveTime,getNext,injectExtras,migrateData,totalAllSessions};
+export{goalTime,ALL_DAYS,countRowingSessions,DAY_LABELS,DAY_OFFSET,PROGRAMS,dailySettings,getEffectiveTime,getNext,migrateData,progWeeks,rowingSchedule,scheduleFor,totalAllSessions};

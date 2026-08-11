@@ -1,10 +1,10 @@
 import{awardCoins}from'./coins.js';
 import{$}from'./dom.js';
 import{pm5,pm5Stats}from'./pm5.js';
-import{PROGRAMS,buildSchedule,injectExtras}from'./programs.js';
+import{PROGRAMS,rowingSchedule}from'./programs.js';
 import{loadData}from'./store.js';
 import{sequence,stepIdx,timerConfig}from'./timer.js';
-import{fmtTime,parseDate}from'./util.js';
+import{fmtTime}from'./util.js';
 import{walkDistance}from'./walk.js';
 /* Coin-earning engine: random mid-session challenges (banner on the timer
    screen) plus fixed bonuses evaluated when a session finishes. No challenge
@@ -147,8 +147,7 @@ function completedWeek(data,sessionKey){
   if(!sessionKey||sessionKey.indexOf('walk-')===0)return 0;
   const prog=data&&PROGRAMS[data.program];
   if(!prog||!data.days||!data.startDate)return 0;
-  const startMon=parseDate(data.startDate);
-  const sessions=injectExtras(buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks);
+  const sessions=rowingSchedule(data);
   const sess=sessions.find(s=>s.key===sessionKey);
   if(!sess)return 0;
   if((data.weekBonus||[]).indexOf(sess.week)>=0)return 0;

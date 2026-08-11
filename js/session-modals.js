@@ -1,6 +1,6 @@
 import{$,$$,customConfirm}from'./dom.js';
 import{buildTimeEditor,collectTimeEditor}from'./time-modals.js';
-import{ALL_DAYS,DAY_LABELS,DAY_OFFSET,PROGRAMS,buildSchedule,injectExtras}from'./programs.js';
+import{ALL_DAYS,DAY_LABELS,DAY_OFFSET,PROGRAMS,rowingSchedule}from'./programs.js';
 import{renderSchedule}from'./schedule.js';
 import{loadData,saveData}from'./store.js';
 import{addDays,dateStr,parseDate}from'./util.js';
@@ -322,12 +322,10 @@ let addSessionTarget=null;
 function openAddSessionModal(week){
   addSessionTarget={week};
   const data=loadData();if(!data)return;
-  const prog=PROGRAMS[data.program];
   const startMon=parseDate(data.startDate);
   const weekMon=addDays(startMon,(week-1)*7);
   $('#addSessionTitle').textContent='Add session to Week '+week;
-  const sessions=injectExtras(buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{}),data,startMon,prog.weeks);
-  const weekSessions=sessions.filter(s=>s.week===week);
+  const weekSessions=rowingSchedule(data,startMon).filter(s=>s.week===week);
   $$('#addSessionDayPicker .day-btn').forEach(b=>{
     b.classList.remove('taken','selected');
   });

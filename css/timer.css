@@ -25,6 +25,11 @@
   color:var(--accent);margin-bottom:4px}
 .streak-warning{font-size:.8rem;font-weight:600;color:var(--gold);margin-bottom:8px;text-align:center}
 .today-tagline{font-size:.75rem;color:var(--muted);font-style:italic;margin-top:2px}
+/* Fogg's celebration: it has to land the moment the floor is passed */
+#floorBanner{display:none;font-size:.85rem;font-weight:700;color:var(--green);
+  text-align:center;margin:6px auto 0;max-width:340px;line-height:1.4}
+#floorBanner.on{display:block;animation:floorPop .5s ease-out}
+@keyframes floorPop{0%{transform:scale(.85);opacity:0}60%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
 .habit-subtitle{font-size:.7rem;color:var(--muted);font-style:italic}
 .quick-session-btn{background:transparent;border:1px solid var(--accent);color:var(--accent);
   border-radius:8px;padding:6px 14px;font-size:.75rem;font-weight:600;cursor:pointer;

@@ -1,3 +1,4 @@
+import{collectDailySetup,initDailySetup,showDailySetup}from'./daily-setup.js';
 import{$,$$,customConfirm,showOnboardStep,showScreen}from'./dom.js';
 import{activateProgram}from'./history.js';
 import{DEFAULT_MAX_HR}from'./hr.js';
@@ -12,6 +13,7 @@ let selectedDays=['tue','thu','sat'];
 let selectedSteady='';
 
 function initOnboarding(){
+  initDailySetup();
   /* Program cards */
   $$('.program-card').forEach(c=>{
     c.addEventListener('click',()=>{
@@ -85,7 +87,8 @@ function initOnboarding(){
     const v=$('#dateInput').value;if(!v)return;
     const existing=loadData();
     if(existing&&existing.program){
-      if(!await customConfirm('Start a new program? Your current one will be moved to Program History.'))return;
+      if(!await customConfirm('Start a new program? Your current one will be moved to Program History. '+
+        'Resume it any time and its remaining weeks move to that week.'))return;
     }
     const d=parseDate(v);
     /* Snap to Monday */
@@ -104,6 +107,7 @@ function initOnboarding(){
       defaultTimes,sessionTimes:{}
     };
     if(selectedProg==='advanced')saveObj.steadyDay=selectedSteady;
+    if(PROGRAMS[selectedProg].daily)Object.assign(saveObj,collectDailySetup());
     if(walkSel.length){
       saveObj.walkDays=walkSel;saveObj.walkStart=dateStr(d);
       saveObj.walkTimes=collectTimeEditor('#obWalkTimesList');
@@ -155,6 +159,7 @@ function initDayPicker(){
 
   $('#steadySection').style.display='none';
   $('#timesSection').style.display='none';
+  showDailySetup(!!prog.daily);
   selectedSteady='';
   updateDayPickerState();
 }

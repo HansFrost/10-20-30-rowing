@@ -1,7 +1,7 @@
 import{$}from'./dom.js';
-import{PROGRAMS,buildSchedule,injectExtras,injectWalks}from'./programs.js';
+import{PROGRAMS,scheduleFor}from'./programs.js';
 import{loadData}from'./store.js';
-import{WEEKDAY_NAMES,fmtDate,fmtTime,parseDate}from'./util.js';
+import{WEEKDAY_NAMES,fmtDate,fmtTime}from'./util.js';
 
 /* Session Log: every completed session of the active program, newest first,
    with an accordion row per session showing all recorded stats. Archived
@@ -14,11 +14,7 @@ function scheduleMap(data){
   try{
     const prog=PROGRAMS[data.program];
     if(!prog)return map;
-    const startMon=parseDate(data.startDate);
-    const sessions=injectWalks(injectExtras(
-      buildSchedule(startMon,data.program,data.days,data.steadyDay,data.swaps||{}),
-      data,startMon,prog.weeks),data,startMon);
-    sessions.forEach(s=>{map[s.key]=s});
+    scheduleFor(data).forEach(s=>{map[s.key]=s});
   }catch(e){}
   return map;
 }

@@ -52,6 +52,10 @@
         <div class="pc-head"><span class="pc-name">Advanced</span><span class="pc-tag">8 weeks</span></div>
         <div class="pc-desc">Interval + 1 steady-state/week. 3 blocks ramping to 4. 2-min rest.</div>
       </div>
+      <div class="program-card daily-card" data-prog="daily">
+        <div class="pc-head"><span class="pc-name">Daily Minimum</span><span class="pc-tag">habit mode</span></div>
+        <div class="pc-desc">Small on purpose, every day. Pass the floor and the day counts &mdash; the rest is a bonus. One grace day a week.</div>
+      </div>
     </div>
     <button class="btn btn-primary" id="progNextBtn" style="width:100%">NEXT</button>
     <button class="btn btn-secondary btn-small" id="onboardCloudBtn" style="margin-top:4px">&#9729; Sign in to sync</button>
@@ -62,7 +66,31 @@
   <div class="onboard-step" id="stepDays">
     <p id="numDaysLabel" style="font-size:.85rem;color:var(--muted)">Sessions per week:</p>
     <div class="btn-row" id="numDaysBtns" style="width:100%;max-width:340px">
-      <button data-val="2">2</button><button data-val="3" class="selected">3</button><button data-val="4">4</button><button data-val="5">5</button>
+      <button data-val="2">2</button><button data-val="3" class="selected">3</button><button data-val="4">4</button><button data-val="5">5</button><button data-val="6">6</button><button data-val="7">7</button>
+    </div>
+    <div id="dailySection" style="display:none">
+      <p class="daily-intro">Make it small enough that a bad day cannot stop you.</p>
+      <p class="daily-lbl"><strong>Floor</strong> &mdash; passing this counts the day</p>
+      <div class="btn-row" id="dailyFloorBtns">
+        <button data-val="1" class="selected">1 block</button><button data-val="2">2 blocks</button><button data-val="3">3 blocks</button>
+      </div>
+      <p class="daily-lbl"><strong>Target</strong> &mdash; what the timer builds</p>
+      <div class="btn-row" id="dailyTargetBtns">
+        <button data-val="1">1</button><button data-val="2" class="selected">2</button><button data-val="3">3</button><button data-val="4">4</button>
+      </div>
+      <p class="daily-lbl"><strong>Rest between blocks</strong></p>
+      <div class="btn-row" id="dailyRestBtns">
+        <button data-val="30">30s</button><button data-val="60" class="selected">1 min</button><button data-val="120">2 min</button>
+      </div>
+      <div class="daily-toggles">
+        <label><input type="checkbox" id="dailyWarmup"> Warm-up (4 min)</label>
+        <label><input type="checkbox" id="dailyCooldown"> Cool-down (5 min)</label>
+      </div>
+      <p class="daily-lbl"><strong>Run it for</strong></p>
+      <div class="btn-row" id="dailyWeeksBtns">
+        <button data-val="4">4 weeks</button><button data-val="8">8 weeks</button><button data-val="12" class="selected">12 weeks</button>
+      </div>
+      <p class="daily-est" id="dailyEstimate"></p>
     </div>
     <p id="daysPrompt">Choose your training days:</p>
     <div class="day-picker" id="dayPicker">
@@ -161,6 +189,7 @@
   <div class="set-group">
     <div class="set-title">Program</div>
     <button class="set-row" id="changProgBtn">Change Program</button>
+    <button class="set-row" id="pauseProgBtn">Pause Program</button>
     <button class="set-row" id="historyBtn">Program History</button>
     <button class="set-row" id="changeDaysBtn">Change Training Days</button>
     <button class="set-row" id="defTimesBtn">Set Default Times</button>
@@ -199,6 +228,7 @@
   <div id="hrZone"></div>
   <div id="countdown">--</div>
   <div id="instruction"></div>
+  <div id="floorBanner"></div>
   <div id="encouragement"></div>
   <div id="pm5Strip">
     <div class="pm5-tile"><div class="pv" id="pmWatts">-</div><div class="pl">watts</div></div>

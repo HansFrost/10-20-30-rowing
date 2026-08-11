@@ -53,6 +53,10 @@
 .history-badge{background:rgba(183,191,16,.15);color:var(--accent);border-radius:8px;
   padding:2px 8px;font-size:.7rem;font-weight:700;white-space:nowrap}
 .history-resume{align-self:flex-end;font-size:.75rem;padding:8px 16px}
+.history-entry.paused{border-color:var(--accent)}
+.history-paused{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+  background:rgba(183,191,16,.15);color:var(--accent);border-radius:6px;padding:2px 6px;
+  vertical-align:middle}
 
 /* CLOUD SYNC */
 #cloudOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;

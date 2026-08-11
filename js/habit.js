@@ -1,5 +1,6 @@
+import{dailyStreak,isDaily}from'./daily.js';
 import{$,customAlertHtml}from'./dom.js';
-import{countRowingSessions,PROGRAMS,totalAllSessions}from'./programs.js';
+import{countRowingSessions,progWeeks,totalAllSessions}from'./programs.js';
 import{loadData,saveData}from'./store.js';
 import{lifetimeMeters}from'./xp.js';
 const MILESTONES={
@@ -22,6 +23,10 @@ const MILESTONES={
 };
 
 function calcStreak(data,sessions){
+  if(isDaily(data)){
+    const t=new Date();t.setHours(0,0,0,0);
+    return dailyStreak(data,sessions,t);
+  }
   const completed=data.completed||{};
   /* Walks neither break nor extend the rowing streak, and never gate shields */
   const sorted=sessions.filter(s=>s.type!=='walk').sort((a,b)=>a.date-b.date);
@@ -63,8 +68,7 @@ function getHabitStage(doneCount){
 function checkFullWeek(sessions){
   const data=loadData();if(!data)return false;
   const completed=data.completed||{};
-  const prog=PROGRAMS[data.program];
-  for(let w=1;w<=prog.weeks;w++){
+  for(let w=1;w<=progWeeks(data);w++){
     const ws=sessions.filter(s=>s.week===w&&s.type!=='walk');
     if(ws.length>0&&ws.every(s=>!!completed[s.key]))return true;
   }
@@ -73,7 +77,7 @@ function checkFullWeek(sessions){
 
 function checkMilestones(data,sessions,streakInfo){
   const doneCount=countRowingSessions(data.completed);
-  const total=totalAllSessions(data.program,data.days.length,data.extraSessions||[]);
+  const total=totalAllSessions(data);
   const meters=lifetimeMeters(data);
   const shown=data.milestones||[];
   const found=[];
@@ -107,7 +111,8 @@ function renderHabitStrip(data,sessions){
   if(si.best!==(data.bestStreak||0)){data.bestStreak=si.best;saveData(data)}
   const bestTxt=si.best>0?'Best: '+si.best:'';
   const progTxt=stage.next?doneCount+' / '+stage.next+' to next stage':doneCount+' sessions completed';
-  const streakMeta=[bestTxt,si.shields>0?'🛡×'+si.shields:''].filter(Boolean).join(' · ');
+  const guard=si.graceTotal?(si.graceLeft>0?'🛡 grace day left':'🛡 grace used'):(si.shields>0?'🛡×'+si.shields:'');
+  const streakMeta=[bestTxt,guard].filter(Boolean).join(' · ');
   el.innerHTML='<div class="sched-habit">'+
     '<div class="habit-ring '+stage.cls+'">'+stage.ring+'</div>'+
     '<div class="habit-mid">'+
