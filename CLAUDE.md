@@ -58,6 +58,8 @@ consensus). Apply to all new and refactored code:
 
 This repo is stamped by the dev-harness: `harness.toml` is what it says about itself, and its gates enforce it. Before you build here, load the `dev-harness:workflow` skill (a worktree branch per change, the gates, one vet round before every merge). Main is `master`, and the served page opens as `http://127.0.0.1:<port>/?debug=all`. Regression tests are written at keep (`scripts/vet.py keep`), after the seen and never before it: the fewest tests, each one failing on main. In an app with a phone page, keep also names the steps Hans checks on the phone (`--pho "<step>"`) or why there are none (`--no-pho "<why>"`), and the merge hands them over.
 
+Until the cloud credit is spent or expires on 2026-11-05 (dev-harness decision 0001), a new build or drawing task starts in a plain cloud session through `D:/Projects/dev-harness/scripts/cloud_start.ps1`; the local session vets, sees, keeps and merges it (the `land` skill). The credit is gone when Hans says so.
+
 ### In a cloud session
 
 When `CLAUDE_CODE_REMOTE` is `true` (a session opened at claude.ai/code), nothing from a plugin loads, so before the task:
