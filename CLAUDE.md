@@ -62,8 +62,8 @@ This repo is stamped by the dev-harness: `harness.toml` is what it says about it
 
 When `CLAUDE_CODE_REMOTE` is `true` (a session opened at claude.ai/code), nothing from a plugin loads, so before the task:
 
-1. Attach the repos this one needs with add_repo and clone each beside it, `git clone https://github.com/HansFrost/<repo>.git ../<repo>`: always dev-harness and pagedebug, claude-plugins for any skill, and the repos this one's `package.json` names with a `file:` path.
+1. Attach the repos this one needs with add_repo and clone each beside it, `git clone https://github.com/HansFrost/<repo>.git ../<repo>`: always dev-harness and pagedebug, claude-plugins for any skill, and every repo a `file:` path names in ANY `package.json` here (`web/` and other subfolders too, not only the root one).
 2. Run `bash ../dev-harness/scripts/cloud-bootstrap.sh`; if it ends "NOT ready", report its FAIL lines and stop.
 3. A skill Hans names (flow, wireframe, guide, records, walkthrough, project, vet, workflow) is read from `../claude-plugins/plugins/*/skills/<name>/SKILL.md` and followed. Figma's skills come from `get_figma_skill`; with no `mcp__Figma__` tool present, ask Hans to turn Figma on under + > Connectors.
-4. Then follow `../dev-harness/cloud/instructions.md`: a branch per change, push it often, never merge, end with its hand-over block.
+4. Then follow `../dev-harness/cloud/instructions.md`: a branch per change, push it often, never merge, end with its hand-over block. A commit message carries no Co-Authored-By line and no "Generated with": the message gate refuses both.
 <!-- dev-harness:end -->
