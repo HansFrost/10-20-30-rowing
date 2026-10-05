@@ -58,4 +58,12 @@ consensus). Apply to all new and refactored code:
 
 This repo is stamped by the dev-harness: `harness.toml` is what it says about itself, and its gates enforce it. Before you build here, load the `dev-harness:workflow` skill (a worktree branch per change, the gates, one vet round before every merge). Main is `master`, and the served page opens as `http://127.0.0.1:<port>/?debug=all`. Regression tests are written at keep (`scripts/vet.py keep`), after the seen and never before it: the fewest tests, each one failing on main. In an app with a phone page, keep also names the steps Hans checks on the phone (`--pho "<step>"`) or why there are none (`--no-pho "<why>"`), and the merge hands them over.
 
+### In a cloud session
+
+When `CLAUDE_CODE_REMOTE` is `true` (a session opened at claude.ai/code), nothing from a plugin loads, so before the task:
+
+1. Attach the repos this one needs with add_repo and clone each beside it, `git clone https://github.com/HansFrost/<repo>.git ../<repo>`: always dev-harness and pagedebug, claude-plugins for any skill, and the repos this one's `package.json` names with a `file:` path.
+2. Run `bash ../dev-harness/scripts/cloud-bootstrap.sh`; if it ends "NOT ready", report its FAIL lines and stop.
+3. A skill Hans names (flow, wireframe, guide, records, walkthrough, project, vet, workflow) is read from `../claude-plugins/plugins/*/skills/<name>/SKILL.md` and followed. Figma's skills come from `get_figma_skill`; with no `mcp__Figma__` tool present, ask Hans to turn Figma on under + > Connectors.
+4. Then follow `../dev-harness/cloud/instructions.md`: a branch per change, push it often, never merge, end with its hand-over block.
 <!-- dev-harness:end -->
