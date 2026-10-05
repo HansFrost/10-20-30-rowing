@@ -1,0 +1,15 @@
+#!/bin/sh
+# Stamped by dev-harness. After a merge landed: the markers the served page
+# owes (needs-build, needs-restart), a fast-forward past the record said
+# loudly, the merged worktree removed in the same breath as the merge, and
+# with [push] auto the merge pushed (auto_push.py).
+ROOT="$(git rev-parse --show-toplevel)" || exit 0
+cd "$ROOT" || exit 0
+L="$ROOT/dev-tools/harness.py"
+[ -f "$L" ] || exit 0
+env -u GIT_DIR -u GIT_INDEX_FILE -u GIT_WORK_TREE python "$L" merge_markers HEAD || true
+python "$L" merge_record post-merge || true
+env -u GIT_DIR -u GIT_INDEX_FILE -u GIT_WORK_TREE python "$L" worktree remove-merged || true
+# a merge onto main that passed the vet gate is pushed, with [push] auto (T2b)
+env -u GIT_DIR -u GIT_INDEX_FILE -u GIT_WORK_TREE python "$L" auto_push merge || true
+exit 0

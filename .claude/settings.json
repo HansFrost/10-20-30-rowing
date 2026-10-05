@@ -1,0 +1,6 @@
+{
+  "enabledPlugins": {
+    "dev-harness@hans-plugins": true
+  },
+  "//": "Stamped by dev-harness. The harness gates run from the dev-harness plugin (D:/Projects/claude-plugins, marketplace hans-plugins), enabled here for this repo only: the vet gate on shell calls, main_guard on edits, the advisory lint after an edit. FAIL CLOSED as before (the plugin's hooks/gate.sh). The stamp removes the hook entries it used to write here, so a repo runs the plugin or the old entries, never both (2026-09-30). The old no-suite entry is removed too: its `|| exit 0` turned every refusal into a pass, so it never refused anything; the rule moves into vet_gate."
+}

@@ -1,0 +1,22 @@
+#!/bin/sh
+# Stamped by dev-harness: the [push] tasks of harness.toml, side by side,
+# with the paths the push carries in HARNESS_CHANGED for the {changed}
+# placeholder. Nothing else runs here; a repo's own push checks are tasks.
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+L="$ROOT/dev-tools/harness.py"
+[ -f "$L" ] || exit 0
+zero=0000000000000000000000000000000000000000
+files=""
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue
+  if [ "$remote_sha" != "$zero" ]; then
+    files="$files
+$(git -c core.quotepath=false diff --name-only --diff-filter=d "$remote_sha" "$local_sha" 2>/dev/null)"
+  else
+    files="$files
+$(git -c core.quotepath=false ls-tree -r --name-only "$local_sha")"
+  fi
+done
+HARNESS_CHANGED="$(printf '%s' "$files" | sort -u)"
+export HARNESS_CHANGED
+exec python "$L" gate push

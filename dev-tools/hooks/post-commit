@@ -1,0 +1,9 @@
+#!/bin/sh
+# Stamped by dev-harness. With [push] auto in harness.toml, a commit on main
+# (docs only: main_guard refuses source there) is pushed at once (auto_push.py,
+# step T2b). Nothing else runs here, and nothing at all without the setting.
+ROOT="$(git rev-parse --show-toplevel)" || exit 0
+L="$ROOT/dev-tools/harness.py"
+[ -f "$L" ] || exit 0
+env -u GIT_DIR -u GIT_INDEX_FILE -u GIT_WORK_TREE python "$L" auto_push commit || true
+exit 0

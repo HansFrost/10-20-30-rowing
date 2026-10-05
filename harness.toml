@@ -1,0 +1,111 @@
+# What this repository says about itself to the shared dev-harness
+# (D:\Projects\dev-harness, stamped 2026-10-05). Every rule the harness
+# enforces here reads this file; the defaults are harness/config.py's.
+
+[repo]
+# the branch the guard protects and the merges land on
+main = "master"
+# what counts as source: a path under one of these folders with one of the
+# suffixes below, or a file matching one of the globs in source_files.
+# Markdown, docs and var/ are never source: a typo still goes to main.
+source_dirs = ["src", "scripts", "tests", "dev-tools"]
+source_ext = [".py", ".js", ".jsx", ".mjs", ".ts", ".tsx", ".css", ".html", ".json", ".toml", ".cmd", ".sh"]
+source_files = [".claude/settings.json", "harness.toml"]
+# where `worktree new` cuts a tree, and what it junctions into it
+worktrees = ".claude/worktrees"
+link_dirs = ["node_modules"]
+# run inside a fresh worktree once it is cut (a build, an install); "" for nothing
+after_new = ""
+
+[phone]
+# reports.jsonl, pho.json, answers.jsonl and log/page.log: what the
+# ?debug panel writes and the scripts/ shims read
+dir = "var/phone"
+
+[app]
+# the addresses the require-debug hook refuses to open bare (no ?debug=all)
+ports = []
+hosts = []
+# what clears each post-merge marker, in the words the refusal prints
+build = "the build command"
+restart = "a server restart"
+# the built entry the vet audit dates against the last merge that touched the build; "" for none
+dist = ""
+
+[markers]
+# a merge onto main touching a path that matches leaves var/<marker>,
+# and an answer to the phone is refused while it stands. Regular
+# expressions on repo-relative posix paths; an empty list never writes.
+needs-build = []
+needs-restart = []
+
+[after_merge]
+# commands run once a merge lands on main and touched a matching path:
+# "<regular expression on repo-relative posix paths>|<command>", through
+# bash in the main checkout; a failure is printed and never blocks the merge.
+# The first bar outside parentheses ends the pattern: write "(src|web)/|cmd".
+tasks = []
+
+[check]
+# the commit gate: `name|command`, run side by side on what is staged.
+# {staged} is every staged path, {staged:py} those with the suffix; a task
+# whose placeholder is empty is skipped. Parse first, then the lint.
+# Every line runs through bash, on Windows too: write a path with forward
+# slashes (C:/Users/... ), since bash eats a backslash (MEASURED 2026-09-17:
+# C:\Python313\python.exe arrived as C:Python313python.exe).
+slots = 2
+tasks = [
+
+]
+
+[push]
+# the push gate: the fast deterministic set, {changed} is what the push carries
+tasks = [
+
+]
+
+[edit]
+# advisory, just after an edit, per suffix; {file} is the path written.
+# Well under a second each: the commit gate is the authority.
+
+
+# [restart]
+# `python dev-tools/harness.py restart` waits until `idle` (a JSON URL)
+# reads `busy` false, runs `command`, and clears var/needs-restart only once
+# `health` answers 2xx. Without `idle` it restarts only with --now.
+# command = "pwsh -File start.ps1 -Restart"
+# idle = "http://127.0.0.1:<port>/whoami"
+# busy = "busy"
+# health = "http://127.0.0.1:<port>/whoami"
+# wait = 600
+# settle = 30
+
+[servers]
+# a worktree's vite or Django that no page loaded through for this long is
+# stopped by `worktree sweep` and `worktree servers stop-idle`; a tree that
+# is removed takes its servers with it either way
+idle_minutes = 60
+
+# [release]
+# Only in a shared library (extract_text, chat-ui, pagedebug, dev-harness).
+# A branch that changes a file under `paths` does not merge into main
+# without a committed change note, checked by the tool's own command:
+# `towncrier check` (kind "python", notes in `notes`) or `changeset
+# status` (kind "npm"). `python dev-tools/harness.py release` bumps the
+# SemVer version from the notes, writes the changelog and tags vX.Y.Z.
+# kind = "python"
+# paths = ["src"]
+# notes = "changes"
+# The library's merge onto main that touches `runtime` writes the machine
+# stamp %LOCALAPPDATA%/dev-harness/libraries/<name>.json, and its next merge
+# waits until every LIVE consumer has renewed (libraries.py).
+# name = "extract_text"
+# runtime = ["^src/extract_text/"]
+# imports = ['^\s*(from|import)\s+extract_text\b']
+
+# [consumes]
+# Only in a repo that loads a shared library. The commit gate runs
+# `harness.py libraries imports {staged}` (an undeclared import fails), the
+# push gate `harness.py libraries versions` (the library's newest MAJOR
+# outside `range` fails). The process writes its ack after it renews.
+# extract_text = { range = ">=1,<2", renew = "the worker retires when idle" }

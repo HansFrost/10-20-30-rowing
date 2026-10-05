@@ -1,0 +1,19 @@
+#!/bin/sh
+# Stamped by dev-harness. In order: the secret guard (a key committed once
+# is a key in the history for ever), the merge record (a merge commit typed
+# by hand still owes its vet record), the main guard (source is never
+# committed on main in the main checkout), then the [check] tasks of
+# harness.toml side by side on what is staged. The guards run FIRST so a
+# refused commit never pays for the gate.
+#   git commit --no-verify      to skip it deliberately
+#   ALLOW_MAIN_COMMIT=1         lets a tooling commit onto main through, on record
+#   HARNESS_ALLOW_SECRET=1      lets a flagged line through, on record
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+L="$ROOT/dev-tools/harness.py"
+[ -f "$L" ] || exit 0
+python "$L" secret_guard --commit || exit 1
+if [ -f "$(git rev-parse --git-dir)/MERGE_HEAD" ]; then
+  python "$L" merge_record pre-commit || exit 1
+fi
+python "$L" main_guard --commit || exit 1
+exec python "$L" gate commit

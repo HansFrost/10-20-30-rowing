@@ -4,3 +4,8 @@ articles/*_tts/
 node_modules/
 test-results/
 playwright-report/
+
+# dev-harness
+var/
+.claude/worktrees/
+__pycache__/

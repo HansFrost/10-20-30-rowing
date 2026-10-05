@@ -1,0 +1,7 @@
+#!/bin/sh
+# Stamped by dev-harness: `git merge <branch>` onto main needs a complete
+# vet record for that branch, however the merge was typed.
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+L="$ROOT/dev-tools/harness.py"
+[ -f "$L" ] || exit 0
+exec python "$L" merge_record pre-merge-commit

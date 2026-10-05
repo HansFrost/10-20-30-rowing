@@ -50,3 +50,12 @@ consensus). Apply to all new and refactored code:
   starting multi-file work, commit promptly when done, and never revert changes you did not make.
 - Fonts: only load Dosis weights that are actually used; never reference a `font-weight` heavier
   than the loaded faces (regression-tested in `tests/font-weights.spec.js`).
+
+---
+
+<!-- dev-harness:begin (stamped 2026-10-05; re-stamping replaces only this block) -->
+## How work gets done here: the shared dev-harness
+
+This repo is stamped by the dev-harness: `harness.toml` is what it says about itself, and its gates enforce it. Before you build here, load the `dev-harness:workflow` skill (a worktree branch per change, the gates, one vet round before every merge). Main is `master`, and the served page opens as `http://127.0.0.1:<port>/?debug=all`. Regression tests are written at keep (`scripts/vet.py keep`), after the seen and never before it: the fewest tests, each one failing on main. In an app with a phone page, keep also names the steps Hans checks on the phone (`--pho "<step>"`) or why there are none (`--no-pho "<why>"`), and the merge hands them over.
+
+<!-- dev-harness:end -->
