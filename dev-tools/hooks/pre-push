@@ -9,6 +9,16 @@ zero=0000000000000000000000000000000000000000
 files=""
 while read -r local_ref local_sha remote_ref remote_sha; do
   [ "$local_sha" = "$zero" ] && continue
+  # a tag on a commit the remote already has carries no change of its own:
+  # with push.followTags an old local tag rode along, and its WHOLE tree,
+  # files long deleted among them, went to the checks (machine-config,
+  # 2026-10-05: sh-syntax failed on a statusline.sh removed in bbedd3c).
+  # Only a commit some refs/remotes/<this remote>/* branch contains counts:
+  # a tag on an unpushed commit is still checked in full (dev-harness-f2).
+  case "$local_ref" in
+    refs/tags/*)
+      [ -n "$(git for-each-ref --contains "$local_sha" --format=x "refs/remotes/$1/" 2>/dev/null)" ] && continue ;;
+  esac
   if [ "$remote_sha" != "$zero" ]; then
     files="$files
 $(git -c core.quotepath=false diff --name-only --diff-filter=d "$remote_sha" "$local_sha" 2>/dev/null)"
